@@ -87,27 +87,6 @@ const mockImages: GalleryItem[] = [
   },
 ]
 
-const SkeletalCard = () => (
-  <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
-    <Card className="group hover:shadow-md transition-all duration-300 bg-card border-border overflow-hidden p-0 animate-pulse">
-      <div className="relative">
-        <div className="w-full h-48 bg-muted"></div>
-        <div className="absolute top-2 left-2 flex gap-1">
-          <div className="w-8 h-8 bg-muted-foreground/20 rounded"></div>
-          <div className="w-8 h-8 bg-muted-foreground/20 rounded"></div>
-        </div>
-      </div>
-      <div className="p-4 space-y-2">
-        <div className="h-4 bg-muted rounded w-3/4"></div>
-        <div className="flex gap-2">
-          <div className="h-6 bg-muted rounded w-16"></div>
-          <div className="h-6 bg-muted rounded w-20"></div>
-        </div>
-      </div>
-    </Card>
-  </motion.div>
-)
-
 export default function DesignVault() {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -123,7 +102,6 @@ export default function DesignVault() {
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [galleryViewMode, setGalleryViewMode] = useState<"recent" | "random">("recent")
-  const [isTransitioning, setIsTransitioning] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     fileTypes: [],
     selectedTags: [],
@@ -145,6 +123,7 @@ export default function DesignVault() {
   const [newlyUploadedFiles, setNewlyUploadedFiles] = useState<Set<string>>(new Set())
   const [pendingTags, setPendingTags] = useState<Record<string, string[]>>({})
   const [newFileTimers, setNewFileTimers] = useState<Record<string, number>>({})
+  const [uploadingFiles, setUploadingFiles] = useState<Map<string, number>>(new Map())
 
   const generateTagsWithAI = async (filename: string, imageUrl: string): Promise<string[]> => {
     try {
@@ -316,45 +295,19 @@ export default function DesignVault() {
   }
 
   const handleFileDrop = useCallback(async (files: FileList) => {
+    if (isUploading) return
+
     setIsUploading(true)
-    setIsDragOverWindow(false)
 
-    const fileArray = Array.from(files)
-    const validFiles = fileArray.filter(validateFile)
-
-    const newUploadedFiles: UploadedFile[] = []
-
-    for (const file of validFiles) {
+    for (const file of Array.from(files)) {
       const isVideo = file.type.startsWith("video/")
       const title = file.name.replace(/\.[^/.]+$/, "")
 
       try {
         toast({
-          title: "📤 Processing file...",
-          description: `Preparing ${file.name} for upload`,
-        })
-
-        setUploadProgress({ fileName: file.name, progress: 10 })
-
-        const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2)}`
-        const skeletalFile: UploadedFile = {
-          id: tempId,
-          file,
-          url: URL.createObjectURL(file),
-          title,
-          tags: [],
-          type: isVideo ? "video" : "image",
-          dateAdded: new Date(),
-        }
-
-        setUploadedFiles((prev) => [skeletalFile, ...prev])
-
-        toast({
           title: "☁️ Uploading to storage...",
           description: `Saving ${file.name} to cloud storage`,
         })
-
-        setUploadProgress({ fileName: file.name, progress: 30 })
 
         const serverFile = await uploadFileToStorage(file, title, [])
 
@@ -363,9 +316,21 @@ export default function DesignVault() {
           description: `AI is analyzing ${file.name} for smart tags`,
         })
 
-        setUploadProgress({ fileName: file.name, progress: 70 })
-
-        const tags = await generateTagsWithAI(title, serverFile.file_path)
+        let tags: string[] = []
+        if (isVideo) {
+          // For videos, use filename-based fallback tags since OpenAI doesn't support video analysis
+          const filename_lower = title.toLowerCase()
+          if (filename_lower.includes("button")) tags.push("button")
+          if (filename_lower.includes("card")) tags.push("card")
+          if (filename_lower.includes("form")) tags.push("form")
+          if (filename_lower.includes("nav")) tags.push("navigation")
+          if (filename_lower.includes("dashboard")) tags.push("dashboard")
+          if (filename_lower.includes("animation")) tags.push("animation")
+          if (filename_lower.includes("transition")) tags.push("transition")
+          if (tags.length === 0) tags = ["ui-component", "video"]
+        } else {
+          tags = await generateTagsWithAI(title, serverFile.file_path)
+        }
 
         setPendingTags((prev) => ({ ...prev, [serverFile.id]: tags }))
 
@@ -379,13 +344,7 @@ export default function DesignVault() {
           dateAdded: new Date(serverFile.created_at),
         }
 
-        setUploadedFiles((prev) => {
-          const withoutSkeletal = prev.filter((f) => f.id !== tempId)
-          return [uploadedFile, ...withoutSkeletal]
-        })
-
-        newUploadedFiles.push(uploadedFile)
-        setUploadProgress({ fileName: file.name, progress: 100 })
+        setUploadedFiles((prev) => [uploadedFile, ...prev])
 
         toast({
           title: "✅ Upload complete!",
@@ -393,9 +352,6 @@ export default function DesignVault() {
         })
       } catch (error) {
         console.error("Failed to upload file:", file.name, error)
-        setUploadedFiles((prev) => prev.filter((f) => f.id !== `temp-${Date.now()}`))
-        setUploadProgress(null)
-
         toast({
           title: "❌ Upload failed",
           description: `Failed to upload ${file.name}: ${error.message}`,
@@ -405,7 +361,6 @@ export default function DesignVault() {
     }
 
     setIsUploading(false)
-    setUploadProgress(null)
   }, [])
 
   const handleFileInputChange = useCallback(
@@ -429,96 +384,50 @@ export default function DesignVault() {
       }
     }
 
-    window.addEventListener("drop", handleDrop)
-
-    return () => {
-      window.removeEventListener("drop", handleDrop)
-    }
-  }, [handleFileDrop])
-
-  useEffect(() => {
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault()
       setIsDragOverWindow(true)
     }
 
     const handleDragLeave = (e: DragEvent) => {
-      e.preventDefault()
-      setIsDragOverWindow(false)
+      if (!e.relatedTarget) {
+        setIsDragOverWindow(false)
+      }
     }
 
     window.addEventListener("dragover", handleDragOver)
     window.addEventListener("dragleave", handleDragLeave)
+    window.addEventListener("drop", handleDrop)
 
     return () => {
       window.removeEventListener("dragover", handleDragOver)
       window.removeEventListener("dragleave", handleDragLeave)
+      window.removeEventListener("drop", handleDrop)
+    }
+  }, [handleFileDrop])
+
+  useEffect(() => {
+    const handleWindowDragOver = (e: DragEvent) => {
+      e.preventDefault()
+      setIsDragOverWindow(true)
+    }
+
+    const handleWindowDragLeave = (e: DragEvent) => {
+      if (!e.relatedTarget) {
+        setIsDragOverWindow(false)
+      }
+    }
+
+    // Removed duplicate drop handler - already handled above
+
+    window.addEventListener("dragover", handleWindowDragOver)
+    window.addEventListener("dragleave", handleWindowDragLeave)
+
+    return () => {
+      window.removeEventListener("dragover", handleWindowDragOver)
+      window.removeEventListener("dragleave", handleWindowDragLeave)
     }
   }, [])
-
-  const processFiles = useCallback(
-    async (files: FileList | File[]) => {
-      setIsUploading(true)
-      const fileArray = Array.from(files)
-      const validFiles = fileArray.filter(validateFile)
-
-      const newUploadedFiles: UploadedFile[] = []
-
-      for (const file of validFiles) {
-        const isVideo = file.type.startsWith("video/")
-        const title = file.name.replace(/\.[^/.]+$/, "")
-
-        try {
-          toast({
-            title: "Processing file...",
-            description: `Preparing ${file.name} for upload`,
-          })
-
-          setUploadProgress({ fileName: file.name, progress: 10 })
-
-          const serverFile = await uploadFileToStorage(file, title, [])
-
-          toast({
-            title: "🤖 AI analyzing content...",
-            description: `Generating smart tags for ${file.name} using GPT-4o`,
-          })
-
-          const tags = await generateTagsWithAI(title, serverFile.file_path)
-
-          toast({
-            title: "☁️ Uploading to storage...",
-            description: `Saving ${file.name} to cloud storage`,
-          })
-
-          setUploadProgress({ fileName: file.name, progress: 70 })
-
-          const uploadedFile: UploadedFile = {
-            id: serverFile.id,
-            file,
-            url: serverFile.file_path,
-            title: serverFile.title,
-            tags: [], // Start with empty tags are pending
-            type: isVideo ? "video" : "image",
-            dateAdded: new Date(serverFile.created_at),
-          }
-
-          newUploadedFiles.push(uploadedFile)
-          setUploadProgress({ fileName: file.name, progress: 100 })
-        } catch (error) {
-          console.error("Failed to upload file:", file.name, error)
-          setUploadProgress(null)
-        }
-      }
-
-      setUploadedFiles((prev) => [
-        ...newUploadedFiles.sort((a, b) => b.dateAdded.getTime() - a.dateAdded.getTime()),
-        ...prev,
-      ])
-      setIsUploading(false)
-      setUploadProgress(null)
-    },
-    [], // Removed generateTagsWithAI from dependencies
-  )
 
   const handleDeleteFile = async (fileId: string) => {
     try {
@@ -583,7 +492,7 @@ export default function DesignVault() {
     }))
   }
 
-  const { filteredImages, availableTags, displayImages } = useMemo(() => {
+  const sortedAndFilteredImages = useMemo(() => {
     const combined = [...uploadedFiles, ...mockImagesList]
     let filtered = [...combined]
     let display = [...combined]
@@ -624,19 +533,26 @@ export default function DesignVault() {
     }
 
     const sortFunction = (a: GalleryItem, b: GalleryItem) => {
-      // Always prioritize newly uploaded files first, regardless of view mode
       const aIsNewlyUploaded = newlyUploadedFiles.has(a.id)
       const bIsNewlyUploaded = newlyUploadedFiles.has(b.id)
 
       if (aIsNewlyUploaded && !bIsNewlyUploaded) return -1
       if (!aIsNewlyUploaded && bIsNewlyUploaded) return 1
 
+      if (aIsNewlyUploaded && bIsNewlyUploaded) {
+        return b.dateAdded.getTime() - a.dateAdded.getTime()
+      }
+
       if (galleryViewMode === "recent" && !searchQuery) {
         const aIsUploaded = a.id.startsWith("uploaded-") || !a.id.match(/^\d+$/)
-        const bIsUploaded = b.id.startsWith("uploaded-") || !a.id.match(/^\d+$/)
+        const bIsUploaded = b.id.startsWith("uploaded-") || !b.id.match(/^\d+$/)
 
         if (aIsUploaded && !bIsUploaded) return -1
         if (!aIsUploaded && bIsUploaded) return 1
+
+        if (aIsUploaded && bIsUploaded) {
+          return b.dateAdded.getTime() - a.dateAdded.getTime()
+        }
       }
 
       let comparison = 0
@@ -941,7 +857,7 @@ export default function DesignVault() {
 
     const files = e.dataTransfer?.files
     if (files && files.length > 0) {
-      processFiles(files)
+      handleFileDrop(files)
     }
   }
 
@@ -953,39 +869,6 @@ export default function DesignVault() {
   const handleDragLeave = () => {
     setIsDragOver(false)
   }
-
-  useEffect(() => {
-    const handleWindowDragOver = (e: DragEvent) => {
-      e.preventDefault()
-      setIsDragOverWindow(true)
-    }
-
-    const handleWindowDragLeave = (e: DragEvent) => {
-      if (!e.relatedTarget) {
-        setIsDragOverWindow(false)
-      }
-    }
-
-    const handleWindowDrop = (e: DragEvent) => {
-      e.preventDefault()
-      setIsDragOverWindow(false)
-
-      const files = e.dataTransfer?.files
-      if (files && files.length > 0) {
-        processFiles(files)
-      }
-    }
-
-    window.addEventListener("dragover", handleWindowDragOver)
-    window.addEventListener("dragleave", handleWindowDragLeave)
-    window.addEventListener("drop", handleWindowDrop)
-
-    return () => {
-      window.removeEventListener("dragover", handleWindowDragOver)
-      window.removeEventListener("dragleave", handleWindowDragLeave)
-      window.removeEventListener("drop", handleWindowDrop)
-    }
-  }, [processFiles])
 
   useEffect(() => {
     const combined = [...uploadedFiles, ...mockImagesList]
@@ -1010,20 +893,9 @@ export default function DesignVault() {
     }
   }, [newlyUploadedFiles])
 
-  const handleViewModeChange = async (newMode: "recent" | "random") => {
+  const handleViewModeChange = (newMode: "recent" | "random") => {
     if (newMode === galleryViewMode) return
-
-    setIsTransitioning(true)
-
-    // Wait for fade out animation to complete
-    await new Promise((resolve) => setTimeout(resolve, 600))
-
     setGalleryViewMode(newMode)
-
-    // Wait for fade in animation to start
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    setIsTransitioning(false)
   }
 
   if (isLoading) {
@@ -1053,7 +925,25 @@ export default function DesignVault() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {Array.from({ length: 8 }).map((_, i) => (
-              <SkeletalCard key={i} />
+              <Card
+                key={i}
+                className="group hover:shadow-md transition-all duration-300 bg-card border-border overflow-hidden p-0 animate-pulse"
+              >
+                <div className="relative">
+                  <div className="w-full h-48 bg-muted"></div>
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <div className="w-8 h-8 bg-muted-foreground/20 rounded"></div>
+                    <div className="w-8 h-8 bg-muted-foreground/20 rounded"></div>
+                  </div>
+                </div>
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 bg-muted rounded w-16"></div>
+                    <div className="h-6 bg-muted rounded w-20"></div>
+                  </div>
+                </div>
+              </Card>
             ))}
           </motion.div>
         </div>
@@ -1277,9 +1167,9 @@ export default function DesignVault() {
               onClose={() => setIsFilterOpen(false)}
               filters={filters}
               onFiltersChange={setFilters}
-              availableTags={availableTags}
+              availableTags={sortedAndFilteredImages.availableTags}
               totalItems={allImages.length}
-              filteredItems={filteredImages.length}
+              filteredItems={sortedAndFilteredImages.filteredImages.length}
             />
           </div>
         </div>
@@ -1303,7 +1193,6 @@ export default function DesignVault() {
                     size="sm"
                     onClick={() => handleViewModeChange("recent")}
                     className="flex items-center gap-2"
-                    disabled={isTransitioning}
                   >
                     <Clock className="h-4 w-4" />
                     Recent
@@ -1313,14 +1202,14 @@ export default function DesignVault() {
                     size="sm"
                     onClick={() => handleViewModeChange("random")}
                     className="flex items-center gap-2"
-                    disabled={isTransitioning}
                   >
                     <Shuffle className="h-4 w-4" />
                     Random
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {displayImages.length} designs {galleryViewMode === "random" ? "(showing 20 random)" : ""}
+                  {sortedAndFilteredImages.displayImages.length} designs{" "}
+                  {galleryViewMode === "random" ? "(showing 20 random)" : ""}
                 </p>
               </div>
             )}
@@ -1332,27 +1221,13 @@ export default function DesignVault() {
               }`}
             >
               <AnimatePresence mode="popLayout">
-                {displayImages.map((image, index) => (
+                {sortedAndFilteredImages.displayImages.map((image, index) => (
                   <motion.div
                     key={`${galleryViewMode}-${image.id}`}
                     layout
-                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                    animate={{
-                      opacity: isTransitioning ? 0 : 1,
-                      scale: isTransitioning ? 0.8 : 1,
-                      y: isTransitioning ? 20 : 0,
-                    }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.8,
-                      y: -20,
-                      transition: { duration: 0.3, delay: index * 0.05 },
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      delay: isTransitioning ? 0 : index * 0.08,
-                      ease: "easeOut",
-                    }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
                   >
                     <Card
                       className={`group hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
@@ -1364,7 +1239,7 @@ export default function DesignVault() {
                         {image.type === "video" ? (
                           <video
                             src={image.url}
-                            className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                            className={`w-full object-cover transition-transform duration-300 ${
                               viewMode === "list" ? "h-auto" : "h-48"
                             }`}
                             muted
@@ -1372,22 +1247,25 @@ export default function DesignVault() {
                             playsInline
                             preload="metadata"
                             onMouseEnter={(e) => {
-                              try {
-                                e.currentTarget.currentTime = 0
-                                e.currentTarget.play()
-                              } catch (error) {
-                                console.log("Video autoplay failed:", error)
+                              const video = e.currentTarget
+                              video.currentTime = 0
+                              const playPromise = video.play()
+                              if (playPromise !== undefined) {
+                                playPromise.catch(() => {
+                                  // Silently handle autoplay restrictions
+                                })
                               }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.pause()
+                              const video = e.currentTarget
+                              video.pause()
                             }}
                           />
                         ) : (
                           <img
                             src={image.url || "/placeholder.svg"}
                             alt={image.title}
-                            className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                            className={`w-full object-cover transition-transform duration-300 ${
                               viewMode === "list" ? "h-auto" : "h-48"
                             }`}
                           />
@@ -1398,7 +1276,7 @@ export default function DesignVault() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90"
+                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation()
                               handleEditTags(image)
@@ -1410,7 +1288,7 @@ export default function DesignVault() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90"
+                              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation()
                                 handleDeleteFile(image.id)
@@ -1428,7 +1306,7 @@ export default function DesignVault() {
                         </div>
                       </div>
 
-                      <div className="p-3 pt-2">
+                      <div className="p-3 pt-1">
                         <div className="flex items-start gap-2 mb-2">
                           <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
                           {newlyUploadedFiles.has(image.id) && (
@@ -1469,32 +1347,36 @@ export default function DesignVault() {
                               {tag}
                             </Badge>
                           ))}
+
                           {pendingTags[image.id]?.map((tag, tagIndex) => (
-                            <Badge
+                            <div
                               key={`pending-${tagIndex}`}
-                              variant="outline"
-                              className="text-xs flex items-center gap-1 border-dashed"
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
                             >
-                              {tag}
-                              <button
+                              <span className="text-muted-foreground">{tag}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   confirmTag(image.id, tag)
                                 }}
-                                className="ml-1 hover:bg-green-100 rounded-full p-0.5"
+                                className="h-4 w-4 p-0 hover:bg-muted"
                               >
-                                <Check className="h-2 w-2 text-green-600" />
-                              </button>
-                              <button
+                                <Check className="h-3 w-3 text-foreground" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   rejectTag(image.id, tag)
                                 }}
-                                className="hover:bg-red-100 rounded-full p-0.5"
+                                className="h-4 w-4 p-0 hover:bg-muted"
                               >
-                                <X className="h-2 w-2 text-red-600" />
-                              </button>
-                            </Badge>
+                                <X className="h-3 w-3 text-foreground" />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       </div>
@@ -1504,7 +1386,7 @@ export default function DesignVault() {
               </AnimatePresence>
             </motion.div>
 
-            {displayImages.length === 0 && (
+            {sortedAndFilteredImages.displayImages.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
