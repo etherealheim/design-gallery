@@ -121,6 +121,7 @@ Return ONLY the component names separated by commas, no quotes, no other text.`,
           .slice(0, 6)
 
         console.log(`[v0] Successfully generated tags: ${tags.join(", ")}`)
+        console.log(`[v0] Returning tags array:`, tags)
         return NextResponse.json({ tags })
       } catch (error) {
         lastError = error instanceof Error ? error : new Error("Unknown error")

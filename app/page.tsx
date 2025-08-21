@@ -1,56 +1,21 @@
 "use client"
 
 import type React from "react"
-import { useState, useCallback, useRef, useMemo, useEffect } from "react"
-import {
-  Search,
-  Upload,
-  X,
-  Edit3,
-  Clock,
-  Shuffle,
-  Edit,
-  Play,
-  ImageIcon,
-  Check,
-  Filter,
-  List,
-  Grid3X3,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useCallback } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
+import { motion } from "framer-motion"
+import { toast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { TagEditorModal } from "@/components/tag-editor-modal"
-import { FilterSidebar, type FilterState } from "@/components/filter-sidebar"
+import { FilterSidebar } from "@/components/filter-sidebar"
+import { GalleryHeader } from "@/components/gallery-header"
 import { supabase } from "@/lib/supabase/client"
-import { useToast } from "@/hooks/use-toast"
-import { motion, AnimatePresence } from "framer-motion"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { GalleryGrid } from "@/components/gallery-grid"
+import { PreviewModal } from "@/components/preview-modal"
+import type { GalleryItem, UploadedFile } from "@/types/gallery"
+import type { FilterState } from "@/types"
+import { useUploadHandler } from "@/hooks/use-upload-handler"
 
-interface UploadedFile {
-  id: string
-  file: File
-  url: string
-  title: string
-  tags: string[]
-  type: "image" | "video"
-  dateAdded: Date
-}
-
-interface GalleryItem {
-  id: string
-  url: string
-  title: string
-  tags: string[]
-  type: "image" | "video"
-  dateAdded: Date
-}
-
-const mockImages: GalleryItem[] = [
+const mockImagesList: GalleryItem[] = [
   {
     id: "1",
     url: "/modern-button-design.png",
@@ -86,150 +51,43 @@ const mockImages: GalleryItem[] = [
 ]
 
 export default function DesignVault() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [mockImagesList, setMockImagesList] = useState<GalleryItem[]>(mockImages)
-  const [allImages, setAllImages] = useState<GalleryItem[]>([])
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState<{ fileName: string; progress: number } | null>(null)
-  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
-  const [isSelectionMode, setIsSelectionMode] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true)
-  const [galleryViewMode, setGalleryViewMode] = useState<"recent" | "random">("recent")
+  const [searchQuery, setSearchQuery] = useState("")
   const [filters, setFilters] = useState<FilterState>({
     fileTypes: [],
     selectedTags: [],
-    sortBy: "title",
-    sortOrder: "asc",
+    sortBy: "date",
+    sortOrder: "desc",
   })
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isDragOverWindow, setIsDragOverWindow] = useState(false)
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [previewItem, setPreviewItem] = useState<GalleryItem | null>(null)
-  const [isEditingTitle, setIsEditingTitle] = useState(false)
-  const [editingTitle, setEditingTitle] = useState("")
-  const [newTag, setNewTag] = useState("")
   const [isAddingTag, setIsAddingTag] = useState(false)
+  const [newTag, setNewTag] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const { toast } = useToast()
-
+  const [galleryViewMode, setGalleryViewMode] = useState<"recent" | "random">("recent")
   const [newlyUploadedFiles, setNewlyUploadedFiles] = useState<Set<string>>(new Set())
   const [pendingTags, setPendingTags] = useState<Record<string, string[]>>({})
-  const [newFileTimers, setNewFileTimers] = useState<Record<string, number>>({})
-  const [uploadingFiles, setUploadingFiles] = useState<Map<string, number>>(new Map())
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ fileName: string; progress: number } | null>(null)
+  const [isDragOverWindow, setIsDragOverWindow] = useState(false)
+  const [uploadingFiles, setUploadingFiles] = useState<string[]>([])
 
-  const generateTagsWithAI = async (filename: string, imageUrl: string): Promise<string[]> => {
-    try {
-      console.log("[v0] Generating tags for:", filename, "URL:", imageUrl)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-      const response = await fetch("/api/generate-tags", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          filename,
-          imageUrl: imageUrl || "", // Ensure we always pass a string
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to generate tags")
-      }
-
-      const data = await response.json()
-      console.log("[v0] Generated tags:", data.tags)
-      return data.tags || []
-    } catch (error) {
-      console.error("Failed to generate tags:", error)
-      const filename_lower = filename.toLowerCase()
-      const fallbackTags: string[] = []
-      if (filename_lower.includes("button")) fallbackTags.push("button")
-      if (filename_lower.includes("card")) fallbackTags.push("card")
-      if (filename_lower.includes("form")) fallbackTags.push("form")
-      if (filename_lower.includes("nav")) fallbackTags.push("navigation")
-      if (filename_lower.includes("dashboard")) fallbackTags.push("dashboard")
-      return fallbackTags
-    }
-  }
-
-  const uploadFileToStorage = async (file: File, title: string, tags: string[]) => {
-    try {
-      toast({
-        title: "Uploading file...",
-        description: `Starting upload of ${file.name}`,
-      })
-
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `uploads/${fileName}`
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("design-vault")
-        .upload(filePath, file)
-
-      if (uploadError) {
-        throw new Error(`Storage upload failed: ${uploadError.message}`)
-      }
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("design-vault").getPublicUrl(filePath)
-
-      const fileData = {
-        id: globalThis.crypto.randomUUID(),
-        title,
-        file_path: publicUrl,
-        file_type: file.type.startsWith("video/") ? "video" : "image",
-        file_size: file.size,
-        tags: [], // Start with empty tags, AI tags will be pending
-        created_at: new Date().toISOString(),
-      }
-
-      const { data, error } = await supabase.from("uploaded_files").insert(fileData).select().single()
-
-      if (error) {
-        throw new Error(`Database insert failed: ${error.message}`)
-      }
-
-      setNewlyUploadedFiles((prev) => new Set([...prev, data.id]))
-      setPendingTags((prev) => ({ ...prev, [data.id]: tags }))
-
-      setTimeout(() => {
-        setNewlyUploadedFiles((prev) => {
-          const newSet = new Set(prev)
-          newSet.delete(data.id)
-          return newSet
-        })
-      }, 5000)
-
-      toast({
-        title: "Upload successful!",
-        description: `${file.name} has been uploaded with ${tags.length} AI-generated tags`,
-      })
-
-      return { ...data }
-    } catch (error) {
-      console.error("Upload failed:", error)
-      toast({
-        title: "Upload failed",
-        description: `Failed to upload ${file.name}: ${error.message}`,
-        variant: "destructive",
-      })
-      throw error
-    }
-  }
-
-  useEffect(() => {
-    loadPersistedFiles()
-  }, [])
+  const { handleFileDrop } = useUploadHandler({
+    isUploading,
+    setIsUploading,
+    setUploadProgress,
+    setNewlyUploadedFiles,
+    setPendingTags,
+    setUploadedFiles,
+    setUploadingFiles,
+  })
 
   const loadPersistedFiles = async () => {
     try {
-      setIsLoading(true)
       const { data, error } = await supabase
         .from("uploaded_files")
         .select("*")
@@ -240,14 +98,14 @@ export default function DesignVault() {
         return
       }
 
-      const persistedFiles: UploadedFile[] = data.map((item) => ({
-        id: item.id,
-        file: null as any, // File object not needed for persisted files
-        url: item.file_path,
-        title: item.title,
-        tags: item.tags || [],
-        type: item.file_type as "image" | "video",
-        dateAdded: new Date(item.created_at),
+      const persistedFiles: UploadedFile[] = data.map((file) => ({
+        id: file.id,
+        file: null,
+        url: file.file_path,
+        title: file.title,
+        tags: file.tags || [],
+        type: file.file_type === "video" ? "video" : "image",
+        dateAdded: new Date(file.created_at),
       }))
 
       setUploadedFiles(persistedFiles)
@@ -257,115 +115,6 @@ export default function DesignVault() {
       setIsLoading(false)
     }
   }
-
-  const saveFileToDatabase = async (file: UploadedFile, fileUrl: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("uploaded_files")
-        .insert({
-          id: file.id,
-          title: file.title,
-          file_path: fileUrl,
-          file_type: file.type,
-          file_size: file.file?.size || 0,
-          tags: file.tags,
-        })
-        .select()
-
-      if (error) {
-        console.error("Error saving file to database:", error)
-        return null
-      }
-
-      return data
-    } catch (error) {
-      console.error("Failed to save file to database:", error)
-      return null
-    }
-  }
-
-  const handleFileDrop = useCallback(async (files: FileList) => {
-    if (isUploading) return
-
-    setIsUploading(true)
-
-    for (const file of Array.from(files)) {
-      const isVideo = file.type.startsWith("video/")
-      const title = file.name.replace(/\.[^/.]+$/, "")
-
-      try {
-        setUploadProgress({ fileName: file.name, progress: 0 })
-
-        toast({
-          title: "☁️ Uploading to storage...",
-          description: `Saving ${file.name} to cloud storage`,
-        })
-
-        // Simulate progress updates during upload
-        setUploadProgress({ fileName: file.name, progress: 30 })
-
-        const serverFile = await uploadFileToStorage(file, title, [])
-
-        setUploadProgress({ fileName: file.name, progress: 70 })
-
-        toast({
-          title: "🤖 Generating tags...",
-          description: `AI is analyzing ${file.name} for smart tags`,
-        })
-
-        let tags: string[] = []
-        if (isVideo) {
-          // For videos, use filename-based fallback tags since OpenAI doesn't support video analysis
-          const filename_lower = title.toLowerCase()
-          if (filename_lower.includes("button")) tags.push("button")
-          if (filename_lower.includes("card")) tags.push("card")
-          if (filename_lower.includes("form")) tags.push("form")
-          if (filename_lower.includes("nav")) tags.push("navigation")
-          if (filename_lower.includes("dashboard")) tags.push("dashboard")
-          if (filename_lower.includes("animation")) tags.push("animation")
-          if (filename_lower.includes("transition")) tags.push("transition")
-          if (tags.length === 0) tags = ["ui-component", "video"]
-        } else {
-          tags = await generateTagsWithAI(title, serverFile.file_path)
-        }
-
-        setPendingTags((prev) => ({ ...prev, [serverFile.id]: tags }))
-
-        const uploadedFile: UploadedFile = {
-          id: serverFile.id,
-          file,
-          url: serverFile.file_path,
-          title: serverFile.title,
-          tags: [], // Start with empty tags, AI tags are pending
-          type: isVideo ? "video" : "image",
-          dateAdded: new Date(serverFile.created_at),
-        }
-
-        setUploadedFiles((prev) => [uploadedFile, ...prev])
-
-        setUploadProgress({ fileName: file.name, progress: 100 })
-
-        setTimeout(() => {
-          setUploadProgress(null)
-        }, 1000)
-
-        toast({
-          title: "✅ Upload complete!",
-          description: `${file.name} uploaded with ${tags.length} AI-generated tags: ${tags.slice(0, 3).join(", ")}${tags.length > 3 ? "..." : ""}`,
-        })
-      } catch (error) {
-        console.error("Failed to upload file:", file.name, error)
-        setUploadProgress(null)
-        toast({
-          title: "❌ Upload failed",
-          description: `Failed to upload ${file.name}: ${error.message}`,
-          variant: "destructive",
-        })
-      }
-    }
-
-    setIsUploading(false)
-  }, [])
 
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -410,47 +159,13 @@ export default function DesignVault() {
     }
   }, [handleFileDrop])
 
-  useEffect(() => {
-    const handleWindowDragOver = (e: DragEvent) => {
-      e.preventDefault()
-      setIsDragOverWindow(true)
-    }
-
-    const handleWindowDragLeave = (e: DragEvent) => {
-      if (!e.relatedTarget) {
-        setIsDragOverWindow(false)
-      }
-    }
-
-    // Removed duplicate drop handler - already handled above
-
-    window.addEventListener("dragover", handleWindowDragOver)
-    window.addEventListener("dragleave", handleWindowDragLeave)
-
-    return () => {
-      window.removeEventListener("dragover", handleWindowDragOver)
-      window.removeEventListener("dragleave", handleWindowDragLeave)
-    }
-  }, [])
-
   const handleDeleteFile = async (fileId: string) => {
     try {
-      // Immediate UI update for instant feedback
       const fileToDelete = uploadedFiles.find((f) => f.id === fileId)
       if (fileToDelete) {
         setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId))
 
-        // Background database deletion
-        deleteFileFromServer(fileId).catch((error) => {
-          console.error("Background delete failed:", error)
-          // Revert UI change if database delete fails
-          setUploadedFiles((prev) => [...prev, fileToDelete])
-          toast({
-            title: "Delete failed",
-            description: "Failed to delete file from database",
-            variant: "destructive",
-          })
-        })
+        await deleteFileFromServer(fileId)
 
         toast({
           title: "File deleted",
@@ -476,15 +191,12 @@ export default function DesignVault() {
       const newPendingTags = { ...pendingTags }
       newPendingTags[fileId] = newPendingTags[fileId]?.filter((t) => t !== tag) || []
 
-      // Update local state immediately
       setUploadedFiles((prev) => prev.map((file) => (file.id === fileId ? { ...file, tags: newTags } : file)))
       setPendingTags(newPendingTags)
 
-      // Update database
       await updateFileOnServer(fileId, { tags: newTags })
     } catch (error) {
       console.error("Failed to confirm tag:", error)
-      // Revert on error
       loadPersistedFiles()
     }
   }
@@ -510,7 +222,12 @@ export default function DesignVault() {
       display = filtered
     } else {
       if (galleryViewMode === "random") {
-        display = [...combined].sort(() => Math.random() - 0.5).slice(0, 20)
+        const shuffled = [...combined]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const randomIndex = Math.floor(Math.random() * (i + 1))
+          ;[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]]
+        }
+        display = shuffled.slice(0, 20)
       } else {
         display = [...combined].sort((a, b) => {
           const aIsUploaded = a.id.startsWith("uploaded-") || !a.id.match(/^\d+$/)
@@ -612,20 +329,15 @@ export default function DesignVault() {
     setSelectedFiles(new Set())
   }
 
-  const handleBatchTag = () => {}
-
-  const handleBatchTagSave = (newTags: string[]) => {}
-
   const handleBatchDelete = async () => {
     const selectedFileIds = Array.from(selectedFiles)
 
-    // Delete from server for uploaded files
     const deletePromises = selectedFileIds.map(async (fileId) => {
       const isUploadedFile = uploadedFiles.some((file) => file.id === fileId)
       if (isUploadedFile) {
         return await deleteFileFromServer(fileId)
       }
-      return true // For mock files, just remove from local state
+      return true
     })
 
     const results = await Promise.all(deletePromises)
@@ -633,43 +345,14 @@ export default function DesignVault() {
 
     if (allSuccessful) {
       setUploadedFiles((prev) => prev.filter((file) => !selectedFiles.has(file.id)))
-      setAllImages((prev) => prev.filter((image) => !selectedFiles.has(image.id)))
       setSelectedFiles(new Set())
-      setIsSelectionMode(false)
     } else {
       console.error("Some files failed to delete")
     }
   }
 
-  const validateFile = (file: File): boolean => {
-    const validImageTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml"]
-    const validVideoTypes = ["video/mp4", "video/webm", "video/ogg", "video/avi", "video/mov"]
-    const maxSize = 50 * 1024 * 1024
-
-    const isValidType = [...validImageTypes, ...validVideoTypes].includes(file.type)
-    const isValidSize = file.size <= maxSize
-
-    return isValidType && isValidSize
-  }
-
   const handleEditTags = (item: GalleryItem) => {
-    setEditingItem(item)
-  }
-
-  const handleSaveEdit = async (id: string, newTitle: string, newTags: string[]) => {
-    try {
-      await updateFileOnServer(id, { title: newTitle, tags: newTags })
-
-      setUploadedFiles((prev) =>
-        prev.map((file) => (file.id === id ? { ...file, title: newTitle, tags: newTags } : file)),
-      )
-      setAllImages((prev) =>
-        prev.map((image) => (image.id === id ? { ...image, title: newTitle, tags: newTags } : image)),
-      )
-      setEditingItem(null)
-    } catch (error) {
-      console.error("Failed to save changes:", error)
-    }
+    setPreviewItem(item)
   }
 
   const handlePreviewSave = async (id: string, newTitle: string, newTags: string[]) => {
@@ -678,9 +361,6 @@ export default function DesignVault() {
 
       setUploadedFiles((prev) =>
         prev.map((file) => (file.id === id ? { ...file, title: newTitle, tags: newTags } : file)),
-      )
-      setAllImages((prev) =>
-        prev.map((image) => (image.id === id ? { ...image, title: newTitle, tags: newTags } : image)),
       )
       setPreviewItem((prev) => (prev ? { ...prev, title: newTitle, tags: newTags } : null))
     } catch (error) {
@@ -702,42 +382,8 @@ export default function DesignVault() {
     }
   }
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode)
-    document.documentElement.classList.toggle("dark")
-  }
-
   const handleCardClick = (item: GalleryItem) => {
     setPreviewItem(item)
-  }
-
-  const handleTitleEdit = () => {
-    if (!previewItem) return
-    setEditingTitle(previewItem.title)
-    setIsEditingTitle(true)
-  }
-
-  const handleTitleSave = async () => {
-    if (!previewItem || !editingTitle.trim()) return
-
-    const isUploadedFile = !previewItem.id.match(/^\d+$/)
-
-    if (isUploadedFile) {
-      await handleSaveEdit(previewItem.id, editingTitle.trim(), previewItem.tags)
-    } else {
-      setMockImagesList((prev) =>
-        prev.map((item) => (item.id === previewItem.id ? { ...item, title: editingTitle.trim() } : item)),
-      )
-    }
-
-    setPreviewItem({ ...previewItem, title: editingTitle.trim() })
-    setIsEditingTitle(false)
-    setEditingTitle("")
-  }
-
-  const handleTitleCancel = () => {
-    setIsEditingTitle(false)
-    setEditingTitle("")
   }
 
   const handleAddTag = async () => {
@@ -751,15 +397,8 @@ export default function DesignVault() {
     }
 
     const updatedTags = [...previewItem.tags, trimmedTag]
-    const isUploadedFile = !previewItem.id.match(/^\d+$/)
 
-    if (isUploadedFile) {
-      await handlePreviewSave(previewItem.id, previewItem.title, updatedTags)
-    } else {
-      setMockImagesList((prev) =>
-        prev.map((item) => (item.id === previewItem.id ? { ...item, tags: updatedTags } : item)),
-      )
-    }
+    await handlePreviewSave(previewItem.id, previewItem.title, updatedTags)
 
     setPreviewItem({ ...previewItem, tags: updatedTags })
     setNewTag("")
@@ -770,40 +409,10 @@ export default function DesignVault() {
     if (!previewItem) return
 
     const updatedTags = previewItem.tags.filter((tag) => tag !== tagToRemove)
-    const isUploadedFile = !previewItem.id.match(/^\d+$/)
 
-    // Immediate UI update for instant feedback
     setPreviewItem({ ...previewItem, tags: updatedTags })
 
-    if (isUploadedFile) {
-      // Update uploaded files state immediately
-      setUploadedFiles((prev) =>
-        prev.map((file) => (file.id === previewItem.id ? { ...file, tags: updatedTags } : file)),
-      )
-
-      // Background database update
-      handlePreviewSave(previewItem.id, previewItem.title, updatedTags).catch((error) => {
-        console.error("Background tag update failed:", error)
-        // Revert UI changes if database update fails
-        setPreviewItem({ ...previewItem, tags: previewItem.tags })
-        setUploadedFiles((prev) =>
-          prev.map((file) => (file.id === previewItem.id ? { ...file, tags: previewItem.tags } : file)),
-        )
-        toast({
-          title: "Update failed",
-          description: "Failed to update tags in database",
-          variant: "destructive",
-        })
-      })
-    } else {
-      // Update mock images immediately
-      setMockImagesList((prev) =>
-        prev.map((item) => (item.id === previewItem.id ? { ...item, tags: updatedTags } : item)),
-      )
-    }
-
-    setNewTag("")
-    setIsAddingTag(false)
+    await handlePreviewSave(previewItem.id, previewItem.title, updatedTags)
   }
 
   const updateFileOnServer = async (fileId: string, updates: { title?: string; tags?: string[] }) => {
@@ -848,58 +457,16 @@ export default function DesignVault() {
   }
 
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [isDarkMode])
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragOver(false)
-
-    const files = e.dataTransfer?.files
-    if (files && files.length > 0) {
-      handleFileDrop(files)
-    }
-  }
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsDragOver(false)
-  }
-
-  useEffect(() => {
-    const combined = [...uploadedFiles, ...mockImagesList]
-    setAllImages(combined)
-  }, [mockImagesList, uploadedFiles])
-
-  useEffect(() => {
-    const timers: Record<string, number> = {}
-    newlyUploadedFiles.forEach((fileId) => {
-      timers[fileId] = window.setTimeout(() => {
-        setNewFileTimers((prev) => {
-          const { [fileId]: _, ...rest } = prev
-          return rest
-        })
-      }, 5000)
-    })
-
-    setNewFileTimers(timers)
-
-    return () => {
-      Object.values(timers).forEach(clearTimeout)
-    }
-  }, [newlyUploadedFiles])
+    loadPersistedFiles()
+  }, [])
 
   const handleViewModeChange = (newMode: "recent" | "random") => {
     if (newMode === galleryViewMode) return
     setGalleryViewMode(newMode)
+    if (newMode === "random") {
+      setGalleryViewMode("recent")
+      setTimeout(() => setGalleryViewMode("random"), 0)
+    }
   }
 
   if (isLoading) {
@@ -929,7 +496,7 @@ export default function DesignVault() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {Array.from({ length: 8 }).map((_, i) => (
-              <Card
+              <div
                 key={i}
                 className="group hover:shadow-md transition-all duration-300 bg-card border-border overflow-hidden p-0 animate-pulse"
               >
@@ -947,7 +514,7 @@ export default function DesignVault() {
                     <div className="h-6 bg-muted rounded w-20"></div>
                   </div>
                 </div>
-              </Card>
+              </div>
             ))}
           </motion.div>
         </div>
@@ -956,194 +523,19 @@ export default function DesignVault() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <AnimatePresence>
-        {isDragOverWindow && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-card text-card-foreground rounded-lg border-2 border-dashed border-border p-12 shadow-lg max-w-md mx-4"
-            >
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                  <Upload className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold">Drop files to upload</h3>
-                  <p className="text-sm text-muted-foreground">Support for images and videos</p>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {uploadProgress && (
-          <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 100 }}
-            transition={{ duration: 0.3 }}
-            className="fixed bottom-4 right-4 bg-card border rounded-lg p-4 shadow-lg z-40 min-w-[280px]"
-          >
-            <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{uploadProgress.fileName}</p>
-                <div className="w-full bg-muted rounded-full h-2 mt-1">
-                  <motion.div
-                    className="bg-primary h-2 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${uploadProgress.progress}%` }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{uploadProgress.progress}% complete</p>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40"
-      >
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">Design Vault</h1>
-              <p className="text-sm text-muted-foreground">UI Inspiration Gallery</p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="flex items-center gap-4 flex-1 max-w-md mx-8"
-            >
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search by tags or title..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex items-center gap-2"
-            >
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="h-10 bg-transparent"
-                      onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    >
-                      <Filter className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle Filters</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <div className="flex border rounded-md">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={viewMode === "grid" ? "default" : "ghost"}
-                        size="sm"
-                        className="rounded-r-none border-r-0 h-10"
-                        onClick={() => setViewMode("grid")}
-                      >
-                        <Grid3X3 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Grid View</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant={viewMode === "list" ? "default" : "ghost"}
-                        size="sm"
-                        className="rounded-l-none h-10"
-                        onClick={() => setViewMode("list")}
-                      >
-                        <List className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>List View</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-
-              {selectedFiles.size > 0 && (
-                <>
-                  <Button variant="outline" size="default" className="h-10 bg-transparent" onClick={selectAllFiles}>
-                    Select All
-                  </Button>
-                  <Button variant="outline" size="default" className="h-10 bg-transparent" onClick={deselectAllFiles}>
-                    Clear
-                  </Button>
-                  <Button variant="destructive" size="default" className="h-10" onClick={handleBatchDelete}>
-                    Delete ({selectedFiles.size})
-                  </Button>
-                </>
-              )}
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="default" className="h-10 bg-transparent" asChild>
-                      <ThemeToggle />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle theme</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </motion.div>
-          </div>
-        </div>
-      </motion.header>
+    <div className={cn("min-h-screen bg-background text-foreground transition-colors duration-300")}>
+      <GalleryHeader
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        isFilterOpen={isFilterOpen}
+        setIsFilterOpen={setIsFilterOpen}
+        selectedFiles={selectedFiles}
+        selectAllFiles={selectAllFiles}
+        deselectAllFiles={deselectAllFiles}
+        handleBatchDelete={handleBatchDelete}
+      />
 
       <div className="flex">
         <div className={cn("transition-all duration-300 lg:block", isFilterOpen ? "w-80" : "w-0 overflow-hidden")}>
@@ -1154,7 +546,7 @@ export default function DesignVault() {
               filters={filters}
               onFiltersChange={setFilters}
               availableTags={sortedAndFilteredImages.availableTags}
-              totalItems={allImages.length}
+              totalItems={sortedAndFilteredImages.displayImages.length}
               filteredItems={sortedAndFilteredImages.filteredImages.length}
             />
           </div>
@@ -1171,362 +563,41 @@ export default function DesignVault() {
               className="hidden"
             />
 
-            {!searchQuery && (
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant={galleryViewMode === "recent" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleViewModeChange("recent")}
-                    className="flex items-center gap-2"
-                  >
-                    <Clock className="h-4 w-4" />
-                    Recent
-                  </Button>
-                  <Button
-                    variant={galleryViewMode === "random" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleViewModeChange("random")}
-                    className="flex items-center gap-2"
-                  >
-                    <Shuffle className="h-4 w-4" />
-                    Random
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {sortedAndFilteredImages.displayImages.length} designs{" "}
-                  {galleryViewMode === "random" ? "(showing 20 random)" : ""}
-                </p>
+            <GalleryGrid
+              searchQuery={searchQuery}
+              galleryViewMode={galleryViewMode}
+              handleViewModeChange={handleViewModeChange}
+              sortedAndFilteredImages={sortedAndFilteredImages}
+              viewMode={viewMode}
+              newlyUploadedFiles={newlyUploadedFiles}
+              pendingTags={pendingTags}
+              uploadingFiles={uploadingFiles}
+              setPreviewItem={setPreviewItem}
+              handleEditTags={handleEditTags}
+              handleDeleteFile={handleDeleteFile}
+              confirmTag={confirmTag}
+              rejectTag={rejectTag}
+            />
+
+            {isDragOverWindow && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="text-white text-2xl">Drop files here</div>
               </div>
-            )}
-
-            <motion.div
-              layout
-              className={`grid gap-6 ${
-                viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
-              }`}
-            >
-              <AnimatePresence mode="popLayout">
-                {sortedAndFilteredImages.displayImages.map((image, index) => (
-                  <motion.div
-                    key={`${galleryViewMode}-${image.id}`}
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Card
-                      className={`group hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
-                        viewMode === "list" ? "flex flex-row h-auto" : ""
-                      }`}
-                      onClick={() => setPreviewItem(image)}
-                    >
-                      <div className="relative">
-                        {image.type === "video" ? (
-                          <video
-                            src={image.url}
-                            className={`w-full object-cover transition-transform duration-300 ${
-                              viewMode === "list" ? "h-auto" : "h-48"
-                            }`}
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
-                            onMouseEnter={(e) => {
-                              const video = e.currentTarget
-                              video.currentTime = 0
-                              const playPromise = video.play()
-                              if (playPromise !== undefined) {
-                                playPromise.catch(() => {
-                                  // Silently handle autoplay restrictions
-                                })
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              const video = e.currentTarget
-                              video.pause()
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={image.url || "/placeholder.svg"}
-                            alt={image.title}
-                            className={`w-full object-cover transition-transform duration-300 ${
-                              viewMode === "list" ? "h-auto" : "h-48"
-                            }`}
-                          />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                        <div className="absolute top-2 left-2 flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleEditTags(image)
-                            }}
-                          >
-                            <Edit3 className="h-3 w-3" />
-                          </Button>
-                          {!image.id.match(/^\d+$/) && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteFile(image.id)
-                              }}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="absolute top-2 right-2">
-                          <Button variant="secondary" size="sm" className="h-6 w-6 p-0">
-                            {image.type === "video" ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="p-3 pt-1">
-                        <div className="flex items-start gap-2 mb-2">
-                          <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
-                          {newlyUploadedFiles.has(image.id) && (
-                            <motion.div
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                              style={{ backgroundColor: "#ECF1FF", color: "#1A57DA" }}
-                            >
-                              <span>new</span>
-                              <motion.svg width="12" height="12" viewBox="0 0 24 24" className="text-current">
-                                <motion.circle
-                                  cx="12"
-                                  cy="12"
-                                  r="8"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeDasharray="50.27"
-                                  strokeDashoffset="0"
-                                  animate={{
-                                    strokeDashoffset: [0, 50.27],
-                                  }}
-                                  transition={{
-                                    duration: 5,
-                                    ease: "linear",
-                                  }}
-                                />
-                              </motion.svg>
-                            </motion.div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-wrap gap-1">
-                          {image.tags.map((tag, tagIndex) => (
-                            <Badge key={tagIndex} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-
-                          {pendingTags[image.id]?.map((tag, tagIndex) => (
-                            <div
-                              key={`pending-${tagIndex}`}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
-                            >
-                              <span className="text-muted-foreground">{tag}</span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  confirmTag(image.id, tag)
-                                }}
-                                className="h-4 w-4 p-0 hover:bg-muted"
-                              >
-                                <Check className="h-3 w-3 text-foreground" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  rejectTag(image.id, tag)
-                                }}
-                                className="h-4 w-4 p-0 hover:bg-muted"
-                              >
-                                <X className="h-3 w-3 text-foreground" />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </motion.div>
-
-            {sortedAndFilteredImages.displayImages.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="text-center py-12"
-              >
-                <div className="text-muted-foreground mb-4">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 opacity-50" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">No images found</h3>
-                  <p className="text-sm">Try adjusting your search or filters</p>
-                </div>
-              </motion.div>
             )}
           </div>
         </main>
       </div>
 
-      <TagEditorModal
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        onSave={handleSaveEdit}
-        initialTitle={editingItem?.title || ""}
-        initialTags={editingItem?.tags || []}
+      <PreviewModal
+        previewItem={previewItem}
+        setPreviewItem={setPreviewItem}
+        isAddingTag={isAddingTag}
+        setIsAddingTag={setIsAddingTag}
+        newTag={newTag}
+        setNewTag={setNewTag}
+        handleAddTag={handleAddTag}
+        handleRemoveTag={handleRemoveTag}
       />
-
-      <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0">
-          <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between space-y-0 pt-4 pl-4 pr-4">
-            <div className="flex items-center flex-1 gap-0">
-              {isEditingTitle ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    className="flex-1"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleTitleSave()
-                      if (e.key === "Escape") handleTitleCancel()
-                    }}
-                    autoFocus
-                  />
-                  <Button size="sm" onClick={handleTitleSave}>
-                    Save
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleTitleCancel}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <DialogTitle className="text-left">{previewItem?.title}</DialogTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="cursor-pointer hover:cursor-pointer ml-2"
-                    onClick={handleTitleEdit}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="cursor-pointer hover:cursor-pointer"
-              onClick={() => setPreviewItem(null)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogHeader>
-          <div className="p-6 pt-0 pl-4 pr-4 pb-4">
-            {previewItem && (
-              <div className="relative">
-                {previewItem.type === "video" ? (
-                  <video
-                    src={previewItem.url}
-                    className="w-full max-h-[75vh] object-contain rounded-lg"
-                    controls
-                    autoPlay
-                    muted
-                    loop
-                  />
-                ) : (
-                  <img
-                    src={previewItem.url || "/placeholder.svg"}
-                    alt={previewItem.title}
-                    className="w-full max-h-[75vh] object-contain rounded-lg"
-                  />
-                )}
-                <div className="mt-4 space-y-3">
-                  <div className="flex flex-wrap gap-2 items-center">
-                    {previewItem.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
-                        {tag}
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="ml-1 hover:bg-muted-foreground/20 rounded-sm p-0.5 transition-colors"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                    {!isAddingTag && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-6 px-2 bg-transparent"
-                        onClick={() => setIsAddingTag(true)}
-                      >
-                        Add tag
-                      </Button>
-                    )}
-                  </div>
-
-                  {isAddingTag && (
-                    <div className="flex items-center gap-2">
-                      <Input
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Enter tag name..."
-                        className="flex-1"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddTag()
-                          if (e.key === "Escape") {
-                            setIsAddingTag(false)
-                            setNewTag("")
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <Button size="sm" onClick={handleAddTag}>
-                        Add
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setIsAddingTag(false)
-                          setNewTag("")
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

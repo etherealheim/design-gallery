@@ -89,7 +89,7 @@ export function FilterSidebar({
       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm lg:hidden" onClick={onClose} />
 
       {/* Sidebar */}
-      <Card className="absolute right-0 top-0 h-full w-80 lg:relative lg:w-full lg:h-auto glass-effect shadow-strong lg:shadow-soft animate-slide-up lg:animate-none">
+      <Card className="absolute left-0 top-0 h-full w-80 lg:relative lg:w-full lg:h-auto glass-effect shadow-strong lg:shadow-soft animate-slide-up lg:animate-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <div className="w-5 h-5 gradient-primary rounded flex items-center justify-center">

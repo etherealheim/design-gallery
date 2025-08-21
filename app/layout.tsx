@@ -1,6 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans } from "next/font/google"
+import { ThemeProvider } from "next-themes"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -22,8 +24,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={ibmPlexSans.variable}>
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="en" className={ibmPlexSans.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

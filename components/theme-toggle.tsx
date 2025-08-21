@@ -16,7 +16,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="outline" size="icon" className="h-10 w-10 bg-transparent">
+      <Button variant="outline" size="icon" className="h-10 w-10 bg-transparent cursor-pointer">
         <Sun className="h-4 w-4" />
       </Button>
     )
@@ -26,7 +26,7 @@ export function ThemeToggle() {
     <Button
       variant="outline"
       size="icon"
-      className="h-10 w-10 bg-transparent"
+      className="h-10 w-10 bg-transparent cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
