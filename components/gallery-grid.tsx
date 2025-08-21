@@ -2,10 +2,11 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Clock, Shuffle, Search } from "lucide-react"
 import { GalleryCard } from "./gallery-card"
 import { SkeletalCard } from "./skeletal-card"
-import type { GalleryItem } from "@/types/gallery"
+import type { GalleryItem } from "@/types"
 
 interface GalleryGridProps {
   searchQuery: string
@@ -49,24 +50,42 @@ export function GalleryGrid({
       {!searchQuery && (
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
-            <Button
-              variant={galleryViewMode === "recent" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleViewModeChange("recent")}
-              className="flex items-center gap-2"
-            >
-              <Clock className="h-4 w-4" />
-              Recent
-            </Button>
-            <Button
-              variant={galleryViewMode === "random" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleViewModeChange("random")}
-              className="flex items-center gap-2"
-            >
-              <Shuffle className="h-4 w-4" />
-              Random
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={galleryViewMode === "recent" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("recent")}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Recent
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Show recently uploaded files</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={galleryViewMode === "random" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("random")}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Shuffle className="h-4 w-4" />
+                    Random
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Show files in random order</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <p className="text-sm text-muted-foreground">
             {sortedAndFilteredImages.displayImages.length} designs{" "}
@@ -76,12 +95,14 @@ export function GalleryGrid({
       )}
 
       {searchQuery && sortedAndFilteredImages.displayImages.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Search className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No results found</h3>
-          <p className="text-muted-foreground max-w-md">
-            No designs match your search for "{searchQuery}". Try different keywords or browse all designs.
-          </p>
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center max-w-md">
+            <Search className="h-12 w-12 text-muted-foreground mb-4 mx-auto" />
+            <h3 className="text-lg font-medium mb-2">No results found</h3>
+            <p className="text-muted-foreground">
+              No designs match your search for "{searchQuery}". Try different keywords or browse all designs.
+            </p>
+          </div>
         </div>
       )}
 

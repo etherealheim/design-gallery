@@ -1,13 +1,21 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import { handleApiError, createAppError, ERROR_CODES } from "@/lib/errors"
+import type { ApiResponse } from "@/types"
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse<ApiResponse>> {
   try {
-    const supabase = createServerComponentClient({ cookies })
-    const fileId = params.id
+    const cookieStore = await cookies()
+    const supabase = createServerComponentClient({ cookies: () => cookieStore })
+    const { id: fileId } = await params
 
-    // First get the file info to delete from storage
+    // Validate file ID
+    if (!fileId || typeof fileId !== "string") {
+      throw createAppError(ERROR_CODES.VALIDATION_ERROR, "Invalid file ID")
+    }
+
+    // Get the file info to delete from storage
     const { data: fileData, error: fetchError } = await supabase
       .from("uploaded_files")
       .select("file_path")
@@ -15,28 +23,57 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       .single()
 
     if (fetchError) {
-      console.error("Error fetching file:", fetchError)
-      return NextResponse.json({ error: "File not found" }, { status: 404 })
+      if (fetchError.code === "PGRST116") { // Row not found
+        throw createAppError(ERROR_CODES.FILE_NOT_FOUND, "File not found")
+      }
+      throw createAppError(ERROR_CODES.DATABASE_ERROR, `Failed to fetch file: ${fetchError.message}`)
     }
 
-    // Delete from storage
-    const { error: storageError } = await supabase.storage.from("design-vault").remove([fileData.file_path])
+    // Extract file path for storage deletion
+    let storagePath: string
+    try {
+      // Extract path from full URL if needed
+      const url = new URL(fileData.file_path)
+      storagePath = url.pathname.split("/").slice(-2).join("/") // Get last two path segments
+    } catch {
+      // If it's already a path, use it directly
+      storagePath = fileData.file_path
+    }
 
-    if (storageError) {
-      console.error("Error deleting from storage:", storageError)
+    // Delete from storage first (non-critical if fails)
+    try {
+      const { error: storageError } = await supabase.storage
+        .from("design-vault")
+        .remove([storagePath])
+
+      if (storageError) {
+        console.warn("Warning: Failed to delete from storage:", storageError.message)
+        // Continue with database deletion even if storage fails
+      }
+    } catch (error) {
+      console.warn("Warning: Storage deletion failed:", error)
+      // Continue with database deletion
     }
 
     // Delete from database
-    const { error: dbError } = await supabase.from("uploaded_files").delete().eq("id", fileId)
+    const { error: dbError } = await supabase
+      .from("uploaded_files")
+      .delete()
+      .eq("id", fileId)
 
     if (dbError) {
-      console.error("Error deleting from database:", dbError)
-      return NextResponse.json({ error: "Failed to delete file" }, { status: 500 })
+      throw createAppError(ERROR_CODES.DATABASE_ERROR, `Failed to delete file from database: ${dbError.message}`)
     }
 
-    return NextResponse.json({ success: true })
+    const response: ApiResponse = {
+      success: true,
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Delete file error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    
+    const { response, status } = handleApiError(error, "Delete API")
+    return NextResponse.json(response, { status })
   }
 }

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 
 import { motion } from "framer-motion"
-import { Search, Settings, Grid3X3, List, X } from "lucide-react"
+import { Search, Settings, Grid3X3, List, X, Upload } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -20,6 +20,7 @@ interface GalleryHeaderProps {
   selectAllFiles: () => void
   deselectAllFiles: () => void
   handleBatchDelete: () => void
+  onUploadClick?: () => void
 }
 
 export function GalleryHeader({
@@ -33,6 +34,7 @@ export function GalleryHeader({
   selectAllFiles,
   deselectAllFiles,
   handleBatchDelete,
+  onUploadClick,
 }: GalleryHeaderProps) {
   return (
     <motion.header
@@ -49,9 +51,23 @@ export function GalleryHeader({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex items-center"
           >
-            <svg width="32" height="32" viewBox="0 0 32 32" className="text-foreground">
-              <polygon points="16,4 28,26 4,26" fill="currentColor" />
-            </svg>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="cursor-pointer hover:scale-105 transition-transform duration-200"
+                  >
+                    <svg width="32" height="32" viewBox="0 0 32 32" className="text-foreground">
+                      <polygon points="16,4 28,26 4,26" fill="currentColor" />
+                    </svg>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reload page</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </motion.div>
 
           <motion.div
@@ -66,17 +82,26 @@ export function GalleryHeader({
                 placeholder="Search by tags or title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 w-full"
+                className="pl-10 pr-12 w-full"
               />
               {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Clear search</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
           </motion.div>
@@ -87,6 +112,27 @@ export function GalleryHeader({
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex items-center gap-2"
           >
+            {onUploadClick && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      className="h-10 bg-transparent cursor-pointer"
+                      onClick={onUploadClick}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Upload Files</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { IBM_Plex_Sans } from "next/font/google"
 import { ThemeProvider } from "next-themes"
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 
 const ibmPlexSans = IBM_Plex_Sans({

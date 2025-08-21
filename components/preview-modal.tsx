@@ -62,7 +62,7 @@ export function PreviewModal({
 
   return (
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-6">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-6" showCloseButton={false}>
         {previewItem && (
           <div className="space-y-4 flex flex-col max-w-full">
             <DialogTitle className="sr-only">

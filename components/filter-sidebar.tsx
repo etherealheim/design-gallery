@@ -114,15 +114,15 @@ export function FilterSidebar({
         <CardContent className="space-y-6">
           <Collapsible open={isFileTypesOpen} onOpenChange={setIsFileTypesOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
+              <button className="w-full flex justify-between p-0 h-auto hover-lift items-center cursor-pointer">
                 <span className="font-medium flex items-center gap-2">
                   <Settings className="h-4 w-4 text-muted-foreground" />
                   File Type
                 </span>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <div className="h-6 w-6 flex items-center justify-center">
                   {isFileTypesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </Button>
+                </div>
+              </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3">
               <div className="flex gap-2">
@@ -150,15 +150,15 @@ export function FilterSidebar({
 
           <Collapsible open={isTagsOpen} onOpenChange={setIsTagsOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
+              <button className="w-full flex justify-between p-0 h-auto hover-lift items-center cursor-pointer">
                 <span className="font-medium flex items-center gap-2">
                   <Settings className="h-4 w-4 text-muted-foreground" />
                   Tags ({availableTags.length})
                 </span>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                <div className="h-6 w-6 flex items-center justify-center">
                   {isTagsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </Button>
+                </div>
+              </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <div className="flex items-center justify-between p-2 border rounded-md">
@@ -197,27 +197,33 @@ export function FilterSidebar({
                   <Badge key={type} variant="default" className="text-xs gradient-primary shadow-soft">
                     {type === "image" ? <FileImage className="h-3 w-3 mr-1" /> : <FileVideo className="h-3 w-3 mr-1" />}
                     {type}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                      onClick={() => toggleFileType(type)}
+                    <div
+                      className="h-4 w-4 ml-1 flex items-center justify-center cursor-pointer hover:bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFileType(type)
+                      }}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </div>
                   </Badge>
                 ))}
                 {filters.selectedTags.map((tag) => (
                   <Badge key={tag} variant="default" className="text-xs gradient-primary shadow-soft">
                     {tag === "__no_tags__" ? "No tags" : tag}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                      onClick={() => (tag === "__no_tags__" ? toggleNoTags() : toggleTag(tag))}
+                    <div
+                      className="h-4 w-4 ml-1 flex items-center justify-center cursor-pointer hover:bg-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (tag === "__no_tags__") {
+                          toggleNoTags()
+                        } else {
+                          toggleTag(tag)
+                        }
+                      }}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </div>
                   </Badge>
                 ))}
               </div>

@@ -8,7 +8,7 @@ export function LoadingSkeleton() {
       <div className="container mx-auto px-4">
         {/* Header Skeleton */}
         <motion.div
-          className="flex items-center justify-between mb-8"
+          className="flex items-center justify-between"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -45,7 +45,7 @@ export function LoadingSkeleton() {
               </div>
               
               {/* Content skeleton */}
-              <div className="px-4 space-y-2">
+              <div className="p-3 pt-1 space-y-2">
                 <div className="h-4 bg-muted rounded w-3/4"></div>
                 <div className="flex gap-2">
                   <div className="h-6 bg-muted rounded w-16"></div>

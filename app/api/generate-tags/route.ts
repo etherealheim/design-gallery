@@ -122,7 +122,10 @@ Return ONLY the component names separated by commas, no quotes, no other text.`,
 
         console.log(`[v0] Successfully generated tags: ${tags.join(", ")}`)
         console.log(`[v0] Returning tags array:`, tags)
-        return NextResponse.json({ tags })
+        return NextResponse.json({ 
+          success: true, 
+          data: { tags } 
+        })
       } catch (error) {
         lastError = error instanceof Error ? error : new Error("Unknown error")
         console.log(`[v0] Attempt ${attempt} failed:`, lastError.message)
@@ -140,7 +143,8 @@ Return ONLY the component names separated by commas, no quotes, no other text.`,
 
     return NextResponse.json(
       {
-        tags: fallbackTags,
+        success: true,
+        data: { tags: fallbackTags },
         error: `Failed after ${maxRetries} attempts: ${lastError?.message}`,
         fallback: true,
       },
@@ -150,7 +154,7 @@ Return ONLY the component names separated by commas, no quotes, no other text.`,
     console.error("Failed to generate tags:", error)
     return NextResponse.json(
       {
-        tags: ["design", "ui"],
+        success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
