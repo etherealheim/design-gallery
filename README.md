@@ -1,4 +1,4 @@
-# 🎨 UI Design Gallery
+# 🎨 Team Inspiration
 
 A modern, responsive design gallery application built with Next.js 15, featuring intelligent file management, automatic tag generation, and seamless user experience for showcasing UI/UX design assets.
 
@@ -54,8 +54,8 @@ A modern, responsive design gallery application built with Next.js 15, featuring
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/etherealheim/v0-ui-design-galleryl.git
-   cd v0-ui-design-galleryl
+   git clone https://github.com/etherealheim/team-inspiration.git
+   cd team-inspiration
    ```
 
 2. **Install dependencies**
@@ -179,7 +179,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🐛 Bug Reports & Feature Requests
 
-Please use the [GitHub Issues](https://github.com/etherealheim/v0-ui-design-galleryl/issues) to report bugs or request features.
+Please use the [GitHub Issues](https://github.com/etherealheim/team-inspiration/issues) to report bugs or request features.
 
 ---
 
