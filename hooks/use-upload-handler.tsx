@@ -5,6 +5,8 @@ import { useCallback } from "react"
 import { toast } from "@/hooks/use-toast"
 import { supabase } from "@/lib/supabase/client"
 import type { UploadedFile } from "@/types/gallery"
+import { UploadToast } from "@/components/upload-toast"
+import { createRoot } from "react-dom/client"
 
 interface UploadHandlerProps {
   isUploading: boolean
@@ -63,11 +65,6 @@ export function useUploadHandler({
 
   const uploadFileToStorage = async (file: File, title: string, tags: string[]) => {
     try {
-      toast({
-        title: "Uploading file...",
-        description: `Starting upload of ${file.name}`,
-      })
-
       const fileExt = file.name.split(".").pop()
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
       const filePath = `uploads/${fileName}`
@@ -111,19 +108,9 @@ export function useUploadHandler({
         })
       }, 5000)
 
-      toast({
-        title: "Upload successful!",
-        description: `${file.name} has been uploaded with ${tags.length} AI-generated tags`,
-      })
-
       return { ...data }
     } catch (error) {
       console.error("Upload failed:", error)
-      toast({
-        title: "Upload failed",
-        description: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`,
-        variant: "destructive",
-      })
       throw error
     }
   }
@@ -139,26 +126,18 @@ export function useUploadHandler({
         const title = file.name.replace(/\.[^/.]+$/, "")
         const skeletalId = `skeletal-${Date.now()}-${Math.random().toString(36).substring(2)}`
 
+        const toastContainer = document.createElement("div")
+        document.body.appendChild(toastContainer)
+        const root = createRoot(toastContainer)
+
         try {
           setUploadingFiles((prev) => [...prev, skeletalId])
 
-          setUploadProgress({ fileName: file.name, progress: 0 })
-
-          toast({
-            title: "☁️ Uploading to storage...",
-            description: `Saving ${file.name} to cloud storage`,
-          })
-
-          setUploadProgress({ fileName: file.name, progress: 30 })
+          root.render(<UploadToast fileName={file.name} progress={0} stage="uploading" />)
 
           const serverFile = await uploadFileToStorage(file, title, [])
 
-          setUploadProgress({ fileName: file.name, progress: 70 })
-
-          toast({
-            title: "🤖 Generating tags...",
-            description: `AI is analyzing ${file.name} for smart tags`,
-          })
+          root.render(<UploadToast fileName={file.name} progress={70} stage="generating" />)
 
           let tags: string[] = []
           if (isVideo) {
@@ -190,20 +169,19 @@ export function useUploadHandler({
           setUploadingFiles((prev) => prev.filter((id) => id !== skeletalId))
           setUploadedFiles((prev) => [uploadedFile, ...prev])
 
-          setUploadProgress({ fileName: file.name, progress: 100 })
+          root.render(<UploadToast fileName={file.name} progress={100} stage="complete" generatedTags={tags} />)
 
           setTimeout(() => {
-            setUploadProgress(null)
-          }, 1000)
-
-          toast({
-            title: "✅ Upload complete!",
-            description: `${file.name} uploaded with ${tags.length} AI-generated tags: ${tags.slice(0, 3).join(", ")}${tags.length > 3 ? "..." : ""}`,
-          })
+            root.unmount()
+            document.body.removeChild(toastContainer)
+          }, 3000)
         } catch (error) {
           console.error("Failed to upload file:", file.name, error)
           setUploadingFiles((prev) => prev.filter((id) => id !== skeletalId))
-          setUploadProgress(null)
+
+          root.unmount()
+          document.body.removeChild(toastContainer)
+
           toast({
             title: "❌ Upload failed",
             description: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`,

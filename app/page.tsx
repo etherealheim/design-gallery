@@ -67,6 +67,7 @@ export default function DesignVault() {
   const [newTag, setNewTag] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [galleryViewMode, setGalleryViewMode] = useState<"recent" | "random">("recent")
+  const [randomSeed, setRandomSeed] = useState(0)
   const [newlyUploadedFiles, setNewlyUploadedFiles] = useState<Set<string>>(new Set())
   const [pendingTags, setPendingTags] = useState<Record<string, string[]>>({})
   const [isUploading, setIsUploading] = useState(false)
@@ -223,8 +224,13 @@ export default function DesignVault() {
     } else {
       if (galleryViewMode === "random") {
         const shuffled = [...combined]
+        const seededRandom = (seed: number) => {
+          const x = Math.sin(seed) * 10000
+          return x - Math.floor(x)
+        }
+
         for (let i = shuffled.length - 1; i > 0; i--) {
-          const randomIndex = Math.floor(Math.random() * (i + 1))
+          const randomIndex = Math.floor(seededRandom(randomSeed + i) * (i + 1))
           ;[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]]
         }
         display = shuffled.slice(0, 20)
@@ -241,16 +247,30 @@ export default function DesignVault() {
       }
     }
 
-    if (filters.fileTypes.length > 0) {
-      filtered = filtered.filter((image) => filters.fileTypes.includes(image.type))
-      display = display.filter((image) => filters.fileTypes.includes(image.type))
-    }
+    if (filters.selectedTags.includes("__no_tags__")) {
+      const noTagsFilter = combined.filter((item) => item.tags.length === 0)
+      const otherTagsFilter = filters.selectedTags.filter((tag) => tag !== "__no_tags__")
 
-    if (filters.selectedTags.length > 0) {
+      if (otherTagsFilter.length > 0) {
+        const taggedItems = combined.filter((item) =>
+          otherTagsFilter.some((selectedTag) => item.tags.includes(selectedTag)),
+        )
+        filtered = [...noTagsFilter, ...taggedItems]
+        display = [...noTagsFilter, ...taggedItems]
+      } else {
+        filtered = noTagsFilter
+        display = noTagsFilter
+      }
+    } else if (filters.selectedTags.length > 0) {
       filtered = filtered.filter((image) =>
         filters.selectedTags.some((selectedTag) => image.tags.includes(selectedTag)),
       )
       display = display.filter((image) => filters.selectedTags.some((selectedTag) => image.tags.includes(selectedTag)))
+    }
+
+    if (filters.fileTypes.length > 0) {
+      filtered = filtered.filter((image) => filters.fileTypes.includes(image.type))
+      display = display.filter((image) => filters.fileTypes.includes(image.type))
     }
 
     const sortFunction = (a: GalleryItem, b: GalleryItem) => {
@@ -303,7 +323,16 @@ export default function DesignVault() {
     const availableTags = Array.from(tagSet).sort()
 
     return { filteredImages: filtered, availableTags, displayImages: display }
-  }, [uploadedFiles, mockImagesList, searchQuery, filters, galleryViewMode, newlyUploadedFiles, pendingTags])
+  }, [
+    uploadedFiles,
+    mockImagesList,
+    searchQuery,
+    filters,
+    galleryViewMode,
+    newlyUploadedFiles,
+    pendingTags,
+    randomSeed,
+  ])
 
   const selectedUploadedFiles = useMemo(() => {
     return uploadedFiles.filter((file) => selectedFiles.has(file.id))
@@ -352,6 +381,10 @@ export default function DesignVault() {
   }
 
   const handleEditTags = (item: GalleryItem) => {
+    setPreviewItem(item)
+  }
+
+  const handleRename = (item: GalleryItem) => {
     setPreviewItem(item)
   }
 
@@ -461,11 +494,9 @@ export default function DesignVault() {
   }, [])
 
   const handleViewModeChange = (newMode: "recent" | "random") => {
-    if (newMode === galleryViewMode) return
     setGalleryViewMode(newMode)
     if (newMode === "random") {
-      setGalleryViewMode("recent")
-      setTimeout(() => setGalleryViewMode("random"), 0)
+      setRandomSeed(Date.now())
     }
   }
 
@@ -538,8 +569,13 @@ export default function DesignVault() {
       />
 
       <div className="flex">
-        <div className={cn("transition-all duration-300 lg:block", isFilterOpen ? "w-80" : "w-0 overflow-hidden")}>
-          <div className="sticky top-20 p-4">
+        <div
+          className={cn(
+            "fixed left-0 top-0 h-full bg-background border-r border-border z-40 transition-transform duration-300 lg:relative lg:z-auto",
+            isFilterOpen ? "translate-x-0 w-80" : "-translate-x-full w-0 lg:w-0",
+          )}
+        >
+          <div className="sticky top-20 p-4 h-full overflow-y-auto">
             <FilterSidebar
               isOpen={isFilterOpen}
               onClose={() => setIsFilterOpen(false)}
@@ -552,8 +588,12 @@ export default function DesignVault() {
           </div>
         </div>
 
-        <main className="flex-1 px-4 py-8 bg-background">
-          <div className="container mx-auto animate-fade-in">
+        {isFilterOpen && (
+          <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setIsFilterOpen(false)} />
+        )}
+
+        <main className="flex-1 bg-background">
+          <div className="container mx-auto px-4 py-8 animate-fade-in">
             <input
               ref={fileInputRef}
               type="file"
@@ -577,12 +617,24 @@ export default function DesignVault() {
               handleDeleteFile={handleDeleteFile}
               confirmTag={confirmTag}
               rejectTag={rejectTag}
+              handleRename={handleRename}
             />
 
             {isDragOverWindow && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="text-white text-2xl">Drop files here</div>
-              </div>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+              >
+                <div className="p-8 border-2 border-dashed border-primary/50 bg-background/90 backdrop-blur-sm rounded-lg">
+                  <div className="text-center space-y-4">
+                    <div className="w-12 h-12 mx-auto text-primary">📁</div>
+                    <div className="text-xl font-medium">Drop files here</div>
+                    <div className="text-sm text-muted-foreground">Upload images and videos to your gallery</div>
+                  </div>
+                </div>
+              </motion.div>
             )}
           </div>
         </main>

@@ -1,7 +1,9 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import { motion } from "framer-motion"
-import { Search, Settings, Grid3X3, List } from "lucide-react"
+import { Search, Settings, Grid3X3, List, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -47,7 +49,7 @@ export function GalleryHeader({
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex items-center"
           >
-            <svg width="32" height="32" viewBox="0 0 32 32" className="text-white">
+            <svg width="32" height="32" viewBox="0 0 32 32" className="text-foreground">
               <polygon points="16,4 28,26 4,26" fill="currentColor" />
             </svg>
           </motion.div>
@@ -58,14 +60,24 @@ export function GalleryHeader({
             transition={{ duration: 0.5, delay: 0.2 }}
             className="flex items-center gap-4 flex-1 max-w-2xl mx-8"
           >
-            <div className="relative flex-1">
+            <div className="relative flex-1" style={{ minWidth: "400px" }}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search by tags or title..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10 w-full"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           </motion.div>
 
@@ -79,9 +91,12 @@ export function GalleryHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant="outline"
+                    variant={isFilterOpen ? "default" : "outline"}
                     size="default"
-                    className="h-10 bg-transparent"
+                    className={cn(
+                      "h-10",
+                      isFilterOpen ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-transparent",
+                    )}
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
                   >
                     <Settings className="h-4 w-4" />

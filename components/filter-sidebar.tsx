@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Filter, X, ChevronDown, ChevronUp, FileImage, FileVideo, SortAsc, SortDesc } from "lucide-react"
+import { X, ChevronDown, ChevronUp, FileImage, FileVideo, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
 export interface FilterState {
@@ -37,7 +37,6 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   const [isFileTypesOpen, setIsFileTypesOpen] = useState(true)
   const [isTagsOpen, setIsTagsOpen] = useState(true)
-  const [isSortOpen, setIsSortOpen] = useState(true)
 
   const getTagColor = (tag: string) => {
     const colors = [
@@ -70,6 +69,15 @@ export function FilterSidebar({
     onFiltersChange({ ...filters, selectedTags: newTags })
   }
 
+  const toggleNoTags = () => {
+    const hasNoTagsFilter = filters.selectedTags.includes("__no_tags__")
+    const newTags = hasNoTagsFilter
+      ? filters.selectedTags.filter((t) => t !== "__no_tags__")
+      : [...filters.selectedTags, "__no_tags__"]
+
+    onFiltersChange({ ...filters, selectedTags: newTags })
+  }
+
   const clearAllFilters = () => {
     onFiltersChange({
       fileTypes: [],
@@ -92,10 +100,11 @@ export function FilterSidebar({
       <Card className="absolute left-0 top-0 h-full w-80 lg:relative lg:w-full lg:h-auto glass-effect shadow-strong lg:shadow-soft animate-slide-up lg:animate-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <div className="w-5 h-5 gradient-primary rounded flex items-center justify-center">
-              <Filter className="h-3 w-3 text-primary-foreground" />
-            </div>
+            <Settings className="h-5 w-5 text-muted-foreground" />
             Filters
+            <Badge variant="secondary" className="ml-2 text-xs">
+              {filteredItems} items
+            </Badge>
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose} className="lg:hidden hover-lift">
             <X className="h-4 w-4" />
@@ -103,126 +112,61 @@ export function FilterSidebar({
         </CardHeader>
 
         <CardContent className="space-y-6">
-          {/* Results Summary */}
-          <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 backdrop-blur-sm">
-            Showing <span className="font-medium text-foreground">{filteredItems}</span> of{" "}
-            <span className="font-medium text-foreground">{totalItems}</span> items
-            {hasActiveFilters && (
-              <Button
-                variant="link"
-                size="sm"
-                onClick={clearAllFilters}
-                className="h-auto p-0 ml-2 text-accent hover:text-accent/80 transition-colors duration-300"
-              >
-                Clear all
-              </Button>
-            )}
-          </div>
-
-          {/* File Types Filter */}
           <Collapsible open={isFileTypesOpen} onOpenChange={setIsFileTypesOpen}>
             <CollapsibleTrigger asChild>
               <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
-                <span className="font-medium">File Type</span>
-                {isFileTypesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                <span className="font-medium flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  File Type
+                </span>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  {isFileTypesOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 mt-3">
-              <Button
-                variant={filters.fileTypes.includes("image") ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleFileType("image")}
-                className={cn(
-                  "w-full justify-start transition-all duration-300 hover-lift shadow-soft",
-                  filters.fileTypes.includes("image")
-                    ? "gradient-primary shadow-medium"
-                    : "bg-card/50 backdrop-blur-sm",
-                )}
-              >
-                <FileImage className="h-4 w-4 mr-2" />
-                Images
-              </Button>
-              <Button
-                variant={filters.fileTypes.includes("video") ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleFileType("video")}
-                className={cn(
-                  "w-full justify-start transition-all duration-300 hover-lift shadow-soft",
-                  filters.fileTypes.includes("video")
-                    ? "gradient-primary shadow-medium"
-                    : "bg-card/50 backdrop-blur-sm",
-                )}
-              >
-                <FileVideo className="h-4 w-4 mr-2" />
-                Videos
-              </Button>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Sort Options */}
-          <Collapsible open={isSortOpen} onOpenChange={setIsSortOpen}>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
-                <span className="font-medium">Sort</span>
-                {isSortOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-3 mt-3">
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Sort by</label>
-                <Select
-                  value={filters.sortBy}
-                  onValueChange={(value: "title" | "date" | "tags") => onFiltersChange({ ...filters, sortBy: value })}
-                >
-                  <SelectTrigger className="bg-card/50 backdrop-blur-sm shadow-soft hover:shadow-medium transition-all duration-300">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="glass-effect shadow-strong">
-                    <SelectItem value="title">Title</SelectItem>
-                    <SelectItem value="date">Date Added</SelectItem>
-                    <SelectItem value="tags">Number of Tags</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <CollapsibleContent className="mt-3">
               <div className="flex gap-2">
                 <Button
-                  variant={filters.sortOrder === "asc" ? "default" : "outline"}
+                  variant={filters.fileTypes.includes("image") ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onFiltersChange({ ...filters, sortOrder: "asc" })}
-                  className={cn(
-                    "flex-1 transition-all duration-300 hover-lift shadow-soft",
-                    filters.sortOrder === "asc" ? "gradient-primary shadow-medium" : "bg-card/50 backdrop-blur-sm",
-                  )}
+                  onClick={() => toggleFileType("image")}
+                  className="flex-1 justify-center"
                 >
-                  <SortAsc className="h-4 w-4 mr-1" />
-                  Asc
+                  <FileImage className="h-4 w-4 mr-2" />
+                  Images
                 </Button>
                 <Button
-                  variant={filters.sortOrder === "desc" ? "default" : "outline"}
+                  variant={filters.fileTypes.includes("video") ? "default" : "outline"}
                   size="sm"
-                  onClick={() => onFiltersChange({ ...filters, sortOrder: "desc" })}
-                  className={cn(
-                    "flex-1 transition-all duration-300 hover-lift shadow-soft",
-                    filters.sortOrder === "desc" ? "gradient-primary shadow-medium" : "bg-card/50 backdrop-blur-sm",
-                  )}
+                  onClick={() => toggleFileType("video")}
+                  className="flex-1 justify-center"
                 >
-                  <SortDesc className="h-4 w-4 mr-1" />
-                  Desc
+                  <FileVideo className="h-4 w-4 mr-2" />
+                  Videos
                 </Button>
               </div>
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Tags Filter */}
-          {availableTags.length > 0 && (
-            <Collapsible open={isTagsOpen} onOpenChange={setIsTagsOpen}>
-              <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
-                  <span className="font-medium">Tags ({availableTags.length})</span>
+          <Collapsible open={isTagsOpen} onOpenChange={setIsTagsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between p-0 h-auto hover-lift">
+                <span className="font-medium flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  Tags ({availableTags.length})
+                </span>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                   {isTagsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3">
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-3 space-y-3">
+              <div className="flex items-center justify-between p-2 border rounded-md">
+                <span className="text-sm font-medium">No tags</span>
+                <Switch checked={filters.selectedTags.includes("__no_tags__")} onCheckedChange={toggleNoTags} />
+              </div>
+
+              {availableTags.length > 0 && (
                 <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
                   {availableTags.map((tag) => (
                     <Badge
@@ -240,9 +184,9 @@ export function FilterSidebar({
                     </Badge>
                   ))}
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+              )}
+            </CollapsibleContent>
+          </Collapsible>
 
           {/* Active Filters */}
           {hasActiveFilters && (
@@ -265,12 +209,12 @@ export function FilterSidebar({
                 ))}
                 {filters.selectedTags.map((tag) => (
                   <Badge key={tag} variant="default" className="text-xs gradient-primary shadow-soft">
-                    {tag}
+                    {tag === "__no_tags__" ? "No tags" : tag}
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
-                      onClick={() => toggleTag(tag)}
+                      onClick={() => (tag === "__no_tags__" ? toggleNoTags() : toggleTag(tag))}
                     >
                       <X className="h-3 w-3" />
                     </Button>

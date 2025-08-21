@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X } from "lucide-react"
+import { X, Edit3 } from "lucide-react"
 import type { GalleryItem } from "@/types/gallery"
 
 interface PreviewModalProps {
@@ -34,7 +34,20 @@ export function PreviewModal({
         {previewItem && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">{previewItem.title}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold">{previewItem.title}</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                  onClick={() => {
+                    // This would trigger rename functionality
+                    console.log("Rename clicked for:", previewItem.title)
+                  }}
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setPreviewItem(null)} className="h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>

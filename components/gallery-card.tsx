@@ -4,8 +4,10 @@ import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Edit3, X, Play, ImageIcon, Check } from "lucide-react"
 import type { GalleryItem } from "@/types/gallery"
+import { useState } from "react"
 
 interface GalleryCardProps {
   image: GalleryItem
@@ -17,6 +19,7 @@ interface GalleryCardProps {
   onDelete: (id: string) => void
   onConfirmTag: (id: string, tag: string) => void
   onRejectTag: (id: string, tag: string) => void
+  onRename: (item: GalleryItem) => void
 }
 
 export function GalleryCard({
@@ -29,13 +32,29 @@ export function GalleryCard({
   onDelete,
   onConfirmTag,
   onRejectTag,
+  onRename,
 }: GalleryCardProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editTitle, setEditTitle] = useState(image.title)
+
+  const handleSaveRename = () => {
+    if (editTitle.trim() && editTitle !== image.title) {
+      onRename({ ...image, title: editTitle.trim() })
+    }
+    setIsEditing(false)
+  }
+
+  const handleCancelRename = () => {
+    setEditTitle(image.title)
+    setIsEditing(false)
+  }
+
   return (
     <Card
       className={`group hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
-      onClick={() => onPreview(image)}
+      onClick={() => !isEditing && onPreview(image)}
     >
       <div className="relative">
         {image.type === "video" ? (
@@ -81,7 +100,7 @@ export function GalleryCard({
             className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation()
-              onEdit(image)
+              setIsEditing(true)
             }}
           >
             <Edit3 className="h-3 w-3" />
@@ -102,7 +121,7 @@ export function GalleryCard({
         </div>
 
         <div className="absolute top-2 right-2">
-          <Button variant="secondary" size="sm" className="h-6 w-6 p-0">
+          <Button variant="secondary" size="sm" className="h-6 w-6 p-0 cursor-pointer">
             {image.type === "video" ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
           </Button>
         </div>
@@ -110,13 +129,54 @@ export function GalleryCard({
 
       <div className="p-3 pt-1">
         <div className="flex items-start gap-2 mb-2">
-          <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
+          {isEditing ? (
+            <div className="flex items-center gap-1 flex-1">
+              <Input
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="h-6 text-sm flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveRename()
+                  } else if (e.key === "Escape") {
+                    handleCancelRename()
+                  }
+                }}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleSaveRename()
+                }}
+                className="h-6 w-6 p-0 hover:bg-muted"
+              >
+                <Check className="h-3 w-3 text-green-600" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCancelRename()
+                }}
+                className="h-6 w-6 p-0 hover:bg-muted"
+              >
+                <X className="h-3 w-3 text-red-600" />
+              </Button>
+            </div>
+          ) : (
+            <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
+          )}
           {isNewlyUploaded && (
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ml-2"
               style={{ backgroundColor: "#ECF1FF", color: "#1A57DA" }}
             >
               <span>new</span>
