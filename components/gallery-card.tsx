@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Edit3, X, Play, ImageIcon, Check } from "lucide-react"
-import type { GalleryItem } from "@/types/gallery"
+import type { GalleryItem } from "@/types"
 import { useState } from "react"
 
 interface GalleryCardProps {
@@ -37,11 +37,27 @@ export function GalleryCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
 
-  const handleSaveRename = () => {
+  const handleSaveRename = async () => {
     if (editTitle.trim() && editTitle !== image.title) {
-      onRename({ ...image, title: editTitle.trim() })
+      const newTitle = editTitle.trim()
+      
+      // Optimistically update the title immediately
+      const updatedImage = { ...image, title: newTitle }
+      
+      // Update parent component state immediately
+      setIsEditing(false)
+      
+      try {
+        // Call the rename function which should handle the API update
+        await onRename(updatedImage)
+      } catch (error) {
+        // If rename fails, revert the title
+        setEditTitle(image.title)
+        console.error("Failed to rename:", error)
+      }
+    } else {
+      setIsEditing(false)
     }
-    setIsEditing(false)
   }
 
   const handleCancelRename = () => {
@@ -56,48 +72,114 @@ export function GalleryCard({
       }`}
       onClick={() => !isEditing && onPreview(image)}
     >
-      <div className="relative">
-        {image.type === "video" ? (
-          <video
-            src={image.url}
-            className={`w-full object-cover transition-transform duration-300 ${
-              viewMode === "list" ? "h-auto" : "h-48"
-            }`}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            onMouseEnter={(e) => {
-              const video = e.currentTarget
+      <div 
+        className="relative overflow-hidden"
+        onMouseEnter={image.type === "video" ? (e) => {
+          const video = e.currentTarget.querySelector('video')
+          if (video) {
+            try {
               video.currentTime = 0
-              const playPromise = video.play()
-              if (playPromise !== undefined) {
-                playPromise.catch(() => {
-                  // Silently handle autoplay restrictions
-                })
-              }
-            }}
-            onMouseLeave={(e) => {
-              const video = e.currentTarget
+              video.play().then(() => {
+                console.log('✅ Video hover play triggered via card:', image.url)
+              }).catch((error) => {
+                console.log('❌ Video hover play failed via card:', error)
+              })
+            } catch (error) {
+              console.log('❌ Video hover error via card:', error)
+            }
+          }
+        } : undefined}
+        onMouseLeave={image.type === "video" ? (e) => {
+          const video = e.currentTarget.querySelector('video')
+          if (video) {
+            try {
               video.pause()
-            }}
-          />
-        ) : (
-          <img
-            src={image.url || "/placeholder.svg"}
-            alt={image.title}
-            className={`w-full object-cover transition-transform duration-300 ${
-              viewMode === "list" ? "h-auto" : "h-48"
-            }`}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              video.currentTime = 0
+              console.log('⏸️ Video hover pause triggered via card:', image.url)
+            } catch (error) {
+              console.log('❌ Video pause error via card:', error)
+            }
+          }
+        } : undefined}
+      >
+        {/* Media Element - Consistent styling for both video and image */}
+        <div className={`w-full transition-transform duration-300 group-hover:scale-105 ${
+          viewMode === "list" ? "h-auto" : "h-48"
+        }`}>
+          {image.type === "video" ? (
+            <video
+              key={image.url} // Force re-render when URL changes
+              src={image.url}
+              className="w-full h-full object-cover"
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              crossOrigin="anonymous"
+              style={{ pointerEvents: 'none' }} // Prevent video controls from interfering
+              onMouseEnter={async (e) => {
+                e.preventDefault()
+                const video = e.currentTarget
+                try {
+                  if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                    video.currentTime = 0
+                    const playPromise = video.play()
+                    if (playPromise) {
+                      await playPromise
+                      console.log('✅ Video autoplay started:', image.url)
+                    }
+                  } else {
+                    console.log('⏳ Video not ready yet:', image.url)
+                  }
+                } catch (error) {
+                  console.log('❌ Video autoplay blocked/failed:', error, image.url)
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.preventDefault()
+                const video = e.currentTarget
+                try {
+                  video.pause()
+                  video.currentTime = 0
+                  console.log('⏸️ Video autoplay paused:', image.url)
+                } catch (error) {
+                  console.log('Error pausing video:', error)
+                }
+              }}
+              onError={(e) => {
+                console.error('🚨 Gallery video loading error:', e.currentTarget.error);
+                console.log('🔗 Video URL:', image.url);
+              }}
+              onCanPlay={() => {
+                console.log('🎬 Video can play:', image.url)
+              }}
+              onLoadedData={() => {
+                console.log('📊 Video loaded data:', image.url)
+              }}
+            />
+          ) : (
+            <img
+              src={image.url || "/placeholder.svg"}
+              alt={image.title}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              onError={(e) => {
+                console.error('Gallery image loading error for:', image.url);
+                e.currentTarget.src = "/placeholder.svg";
+              }}
+            />
+          )}
+        </div>
+        
+        {/* Hover Overlay - Consistent for both types */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+        {/* Action Buttons - Left Side */}
         <div className="absolute top-2 left-2 flex gap-1">
           <Button
             size="sm"
             variant="ghost"
-            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/90 text-white hover:bg-black/100 backdrop-blur-sm"
             onClick={(e) => {
               e.stopPropagation()
               setIsEditing(true)
@@ -109,7 +191,7 @@ export function GalleryCard({
             <Button
               size="sm"
               variant="ghost"
-              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/80 text-white hover:bg-black/90 cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/90 text-white hover:bg-red-600/100 backdrop-blur-sm"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(image.id)
@@ -120,9 +202,19 @@ export function GalleryCard({
           )}
         </div>
 
+        {/* Media Type Indicator - Right Side */}
         <div className="absolute top-2 right-2">
-          <Button variant="secondary" size="sm" className="h-6 w-6 p-0 cursor-pointer">
-            {image.type === "video" ? <Play className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-6 w-6 p-0 bg-black/90 text-white hover:bg-black/100 transition-colors backdrop-blur-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {image.type === "video" ? (
+              <Play className="h-3 w-3" />
+            ) : (
+              <ImageIcon className="h-3 w-3" />
+            )}
           </Button>
         </div>
       </div>
@@ -154,7 +246,7 @@ export function GalleryCard({
                 }}
                 className="h-6 w-6 p-0 hover:bg-muted"
               >
-                <Check className="h-3 w-3 text-green-600" />
+                <Check className="h-3 w-3" />
               </Button>
               <Button
                 size="sm"
@@ -165,7 +257,7 @@ export function GalleryCard({
                 }}
                 className="h-6 w-6 p-0 hover:bg-muted"
               >
-                <X className="h-3 w-3 text-red-600" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           ) : (
@@ -225,7 +317,7 @@ export function GalleryCard({
                 }}
                 className="h-4 w-4 p-0 hover:bg-muted"
               >
-                <Check className="h-3 w-3 text-foreground" />
+                <Check className="h-3 w-3" />
               </Button>
               <Button
                 size="sm"
@@ -236,7 +328,7 @@ export function GalleryCard({
                 }}
                 className="h-4 w-4 p-0 hover:bg-muted"
               >
-                <X className="h-3 w-3 text-foreground" />
+                <X className="h-3 w-3" />
               </Button>
             </div>
           ))}
