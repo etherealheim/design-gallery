@@ -7,12 +7,9 @@ import {
   Upload,
   X,
   Edit3,
-  Moon,
-  Sun,
   Clock,
   Shuffle,
   Edit,
-  Settings,
   Play,
   ImageIcon,
   Check,
@@ -32,6 +29,7 @@ import { supabase } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { motion, AnimatePresence } from "framer-motion"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface UploadedFile {
   id: string
@@ -115,8 +113,6 @@ export default function DesignVault() {
   const [editingTitle, setEditingTitle] = useState("")
   const [newTag, setNewTag] = useState("")
   const [isAddingTag, setIsAddingTag] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [apiKey, setApiKey] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
@@ -127,11 +123,6 @@ export default function DesignVault() {
 
   const generateTagsWithAI = async (filename: string, imageUrl: string): Promise<string[]> => {
     try {
-      const userApiKey = localStorage.getItem("openai-api-key")
-      if (!userApiKey) {
-        throw new Error("No API key provided")
-      }
-
       console.log("[v0] Generating tags for:", filename, "URL:", imageUrl)
 
       const response = await fetch("/api/generate-tags", {
@@ -142,7 +133,6 @@ export default function DesignVault() {
         body: JSON.stringify({
           filename,
           imageUrl: imageUrl || "", // Ensure we always pass a string
-          apiKey: userApiKey,
         }),
       })
 
@@ -304,12 +294,19 @@ export default function DesignVault() {
       const title = file.name.replace(/\.[^/.]+$/, "")
 
       try {
+        setUploadProgress({ fileName: file.name, progress: 0 })
+
         toast({
           title: "☁️ Uploading to storage...",
           description: `Saving ${file.name} to cloud storage`,
         })
 
+        // Simulate progress updates during upload
+        setUploadProgress({ fileName: file.name, progress: 30 })
+
         const serverFile = await uploadFileToStorage(file, title, [])
+
+        setUploadProgress({ fileName: file.name, progress: 70 })
 
         toast({
           title: "🤖 Generating tags...",
@@ -346,12 +343,19 @@ export default function DesignVault() {
 
         setUploadedFiles((prev) => [uploadedFile, ...prev])
 
+        setUploadProgress({ fileName: file.name, progress: 100 })
+
+        setTimeout(() => {
+          setUploadProgress(null)
+        }, 1000)
+
         toast({
           title: "✅ Upload complete!",
           description: `${file.name} uploaded with ${tags.length} AI-generated tags: ${tags.slice(0, 3).join(", ")}${tags.length > 3 ? "..." : ""}`,
         })
       } catch (error) {
         console.error("Failed to upload file:", file.name, error)
+        setUploadProgress(null)
         toast({
           title: "❌ Upload failed",
           description: `Failed to upload ${file.name}: ${error.message}`,
@@ -1127,30 +1131,12 @@ export default function DesignVault() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      className="h-10 bg-transparent"
-                      onClick={() => setIsSettingsOpen(true)}
-                    >
-                      <Settings className="h-4 w-4" />
+                    <Button variant="outline" size="default" className="h-10 bg-transparent" asChild>
+                      <ThemeToggle />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Settings</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="default" className="h-10 bg-transparent" onClick={toggleDarkMode}>
-                      {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle Theme</p>
+                    <p>Toggle theme</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -1415,7 +1401,7 @@ export default function DesignVault() {
       />
 
       <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-        <DialogContent className="max-w-6xl max-h-[95vh] p-0">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] p-0">
           <DialogHeader className="p-6 pb-0 flex flex-row items-center justify-between space-y-0 pt-4 pl-4 pr-4">
             <div className="flex items-center flex-1 gap-0">
               {isEditingTitle ? (
@@ -1466,7 +1452,7 @@ export default function DesignVault() {
                 {previewItem.type === "video" ? (
                   <video
                     src={previewItem.url}
-                    className="w-full max-h-[90vh] object-contain rounded-lg"
+                    className="w-full max-h-[75vh] object-contain rounded-lg"
                     controls
                     autoPlay
                     muted
@@ -1476,7 +1462,7 @@ export default function DesignVault() {
                   <img
                     src={previewItem.url || "/placeholder.svg"}
                     alt={previewItem.title}
-                    className="w-full max-h-[90vh] object-contain rounded-lg"
+                    className="w-full max-h-[75vh] object-contain rounded-lg"
                   />
                 )}
                 <div className="mt-4 space-y-3">
@@ -1538,45 +1524,6 @@ export default function DesignVault() {
                 </div>
               </div>
             )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Settings</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="api-key" className="text-sm font-medium text-foreground">
-                OpenAI API Key
-              </label>
-              <Input
-                id="api-key"
-                type="password"
-                placeholder="sk-..."
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Required for AI-powered tag generation. Your key is stored locally and never sent to our servers.
-              </p>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => {
-                  localStorage.setItem("openai-api-key", apiKey)
-                  setIsSettingsOpen(false)
-                }}
-              >
-                Save
-              </Button>
-            </div>
           </div>
         </DialogContent>
       </Dialog>

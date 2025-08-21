@@ -31,12 +31,12 @@ function generateFallbackTags(filename: string): string[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const { filename, imageUrl, apiKey } = await request.json()
+    const { filename, imageUrl } = await request.json()
+
+    const apiKey = process.env.OPENAI_API_KEY
 
     if (!apiKey) {
-      throw new Error(
-        "OpenAI API key is missing. Pass it using the 'apiKey' parameter or the OPENAI_API_KEY environment variable.",
-      )
+      throw new Error("OpenAI API key is missing. Please add OPENAI_API_KEY to your Vercel environment variables.")
     }
 
     const openaiProvider = createOpenAI({
