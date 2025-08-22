@@ -44,7 +44,80 @@ export function GalleryHeader({
       className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40"
     >
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
+        {/* Mobile Layout */}
+        <div className="md:hidden flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="cursor-pointer hover:scale-105 transition-transform duration-200"
+                    >
+                      <div className="bg-black text-white px-3 py-1.5 rounded text-sm font-bold tracking-wide">
+                        FÖRM.DEV
+                      </div>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Reload page</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </motion.div>
+            
+            {onUploadClick && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-transparent cursor-pointer"
+                  onClick={onUploadClick}
+                >
+                  <Upload className="h-4 w-4" />
+                </Button>
+              </motion.div>
+            )}
+          </div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Search by tags or title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-12 w-full"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
+                  onClick={() => setSearchQuery("")}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -58,9 +131,9 @@ export function GalleryHeader({
                     onClick={() => window.location.reload()} 
                     className="cursor-pointer hover:scale-105 transition-transform duration-200"
                   >
-                    <svg width="32" height="32" viewBox="0 0 32 32" className="text-foreground">
-                      <polygon points="16,4 28,26 4,26" fill="currentColor" />
-                    </svg>
+                    <div className="bg-black text-white px-3 py-1.5 rounded text-sm font-bold tracking-wide">
+                      FÖRM.DEV
+                    </div>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
