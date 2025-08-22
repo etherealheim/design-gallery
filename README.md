@@ -1,6 +1,13 @@
 # 🎨 Design Gallery
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8)
+
 A clean gallery app for your design assets. Drag, drop, search, and let AI tag your stuff automatically.
+
+> **Open Source** - Free to use, modify, and contribute to!
 
 ## Quick Setup
 
@@ -17,12 +24,9 @@ A clean gallery app for your design assets. Drag, drop, search, and let AI tag y
    - Grab your project URL and keys from Settings → API
 
 3. **Environment Variables**
-   Create `.env.local`:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   OPENAI_API_KEY=your_openai_api_key
+   Copy `env.example` to `.env.local` and fill in your keys:
+   ```bash
+   cp env.example .env.local
    ```
 
 4. **Run it**
@@ -42,3 +46,11 @@ That's it! Visit `localhost:3000` and start dropping your design files.
 - Pretty smooth animations
 
 Built with Next.js 15, Supabase, and Tailwind. Mobile optimized because nobody likes tiny buttons.
+
+## Contributing
+
+Want to help make this better? Check out [CONTRIBUTING.md](CONTRIBUTING.md) - we welcome all kinds of contributions!
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details. Free to use for personal and commercial projects.

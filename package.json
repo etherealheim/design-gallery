@@ -1,7 +1,19 @@
 {
-  "name": "team-inspiration",
-  "version": "0.1.0",
-  "private": true,
+  "name": "design-gallery",
+  "version": "1.0.0",
+  "private": false,
+  "description": "A clean gallery app for design assets with AI-powered tagging",
+  "author": "Design Gallery Contributors",
+  "license": "MIT",
+  "keywords": ["design", "gallery", "nextjs", "supabase", "ai", "tagging"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/etherealheim/v0-ui-design-gallery.git"
+  },
+  "homepage": "https://github.com/etherealheim/v0-ui-design-gallery#readme",
+  "bugs": {
+    "url": "https://github.com/etherealheim/v0-ui-design-gallery/issues"
+  },
   "scripts": {
     "build": "next build",
     "dev": "next dev",
