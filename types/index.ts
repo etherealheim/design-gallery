@@ -35,7 +35,7 @@ export interface FilterState {
 
 export interface ViewState {
   mode: "grid" | "list"
-  galleryMode: "recent" | "random"
+  galleryMode: "recent" | "random" | "no-tag"
   isFilterOpen: boolean
   selectedFiles: Set<string>
 }

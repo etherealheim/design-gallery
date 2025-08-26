@@ -63,7 +63,7 @@ export function DragDropOverlay() {
                 transition={{ delay: 0.2 }}
                 className="text-2xl font-semibold text-foreground"
               >
-                Drop your files
+                Drop your files here
               </motion.h3>
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
@@ -71,7 +71,7 @@ export function DragDropOverlay() {
                 transition={{ delay: 0.3 }}
                 className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed"
               >
-                Release to upload images and videos to your gallery
+                Upload multiple images and videos at once (up to 10 files)
               </motion.p>
             </div>
 

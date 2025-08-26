@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils"
 
-import { motion } from "framer-motion"
-import { Search, Settings, Grid3X3, List, X, Upload } from "lucide-react"
+
+import { Search, Settings, Grid3X3, List, X, Upload, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -21,6 +21,7 @@ interface GalleryHeaderProps {
   deselectAllFiles: () => void
   handleBatchDelete: () => void
   onUploadClick?: () => void
+  onDownloadAllClick?: () => void
 }
 
 export function GalleryHeader({
@@ -35,72 +36,21 @@ export function GalleryHeader({
   deselectAllFiles,
   handleBatchDelete,
   onUploadClick,
+  onDownloadAllClick,
 }: GalleryHeaderProps) {
   return (
-    <motion.header
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40"
-    >
+    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4">
         {/* Mobile Layout */}
-        <div className="md:hidden flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button 
-                      onClick={() => window.location.reload()} 
-                      className="cursor-pointer hover:scale-105 transition-transform duration-200"
-                    >
-                      <div className="bg-black text-white px-3 py-1.5 rounded text-sm font-bold tracking-wide">
-                        FÖRM.DEV
-                      </div>
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Reload page</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </motion.div>
-            
-            {onUploadClick && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="bg-transparent cursor-pointer"
-                  onClick={onUploadClick}
-                >
-                  <Upload className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            )}
-          </div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
+        <div className="lg:hidden flex items-center gap-3">
+          <div className="flex-1">
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search by tags or title..."
+                placeholder="Search designs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-12 w-full"
+                className="pl-10 pr-10 w-full text-sm"
               />
               {searchQuery && (
                 <Button
@@ -113,43 +63,42 @@ export function GalleryHeader({
                 </Button>
               )}
             </div>
-          </motion.div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {onUploadClick && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-transparent cursor-pointer px-2 sm:px-3 h-9"
+                onClick={onUploadClick}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                <span className="text-xs">Upload</span>
+              </Button>
+            )}
+            
+            {onDownloadAllClick && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="bg-transparent cursor-pointer h-9 w-9 shrink-0 hidden sm:flex"
+                onClick={onDownloadAllClick}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            )}
+            
+            <div className="hidden sm:block lg:hidden">
+              <ThemeToggle />
+            </div>
+          </div>
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center"
-          >
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button 
-                    onClick={() => window.location.reload()} 
-                    className="cursor-pointer hover:scale-105 transition-transform duration-200"
-                  >
-                    <div className="bg-black text-white px-3 py-1.5 rounded text-sm font-bold tracking-wide">
-                      FÖRM.DEV
-                    </div>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Reload page</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex items-center gap-4 flex-1 max-w-2xl mx-8"
-          >
-            <div className="relative flex-1" style={{ minWidth: "400px" }}>
+        <div className="hidden lg:flex items-center justify-between gap-6">
+          <div className="flex-1 max-w-2xl">
+            <div className="relative flex-1" style={{ minWidth: "300px" }}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search by tags or title..."
@@ -177,14 +126,9 @@ export function GalleryHeader({
                 </TooltipProvider>
               )}
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex items-center gap-2"
-          >
+          <div className="flex items-center gap-3">
             {onUploadClick && (
               <TooltipProvider>
                 <Tooltip>
@@ -192,7 +136,7 @@ export function GalleryHeader({
                     <Button
                       variant="outline"
                       size="default"
-                      className="h-10 bg-transparent cursor-pointer"
+                      className="h-9 bg-transparent cursor-pointer"
                       onClick={onUploadClick}
                     >
                       <Upload className="h-4 w-4 mr-2" />
@@ -200,7 +144,27 @@ export function GalleryHeader({
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Upload Files</p>
+                    <p>Upload Multiple Files</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {onDownloadAllClick && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9 bg-transparent cursor-pointer"
+                      onClick={onDownloadAllClick}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Download All Files</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -213,7 +177,7 @@ export function GalleryHeader({
                     variant={isFilterOpen ? "default" : "outline"}
                     size="default"
                     className={cn(
-                      "h-10",
+                      "h-9 cursor-pointer",
                       isFilterOpen ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-transparent",
                     )}
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -234,7 +198,7 @@ export function GalleryHeader({
                     <Button
                       variant={viewMode === "grid" ? "secondary" : "ghost"}
                       size="sm"
-                      className="rounded-r-none border-r-0 h-10"
+                      className="rounded-r-none border-r-0 h-9 cursor-pointer"
                       onClick={() => setViewMode("grid")}
                     >
                       <Grid3X3 className="h-4 w-4" />
@@ -251,7 +215,7 @@ export function GalleryHeader({
                     <Button
                       variant={viewMode === "list" ? "secondary" : "ghost"}
                       size="sm"
-                      className="rounded-l-none h-10"
+                      className="rounded-l-none h-9 cursor-pointer"
                       onClick={() => setViewMode("list")}
                     >
                       <List className="h-4 w-4" />
@@ -266,13 +230,13 @@ export function GalleryHeader({
 
             {selectedFiles.size > 0 && (
               <>
-                <Button variant="outline" size="default" className="h-10 bg-transparent" onClick={selectAllFiles}>
+                <Button variant="outline" size="default" className="h-9 bg-transparent" onClick={selectAllFiles}>
                   Select All
                 </Button>
-                <Button variant="outline" size="default" className="h-10 bg-transparent" onClick={deselectAllFiles}>
+                <Button variant="outline" size="default" className="h-9 bg-transparent" onClick={deselectAllFiles}>
                   Clear
                 </Button>
-                <Button variant="destructive" size="default" className="h-10" onClick={handleBatchDelete}>
+                <Button variant="destructive" size="default" className="h-9" onClick={handleBatchDelete}>
                   Delete ({selectedFiles.size})
                 </Button>
               </>
@@ -288,9 +252,9 @@ export function GalleryHeader({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-          </motion.div>
+          </div>
         </div>
       </div>
-    </motion.header>
+    </header>
   )
 }

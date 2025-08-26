@@ -426,4 +426,55 @@ export class BatchOperationsService {
 
     return { successful, failed }
   }
+
+  static async downloadAllFiles(files: GalleryItem[]): Promise<void> {
+    if (files.length === 0) {
+      throw createAppError(ERROR_CODES.VALIDATION_ERROR, "No files to download")
+    }
+
+    try {
+      // Download files one by one
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        try {
+          const response = await fetch(file.url)
+          if (!response.ok) {
+            console.warn(`Failed to download ${file.title}: ${response.statusText}`)
+            continue
+          }
+
+          const blob = await response.blob()
+          const extension = file.mimeType ? 
+            file.mimeType.split('/')[1] : 
+            file.url.split('.').pop() || 'bin'
+          
+          // Sanitize filename for download
+          const sanitizedTitle = file.title.replace(/[<>:"/\\|?*]/g, '_')
+          const filename = `${sanitizedTitle}.${extension}`
+          
+          // Create download link
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = filename
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+          // Clean up
+          URL.revokeObjectURL(url)
+          
+          // Add small delay between downloads to avoid overwhelming the browser
+          if (i < files.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500))
+          }
+        } catch (error) {
+          console.warn(`Failed to process file ${file.title}:`, error)
+        }
+      }
+    } catch (error) {
+      logError(error, "BatchOperationsService.downloadAllFiles")
+      throw createAppError(ERROR_CODES.INTERNAL_ERROR, "Failed to download files")
+    }
+  }
 }

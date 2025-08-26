@@ -88,7 +88,7 @@ export function PreviewModal({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted shrink-0"
+                      className="h-8 w-8 p-0 hover:bg-muted shrink-0 cursor-pointer"
                       onClick={handleSaveTitle}
                     >
                       <Check className="h-3 w-3" />
@@ -96,7 +96,7 @@ export function PreviewModal({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted shrink-0"
+                      className="h-8 w-8 p-0 hover:bg-muted shrink-0 cursor-pointer"
                       onClick={handleCancelTitle}
                     >
                       <X className="h-3 w-3" />
@@ -173,7 +173,7 @@ export function PreviewModal({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-6 px-2 bg-transparent"
+                    className="h-6 px-2 bg-transparent cursor-pointer"
                     onClick={() => setIsAddingTag(true)}
                   >
                     Add tag

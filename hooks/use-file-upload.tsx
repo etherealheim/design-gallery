@@ -157,15 +157,41 @@ export function useFileUpload({
 
     setIsUploading(true)
 
+    // Show batch upload start toast if multiple files
+    let batchToastId: string | number | undefined
+    if (validation.validFiles.length > 1) {
+      batchToastId = toast.loading(`📁 Uploading ${validation.validFiles.length} files...`, {
+        description: "Processing files one by one",
+      })
+    }
+
     try {
       // Upload files sequentially to avoid overwhelming the server
-      for (const file of validation.validFiles) {
+      for (let i = 0; i < validation.validFiles.length; i++) {
+        const file = validation.validFiles[i]
+        
+        // Update batch progress if multiple files
+        if (batchToastId && validation.validFiles.length > 1) {
+          toast.loading(`📁 Uploading file ${i + 1} of ${validation.validFiles.length}...`, {
+            id: batchToastId,
+            description: `Processing: ${file.name}`,
+          })
+        }
+        
         await uploadSingleFile(file)
       }
       
-      toast.success("✅ Upload complete", {
-        description: `Successfully uploaded ${validation.validFiles.length} file${validation.validFiles.length > 1 ? 's' : ''}`,
-      })
+      // Update final success toast
+      if (batchToastId) {
+        toast.success("✅ All files uploaded!", {
+          id: batchToastId,
+          description: `Successfully uploaded ${validation.validFiles.length} files to your gallery`,
+        })
+      } else {
+        toast.success("✅ Upload complete", {
+          description: `Successfully uploaded ${validation.validFiles.length} file${validation.validFiles.length > 1 ? 's' : ''}`,
+        })
+      }
     } catch (error) {
       // Individual file errors are already handled in uploadSingleFile
       console.error("Batch upload failed:", error)

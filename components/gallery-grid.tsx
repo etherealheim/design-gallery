@@ -2,16 +2,17 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Clock, Shuffle, Search } from "lucide-react"
+import { Clock, Shuffle, Search, Tag } from "lucide-react"
 import { GalleryCard } from "./gallery-card"
 import { SkeletalCard } from "./skeletal-card"
 import type { GalleryItem } from "@/types"
 
 interface GalleryGridProps {
   searchQuery: string
-  galleryViewMode: "recent" | "random"
-  handleViewModeChange: (mode: "recent" | "random") => void
+  galleryViewMode: "recent" | "random" | "no-tag"
+  handleViewModeChange: (mode: "recent" | "random" | "no-tag") => void
   sortedAndFilteredImages: {
     displayImages: GalleryItem[]
     filteredImages: GalleryItem[]
@@ -45,6 +46,11 @@ export function GalleryGrid({
   rejectTag,
   handleRename,
 }: GalleryGridProps) {
+  // Calculate counts for each filter mode
+  const recentCount = sortedAndFilteredImages.filteredImages.length
+  const randomCount = Math.min(20, sortedAndFilteredImages.filteredImages.length)
+  const noTagCount = sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length
+
   return (
     <>
       {!searchQuery && (
@@ -61,6 +67,9 @@ export function GalleryGrid({
                   >
                     <Clock className="h-4 w-4" />
                     Recent
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {recentCount}
+                    </Badge>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -79,6 +88,9 @@ export function GalleryGrid({
                   >
                     <Shuffle className="h-4 w-4" />
                     Random
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {randomCount}
+                    </Badge>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -86,10 +98,32 @@ export function GalleryGrid({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={galleryViewMode === "no-tag" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleViewModeChange("no-tag")}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Tag className="h-4 w-4" />
+                    No Tag
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {noTagCount}
+                    </Badge>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Show files without any tags</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <p className="text-sm text-muted-foreground">
             {sortedAndFilteredImages.displayImages.length} designs{" "}
-            {galleryViewMode === "random" ? "(showing 20 random)" : ""}
+            {galleryViewMode === "random" ? "(showing 20 random)" : 
+             galleryViewMode === "no-tag" ? "(without tags)" : ""}
           </p>
         </div>
       )}

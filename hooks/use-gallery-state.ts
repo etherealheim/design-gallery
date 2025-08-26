@@ -252,6 +252,9 @@ export function useGalleryState({
         ;[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]]
       }
       displayItems = shuffled.slice(0, 20)
+    } else if (!searchQuery && viewState.galleryMode === "no-tag") {
+      // Filter items without tags
+      displayItems = sortedItems.filter(item => item.tags.length === 0)
     } else {
       // Prioritize newly uploaded files
       displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)

@@ -11,6 +11,8 @@ import { LoadingSkeleton } from "@/components/loading-skeleton"
 import { useGalleryState } from "@/hooks/use-gallery-state"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { usePreviewModal } from "@/hooks/use-preview-modal"
+import { BatchOperationsService } from "@/lib/services/file-service"
+import { toast } from "sonner"
 import type { GalleryItem, PendingTags } from "@/types"
 
 export default function DesignVault() {
@@ -104,6 +106,28 @@ export default function DesignVault() {
     await updateFile(id, { title: newTitle, tags: newTags })
   }
 
+  // Handle download all files
+  const handleDownloadAll = async () => {
+    const toastId = toast.loading("Preparing downloads...", {
+      description: "Getting ready to download all files",
+    })
+    
+    try {
+      await BatchOperationsService.downloadAllFiles(processedItems.displayItems)
+      
+      toast.success("Download started!", {
+        id: toastId,
+        description: `Downloading ${processedItems.displayItems.length} files`,
+      })
+    } catch (error) {
+      console.error("Download failed:", error)
+      toast.error("Download failed", {
+        id: toastId,
+        description: "Unable to download files. Please try again.",
+      })
+    }
+  }
+
   // Show loading skeleton
   if (isLoading) {
     return <LoadingSkeleton />
@@ -124,6 +148,7 @@ export default function DesignVault() {
         deselectAllFiles={deselectAllFiles}
         handleBatchDelete={batchDelete}
         onUploadClick={triggerFileInput}
+        onDownloadAllClick={handleDownloadAll}
       />
 
       <div className="flex">
