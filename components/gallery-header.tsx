@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { RealtimeStatus } from "@/components/realtime-status"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface GalleryHeaderProps {
@@ -26,11 +25,6 @@ interface GalleryHeaderProps {
   onDownloadSelectedClick?: () => void
   selectedTags: string[]
   onRemoveTag: (tag: string) => void
-  // Real-time status props
-  realtimeConnected?: boolean
-  pendingChanges?: number
-  isIdle?: boolean
-  onManualRefresh?: () => void
 }
 
 export function GalleryHeader({
@@ -49,10 +43,6 @@ export function GalleryHeader({
   onDownloadSelectedClick,
   selectedTags,
   onRemoveTag,
-  realtimeConnected = false,
-  pendingChanges = 0,
-  isIdle = false,
-  onManualRefresh,
 }: GalleryHeaderProps) {
   return (
          <header className="fixed top-4 left-4 right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
@@ -316,16 +306,6 @@ export function GalleryHeader({
             {/* Theme Toggle - 8px gap */}
             <div className="ml-2">
               <ThemeToggle />
-            </div>
-
-            {/* Real-time Status - 8px gap */}
-            <div className="ml-2">
-              <RealtimeStatus
-                isConnected={realtimeConnected}
-                pendingChanges={pendingChanges}
-                isIdle={isIdle}
-                onRefresh={onManualRefresh}
-              />
             </div>
           </div>
 

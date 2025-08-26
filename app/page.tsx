@@ -52,10 +52,6 @@ export default function DesignVault() {
     loadMoreFiles,
     totalCount,
     isLoadingSearch,
-    realtimeConnected,
-    pendingChanges,
-    isIdle,
-    handleAutoRefresh,
   } = useGalleryState()
 
   // File upload management
@@ -315,10 +311,6 @@ export default function DesignVault() {
             selectedTags: prev.selectedTags.filter(t => t !== tag)
           }))
         }}
-        realtimeConnected={realtimeConnected}
-        pendingChanges={pendingChanges}
-        isIdle={isIdle}
-        onManualRefresh={handleAutoRefresh}
       />
 
       <div className="flex">
