@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Search, Settings, Grid3X3, List, X, Upload, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
@@ -22,6 +23,8 @@ interface GalleryHeaderProps {
   onUploadClick?: () => void
   onDownloadAllClick?: () => void
   onDownloadSelectedClick?: () => void
+  selectedTags: string[]
+  onRemoveTag: (tag: string) => void
 }
 
 export function GalleryHeader({
@@ -38,6 +41,8 @@ export function GalleryHeader({
   onUploadClick,
   onDownloadAllClick,
   onDownloadSelectedClick,
+  selectedTags,
+  onRemoveTag,
 }: GalleryHeaderProps) {
   return (
          <header className="fixed top-4 left-4 right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
@@ -47,57 +52,82 @@ export function GalleryHeader({
       }}></div>
       <div className="w-full px-4 py-4">
         {/* Mobile Layout */}
-        <div className="lg:hidden flex items-center gap-3">
-          <div className="flex-1">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search designs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 w-full text-base md:text-sm"
-              />
-              {searchQuery && (
+        <div className="lg:hidden flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <div className="relative w-full">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search designs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10 w-full text-base md:text-sm"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {onUploadClick && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
-                  onClick={() => setSearchQuery("")}
+                  className="bg-transparent cursor-pointer px-2 sm:px-3 h-9"
+                  onClick={onUploadClick}
                 >
-                  <X className="h-3 w-3" />
+                  <Upload className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Upload</span>
                 </Button>
               )}
+              
+              {onDownloadAllClick && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="bg-transparent cursor-pointer h-9 w-9 shrink-0 hidden sm:flex"
+                  onClick={onDownloadAllClick}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              )}
+              
+              <div className="hidden sm:block lg:hidden">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {onUploadClick && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-transparent cursor-pointer px-2 sm:px-3 h-9"
-                onClick={onUploadClick}
-              >
-                <Upload className="h-4 w-4 mr-1" />
-                <span className="text-xs">Upload</span>
-              </Button>
-            )}
-            
-            {onDownloadAllClick && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-transparent cursor-pointer h-9 w-9 shrink-0 hidden sm:flex"
-                onClick={onDownloadAllClick}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            )}
-            
-            <div className="hidden sm:block lg:hidden">
-              <ThemeToggle />
+          {/* Mobile Selected Tag Chips */}
+          {selectedTags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedTags.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors"
+                >
+                  {tag === "__no_tags__" ? "No tags" : tag}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-3 w-3 p-0 hover:bg-transparent"
+                    onClick={() => onRemoveTag(tag)}
+                  >
+                    <X className="h-2 w-2" />
+                  </Button>
+                </Badge>
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Desktop Layout */}
@@ -130,6 +160,29 @@ export function GalleryHeader({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+              )}
+              
+              {/* Selected Tag Chips */}
+              {selectedTags.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 flex flex-wrap gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg">
+                  {selectedTags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors"
+                    >
+                      {tag === "__no_tags__" ? "No tags" : tag}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-3 w-3 p-0 hover:bg-transparent"
+                        onClick={() => onRemoveTag(tag)}
+                      >
+                        <X className="h-2 w-2" />
+                      </Button>
+                    </Badge>
+                  ))}
+                </div>
               )}
             </div>
           </div>

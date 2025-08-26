@@ -278,6 +278,13 @@ export default function DesignVault() {
         onUploadClick={triggerFileInput}
         onDownloadAllClick={handleDownloadAll}
         onDownloadSelectedClick={handleDownloadSelected}
+        selectedTags={filters.selectedTags}
+        onRemoveTag={(tag) => {
+          setFilters(prev => ({
+            ...prev,
+            selectedTags: prev.selectedTags.filter(t => t !== tag)
+          }))
+        }}
       />
 
       <div className="flex">

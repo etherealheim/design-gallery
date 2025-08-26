@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { GalleryItem, UploadedFile, FilterState, ViewState, PendingTags } from "@/types"
 import { DataService } from "@/lib/services/data-service"
 import { FileFilterService, FileOperationsService } from "@/lib/services/file-service"
@@ -52,6 +52,13 @@ export function useGalleryState({
   
   // Random view state
   const [randomSeed, setRandomSeed] = useState(0)
+  
+  // Track loading state to prevent infinite loops
+  const isLoadingAllFilesRef = useRef(false)
+  const lastLoadingStateRef = useRef<{
+    needsAllFiles: boolean
+    hasAllFilesLoaded: boolean
+  }>({ needsAllFiles: false, hasAllFilesLoaded: false })
 
 
 
@@ -61,6 +68,7 @@ export function useGalleryState({
       setIsLoading(true)
       setCurrentPage(1)
       setHasAllFilesLoaded(false)
+      isLoadingAllFilesRef.current = false // Reset loading ref
       const result = await DataService.loadFilesWithPagination(1, 20) // No filters - we filter client-side
       const uploadedFilesList = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       setUploadedFiles(uploadedFilesList)
@@ -127,7 +135,13 @@ export function useGalleryState({
 
   // Load all files for search (only when needed)
   const loadAllFilesForSearch = useCallback(async () => {
+    if (isLoadingAllFilesRef.current) {
+      console.log("Already loading all files, skipping...")
+      return
+    }
+    
     try {
+      isLoadingAllFilesRef.current = true
       setIsLoadingSearch(true)
       const files = await DataService.loadAllFiles()
       const uploadedFilesList = files.map(file => ({ ...file, file: undefined })) as UploadedFile[]
@@ -142,6 +156,7 @@ export function useGalleryState({
       })
     } finally {
       setIsLoadingSearch(false)
+      isLoadingAllFilesRef.current = false
     }
   }, [])
 
@@ -513,36 +528,45 @@ export function useGalleryState({
     loadAllTags()
   }, [loadFiles, loadAllTags])
 
-  // Handle search query changes - only load all files when search starts
+  // Handle data loading based on search, filters, and view mode
   useEffect(() => {
     const isSearching = searchQuery.trim().length > 0
-    const wasSearching = !hasAllFilesLoaded && uploadedFiles.length > 0
-    
-    if (isSearching && !hasAllFilesLoaded) {
-      // Starting a search - load all files
-      loadAllFilesForSearch()
-    } else if (!isSearching && hasAllFilesLoaded) {
-      // Clearing search - return to paginated view
-      loadFiles()
-    }
-  }, [searchQuery, hasAllFilesLoaded, loadAllFilesForSearch, loadFiles, uploadedFiles.length])
-
-  // Handle filter changes - load all files when filters are applied for client-side filtering
-  useEffect(() => {
     const hasActiveFilters = filters.fileTypes.length > 0 || filters.selectedTags.length > 0
     const isNoTagMode = viewState.galleryMode === "no-tag"
-    const needsAllFiles = hasActiveFilters || isNoTagMode
+    const needsAllFiles = isSearching || hasActiveFilters || isNoTagMode
     
-    if (needsAllFiles && !hasAllFilesLoaded && !searchQuery) {
-      // Filters applied or no-tag mode - load all files for client-side filtering
-      console.log("Loading all files for filtering/no-tag mode:", { filters, galleryMode: viewState.galleryMode, hasAllFilesLoaded })
+    // Check if the state has actually changed to prevent infinite loops
+    const lastState = lastLoadingStateRef.current
+    const stateChanged = lastState.needsAllFiles !== needsAllFiles || lastState.hasAllFilesLoaded !== hasAllFilesLoaded
+    
+    if (!stateChanged) {
+      return
+    }
+    
+    // Update the last state
+    lastLoadingStateRef.current = { needsAllFiles, hasAllFilesLoaded }
+    
+    if (needsAllFiles && !hasAllFilesLoaded && !isLoadingAllFilesRef.current) {
+      // Need all files for search, filters, or no-tag mode
+      console.log("Loading all files for:", { 
+        isSearching, 
+        hasActiveFilters, 
+        isNoTagMode, 
+        hasAllFilesLoaded 
+      })
       loadAllFilesForSearch()
-    } else if (!needsAllFiles && hasAllFilesLoaded && !searchQuery) {
-      // Filters cleared and not in no-tag mode - return to paginated view
-      console.log("Clearing filters, returning to paginated view")
+    } else if (!needsAllFiles && hasAllFilesLoaded && viewState.galleryMode === "recent") {
+      // No longer need all files and we're in recent mode - return to paginated view
+      console.log("Returning to paginated view")
       loadFiles()
     }
-  }, [filters.fileTypes.length, filters.selectedTags.length, viewState.galleryMode, hasAllFilesLoaded, searchQuery, loadAllFilesForSearch, loadFiles])
+  }, [
+    searchQuery, 
+    filters.fileTypes.length, 
+    filters.selectedTags.length, 
+    viewState.galleryMode, 
+    hasAllFilesLoaded
+  ])
 
   // Note: Removed automatic reload on filter changes since we now use client-side filtering
   // This allows real-time filtering without server requests
