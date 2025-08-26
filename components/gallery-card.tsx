@@ -430,9 +430,9 @@ export function GalleryCard({
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ 
                   type: "spring", 
-                  stiffness: 400, 
-                  damping: 25,
-                  duration: 0.2
+                  stiffness: 600, 
+                  damping: 20,
+                  duration: 0.12
                 }}
                 className="flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm"
               >
@@ -479,9 +479,9 @@ export function GalleryCard({
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ 
                   type: "spring", 
-                  stiffness: 400, 
-                  damping: 25,
-                  duration: 0.2
+                  stiffness: 600, 
+                  damping: 20,
+                  duration: 0.12
                 }}
                 className="flex flex-wrap gap-1"
               >
