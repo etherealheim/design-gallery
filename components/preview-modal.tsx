@@ -161,7 +161,7 @@ export function PreviewModal({
             </div>
 
             {/* Tags - Fixed at bottom with overlay input design */}
-            <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start">
+            <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start pt-2">
               <div className="relative w-full max-w-full">
                 <AnimatePresence mode="wait">
                   {isAddingTag ? (
@@ -175,13 +175,13 @@ export function PreviewModal({
                         duration: 0.15,
                         ease: "easeOut"
                       }}
-                      className="flex items-center gap-2 px-2 py-1.5 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg"
+                      className="flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm"
                     >
                       <Input
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder="Space or comma"
-                        className="flex-1 border-0 p-0 pl-2 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 text-base md:text-sm"
+                        className="flex-1 h-4 text-base md:text-sm border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleAddTag()
                           if (e.key === "Escape") {
@@ -190,15 +190,20 @@ export function PreviewModal({
                           }
                         }}
                         autoFocus
+                        onClick={(e) => e.stopPropagation()}
                       />
                       <button
-                        onClick={handleAddTag}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleAddTag()
+                        }}
                         className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
                         <Check className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation()
                           setIsAddingTag(false)
                           setNewTag("")
                         }}
