@@ -400,9 +400,7 @@ export function useGalleryState({
     try {
       // Update in background
       await updateFile(fileId, { tags: [...currentFile.tags, tag] })
-      toast.success("Tag added", {
-        description: `"${tag}" added to ${currentFile.title}`,
-      })
+      // Note: Toast will be handled by the component for multiple tags
     } catch (error) {
       console.error("Failed to add tag:", error)
       // Revert optimistic update

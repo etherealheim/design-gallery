@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Edit3, X, Play, ImageIcon, Check, Trash2 } from "lucide-react"
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
+import { toast } from "sonner"
 
 interface GalleryCardProps {
   image: GalleryItem
@@ -134,12 +135,48 @@ export function GalleryCard({
   const handleAddTag = async () => {
     if (!newTag.trim() || !onAddTag) return
     
+    // Parse multiple tags from input - support both space and comma separation
+    const rawTags = newTag.trim()
+    let tags: string[] = []
+    
+    // First try comma separation
+    if (rawTags.includes(',')) {
+      tags = rawTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    } else {
+      // Fall back to space separation
+      tags = rawTags.split(/\s+/).filter(tag => tag.length > 0)
+    }
+    
+    // Remove duplicates and filter out existing tags
+    const uniqueTags = [...new Set(tags)].filter(tag => !image.tags.includes(tag))
+    
+    if (uniqueTags.length === 0) {
+      setNewTag("")
+      setIsAddingTag(false)
+      return
+    }
+    
     try {
-      await onAddTag(image.id, newTag.trim())
+      // Add tags sequentially to avoid race conditions
+      for (const tag of uniqueTags) {
+        await onAddTag(image.id, tag)
+      }
+      
+      // Show success toast
+      if (uniqueTags.length === 1) {
+        toast.success("Tag added", {
+          description: `"${uniqueTags[0]}" added to ${image.title}`,
+        })
+      } else {
+        toast.success(`${uniqueTags.length} tags added`, {
+          description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${image.title}`,
+        })
+      }
+      
       setNewTag("")
       setIsAddingTag(false)
     } catch (error) {
-      console.error("Failed to add tag:", error)
+      console.error("Failed to add tags:", error)
     }
   }
 
@@ -422,8 +459,8 @@ export function GalleryCard({
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Tag name..."
-                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[60px] w-auto"
+                placeholder="tag1 tag2 or tag1, tag2"
+                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleAddTag()
