@@ -62,7 +62,7 @@ export function PreviewModal({
 
   return (
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-      <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:max-h-[95vh] sm:w-auto sm:h-auto p-4 sm:p-6" showCloseButton={false}>
+      <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:max-h-[95vh] sm:w-auto sm:h-auto p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" showCloseButton={false}>
         {previewItem && (
           <div className="flex flex-col max-w-full h-full">
             <DialogTitle className="sr-only">
@@ -120,7 +120,7 @@ export function PreviewModal({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center justify-center overflow-hidden mb-4">
+            <div className="flex items-center justify-center overflow-hidden mb-4 flex-1">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
@@ -156,8 +156,8 @@ export function PreviewModal({
                 />
               )}
             </div>
-            <div className="space-y-3 min-w-0">
-              <div className="flex flex-wrap gap-2 items-center">
+            <div className="space-y-3 min-w-0 flex flex-col items-center sm:items-start">
+              <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
                 {previewItem.tags.map((tag, index) => (
                   <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
                     {tag}
@@ -182,7 +182,7 @@ export function PreviewModal({
               </div>
 
               {isAddingTag && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full max-w-sm">
                   <Input
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}

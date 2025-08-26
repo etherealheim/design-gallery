@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -67,10 +68,31 @@ export function GalleryGrid({
     rootMargin: "100px",
   })
 
+  // Add a brief loading state when switching gallery modes to prevent layout shift
+  const [isSwitchingMode, setIsSwitchingMode] = useState(false)
+  const [currentMode, setCurrentMode] = useState(galleryViewMode)
+
+  // Handle mode switching with loading state
+  const handleModeSwitch = (mode: "recent" | "random" | "no-tag") => {
+    if (mode !== currentMode) {
+      setIsSwitchingMode(true)
+      handleViewModeChange(mode)
+      setCurrentMode(mode)
+      
+      // Brief delay to prevent jarring layout changes
+      setTimeout(() => {
+        setIsSwitchingMode(false)
+      }, 150)
+    }
+  }
+
   // Calculate counts for each filter mode - use totalCount for recent, actual counts for others
   const recentCount = totalCount
   const randomCount = Math.min(20, totalCount)
-  const noTagCount = sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length
+  // For no-tag count, count from all available items (not limited by pagination)
+  const noTagCount = searchQuery 
+    ? sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length
+    : sortedAndFilteredImages.displayImages.filter(item => item.tags.length === 0).length
 
   return (
     <>
@@ -93,7 +115,7 @@ export function GalleryGrid({
                   <Button
                     variant={galleryViewMode === "recent" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleViewModeChange("recent")}
+                    onClick={() => handleModeSwitch("recent")}
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Clock className="h-4 w-4" />
@@ -114,7 +136,7 @@ export function GalleryGrid({
                   <Button
                     variant={galleryViewMode === "random" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleViewModeChange("random")}
+                    onClick={() => handleModeSwitch("random")}
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Shuffle className="h-4 w-4" />
@@ -136,7 +158,7 @@ export function GalleryGrid({
                 <Button
                   variant={galleryViewMode === "no-tag" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleViewModeChange("no-tag")}
+                  onClick={() => handleModeSwitch("no-tag")}
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Tag className="h-4 w-4" />
@@ -166,22 +188,32 @@ export function GalleryGrid({
         </div>
       )}
 
-      {sortedAndFilteredImages.displayImages.length > 0 && (
+      {/* Mode switching loading indicator */}
+      {isSwitchingMode && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-sm text-muted-foreground">Switching view...</span>
+        </div>
+      )}
+
+      {!isSwitchingMode && sortedAndFilteredImages.displayImages.length > 0 && (
         <motion.div
-          layout
+          key={galleryViewMode} // Force re-mount on mode change to prevent layout issues
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
           className={`grid gap-6 ${
             viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
           }`}
         >
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {uploadingFiles.map((skeletalId) => (
               <motion.div
                 key={skeletalId}
-                layout
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.2 }}
               >
                 <SkeletalCard viewMode={viewMode} />
               </motion.div>
@@ -190,10 +222,9 @@ export function GalleryGrid({
             {sortedAndFilteredImages.displayImages.map((image, index) => (
               <motion.div
                 key={`${galleryViewMode}-${image.id}`}
-                layout
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.15 }}
               >
                 <GalleryCard
                   image={image}

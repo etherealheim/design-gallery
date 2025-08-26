@@ -393,6 +393,21 @@ export function GalleryCard({
               </Button>
             </div>
           ))}
+
+          {/* Show "Add tag" badge when no tags and no pending tags */}
+          {image.tags.length === 0 && pendingTags.length === 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 bg-transparent cursor-pointer text-xs"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEdit(image)
+              }}
+            >
+              Add tag
+            </Button>
+          )}
         </div>
       </div>
 

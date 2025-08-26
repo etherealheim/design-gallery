@@ -127,6 +127,56 @@ export function useFileUpload({
     }
   }, [generateTagsForFile, onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded, onPendingTags])
 
+  // Upload a single file without showing individual toasts (for batch uploads)
+  const uploadSingleFileWithoutToast = useCallback(async (file: File): Promise<void> => {
+    const isVideo = file.type.startsWith("video/")
+    const title = file.name.replace(/\.[^/.]+$/, "")
+    const skeletalId = `skeletal-${Date.now()}-${Math.random().toString(36).substring(2)}`
+
+    let uploadedFile: UploadedFile | null = null
+
+    try {
+      onUploadStart(skeletalId)
+
+      // Upload file (no individual toast)
+      const dbFile = await FileOperationsService.uploadFile(
+        file,
+        title,
+        [],
+        (progress) => {
+          setUploadProgress({ fileName: file.name, progress: progress.progress })
+        }
+      )
+
+      // Generate tags
+      const tags = await generateTagsForFile(title, dbFile.file_path, isVideo)
+
+      // Create uploaded file object
+      uploadedFile = {
+        id: dbFile.id,
+        file,
+        url: dbFile.file_path,
+        title: dbFile.title,
+        tags: [], // Tags will be added when confirmed
+        type: isVideo ? "video" : "image",
+        dateAdded: new Date(dbFile.created_at),
+        fileSize: dbFile.file_size,
+        mimeType: dbFile.file_type,
+      }
+
+      // Update state
+      onUploadComplete(uploadedFile)
+      onNewlyUploaded(dbFile.id)
+      onPendingTags(dbFile.id, tags)
+      onUploadEnd(skeletalId)
+
+    } catch (error) {
+      console.error("Failed to upload file:", file.name, error)
+      onUploadEnd(skeletalId)
+      throw error
+    }
+  }, [generateTagsForFile, onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded, onPendingTags])
+
   // Handle file drop (multiple files)
   const handleFileDrop = useCallback(async (files: FileList) => {
     if (isUploading) {
@@ -172,13 +222,18 @@ export function useFileUpload({
         
         // Update batch progress if multiple files
         if (batchToastId && validation.validFiles.length > 1) {
-          toast.loading(`Uploading file ${i + 1} of ${validation.validFiles.length}...`, {
+          toast.loading(`Uploading ${i + 1}/${validation.validFiles.length} files...`, {
             id: batchToastId,
             description: `Processing: ${file.name}`,
           })
         }
         
-        await uploadSingleFile(file)
+        // For batch uploads, suppress individual toasts by modifying uploadSingleFile temporarily
+        if (validation.validFiles.length > 1) {
+          await uploadSingleFileWithoutToast(file)
+        } else {
+          await uploadSingleFile(file)
+        }
       }
       
       // Update final success toast
