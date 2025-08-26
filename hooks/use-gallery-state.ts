@@ -21,6 +21,14 @@ export function useGalleryState({
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [totalCount, setTotalCount] = useState(0)
+  const [hasAllFilesLoaded, setHasAllFilesLoaded] = useState(false)
+  const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  
   // Filter and view state
   const [filters, setFilters] = useState<FilterState>({
     fileTypes: [],
@@ -46,13 +54,17 @@ export function useGalleryState({
 
 
 
-  // Load initial data
+  // Load initial data with pagination
   const loadFiles = useCallback(async () => {
     try {
       setIsLoading(true)
-      const files = await DataService.loadAllFiles()
-      const uploadedFilesList = files.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      setCurrentPage(1)
+      setHasAllFilesLoaded(false)
+      const result = await DataService.loadFilesWithPagination(1, 20, filters)
+      const uploadedFilesList = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       setUploadedFiles(uploadedFilesList)
+      setHasMore(result.hasMore)
+      setTotalCount(result.totalCount)
     } catch (error) {
       console.error("Failed to load files:", error)
       toast({
@@ -62,6 +74,50 @@ export function useGalleryState({
       })
     } finally {
       setIsLoading(false)
+    }
+  }, [filters])
+
+  // Load more files for infinite scrolling
+  const loadMoreFiles = useCallback(async () => {
+    if (!hasMore || isLoadingMore) return
+
+    try {
+      setIsLoadingMore(true)
+      const nextPage = currentPage + 1
+      const result = await DataService.loadFilesWithPagination(nextPage, 20, filters)
+      const newFiles = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      
+      setUploadedFiles(prev => [...prev, ...newFiles])
+      setCurrentPage(nextPage)
+      setHasMore(result.hasMore)
+      setTotalCount(result.totalCount)
+    } catch (error) {
+      console.error("Failed to load more files:", error)
+      toast.error("Failed to load more files", {
+        description: createUserFriendlyMessage(error),
+      })
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }, [currentPage, hasMore, isLoadingMore, filters])
+
+  // Load all files for search (only when needed)
+  const loadAllFilesForSearch = useCallback(async () => {
+    try {
+      setIsLoadingSearch(true)
+      const files = await DataService.loadAllFiles()
+      const uploadedFilesList = files.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      setUploadedFiles(uploadedFilesList)
+      setTotalCount(files.length)
+      setHasMore(false) // No pagination for search
+      setHasAllFilesLoaded(true)
+    } catch (error) {
+      console.error("Failed to load files for search:", error)
+      toast.error("Search failed", {
+        description: createUserFriendlyMessage(error),
+      })
+    } finally {
+      setIsLoadingSearch(false)
     }
   }, [])
 
@@ -104,6 +160,8 @@ export function useGalleryState({
       ...prev,
       selectedFiles: new Set([...prev.selectedFiles].filter(id => id !== fileId))
     }))
+    // Update total count immediately
+    setTotalCount(prev => Math.max(0, prev - 1))
     
     // Show success toast immediately
     const toastId = toast.success(`✅ ${fileToDelete.title} deleted`, {
@@ -122,6 +180,8 @@ export function useGalleryState({
         const newFiles = [...prev, fileToDelete]
         return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
       })
+      // Restore total count
+      setTotalCount(prev => prev + 1)
       
       // Dismiss the success toast and show error
       toast.dismiss(toastId)
@@ -142,6 +202,8 @@ export function useGalleryState({
     // Optimistically remove from UI immediately
     setUploadedFiles(prev => prev.filter(file => !selectedFileIds.includes(file.id)))
     setViewState(prev => ({ ...prev, selectedFiles: new Set() }))
+    // Update total count immediately
+    setTotalCount(prev => Math.max(0, prev - selectedFileIds.length))
     
     // Show success toast immediately
     const toastId = toast.success("✅ Files deleted", {
@@ -160,6 +222,8 @@ export function useGalleryState({
         const newFiles = [...prev, ...filesToDelete]
         return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
       })
+      // Restore total count
+      setTotalCount(prev => prev + selectedFileIds.length)
       
       toast.dismiss(toastId)
       toast.error("❌ Batch delete failed", {
@@ -230,18 +294,31 @@ export function useGalleryState({
   const processedItems = useMemo(() => {
     let items = [...combinedItems]
 
-    // Apply search and filters
-    const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
+    // For search queries, apply client-side filtering since we need to search all data
+    if (searchQuery) {
+      const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
+      const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
+      const displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
+      const availableTags = FileFilterService.extractAvailableTags(items)
+      
+      return {
+        displayItems,
+        filteredItems,
+        availableTags,
+        totalItems: filteredItems.length, // Use filtered count for search
+      }
+    }
+
+    // For non-search queries, use paginated data as-is since filtering happens on server
+    const filteredItems = items // Already filtered by pagination
+    const availableTags = FileFilterService.extractAvailableTags(items)
     
-    // Apply sorting
-    const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
+    // Handle view mode specific logic for paginated data
+    let displayItems = items
     
-    // Handle view mode specific logic
-    let displayItems = sortedItems
-    
-    if (!searchQuery && viewState.galleryMode === "random") {
+    if (viewState.galleryMode === "random") {
       // Apply seeded shuffle for consistent random view
-      const shuffled = [...sortedItems]
+      const shuffled = [...items]
       const seededRandom = (seed: number) => {
         const x = Math.sin(seed) * 10000
         return x - Math.floor(x)
@@ -251,24 +328,22 @@ export function useGalleryState({
         const randomIndex = Math.floor(seededRandom(randomSeed + i) * (i + 1))
         ;[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]]
       }
-      displayItems = shuffled.slice(0, 20)
-    } else if (!searchQuery && viewState.galleryMode === "no-tag") {
+      displayItems = shuffled
+    } else if (viewState.galleryMode === "no-tag") {
       // Filter items without tags
-      displayItems = sortedItems.filter(item => item.tags.length === 0)
+      displayItems = items.filter(item => item.tags.length === 0)
     } else {
       // Prioritize newly uploaded files
-      displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
+      displayItems = FileFilterService.prioritizeNewlyUploaded(items, newlyUploadedFiles)
     }
-    
-    const availableTags = FileFilterService.extractAvailableTags(items)
     
     return {
       displayItems,
       filteredItems,
       availableTags,
-      totalItems: items.length,
+      totalItems: totalCount, // Use actual total count from database
     }
-  }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles])
+  }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles, totalCount])
 
   // View state actions
   const updateViewState = useCallback((updates: Partial<ViewState>) => {
@@ -313,10 +388,38 @@ export function useGalleryState({
     })
   }, [])
 
+  // Enhanced upload handler that updates total count
+  const handleFileUpload = useCallback((file: UploadedFile) => {
+    setUploadedFiles(prev => [file, ...prev])
+    // Update total count immediately for real-time badge updates
+    setTotalCount(prev => prev + 1)
+  }, [])
+
   // Initialize data on mount
   useEffect(() => {
     loadFiles()
   }, [loadFiles])
+
+  // Handle search query changes - only load all files when search starts
+  useEffect(() => {
+    const isSearching = searchQuery.trim().length > 0
+    const wasSearching = !hasAllFilesLoaded && uploadedFiles.length > 0
+    
+    if (isSearching && !hasAllFilesLoaded) {
+      // Starting a search - load all files
+      loadAllFilesForSearch()
+    } else if (!isSearching && hasAllFilesLoaded) {
+      // Clearing search - return to paginated view
+      loadFiles()
+    }
+  }, [searchQuery, hasAllFilesLoaded, loadAllFilesForSearch, loadFiles, uploadedFiles.length])
+
+  // Reload data when filters change (but not search)
+  useEffect(() => {
+    if (!searchQuery) {
+      loadFiles()
+    }
+  }, [filters, loadFiles, searchQuery])
 
   return {
     // Data state
@@ -363,5 +466,13 @@ export function useGalleryState({
     
     // Upload management
     setUploadedFiles,
+    handleFileUpload,
+    
+    // Pagination state
+    hasMore,
+    isLoadingMore,
+    loadMoreFiles,
+    totalCount,
+    isLoadingSearch,
   }
 }

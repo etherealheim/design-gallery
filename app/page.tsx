@@ -44,6 +44,12 @@ export default function DesignVault() {
     rejectTag,
     handleTagClick,
     setUploadedFiles,
+    handleFileUpload,
+    hasMore,
+    isLoadingMore,
+    loadMoreFiles,
+    totalCount,
+    isLoadingSearch,
   } = useGalleryState()
 
   // File upload management
@@ -54,7 +60,7 @@ export default function DesignVault() {
     triggerFileInput,
   } = useFileUpload({
     onUploadComplete: (file) => {
-      setUploadedFiles(prev => [file, ...prev])
+      handleFileUpload(file)
     },
     onUploadStart: (skeletalId) => {
       setUploadingFiles(prev => [...prev, skeletalId])
@@ -197,8 +203,8 @@ export default function DesignVault() {
     }
   }
 
-  // Show loading skeleton
-  if (isLoading) {
+  // Show loading skeleton only for initial page load, not for search
+  if (isLoading && !isLoadingSearch) {
     return <LoadingSkeleton />
   }
 
@@ -275,6 +281,11 @@ export default function DesignVault() {
               confirmTag={confirmTag}
               rejectTag={rejectTag}
               handleRename={handleRename}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              loadMoreFiles={loadMoreFiles}
+              totalCount={totalCount}
+              isLoadingSearch={isLoadingSearch}
             />
           </div>
         </main>

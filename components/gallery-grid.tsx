@@ -3,10 +3,12 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Clock, Shuffle, Search, Tag } from "lucide-react"
+import { Clock, Shuffle, Search, Tag, Loader2 } from "lucide-react"
 import { GalleryCard } from "./gallery-card"
 import { SkeletalCard } from "./skeletal-card"
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer"
 import type { GalleryItem } from "@/types"
 
 interface GalleryGridProps {
@@ -28,6 +30,12 @@ interface GalleryGridProps {
   confirmTag: (fileId: string, tag: string) => void
   rejectTag: (fileId: string, tag: string) => void
   handleRename: (item: GalleryItem) => void
+  // Infinite scroll props
+  hasMore: boolean
+  isLoadingMore: boolean
+  loadMoreFiles: () => void
+  totalCount: number
+  isLoadingSearch: boolean
 }
 
 export function GalleryGrid({
@@ -45,14 +53,37 @@ export function GalleryGrid({
   confirmTag,
   rejectTag,
   handleRename,
+  hasMore,
+  isLoadingMore,
+  loadMoreFiles,
+  totalCount,
+  isLoadingSearch,
 }: GalleryGridProps) {
-  // Calculate counts for each filter mode
-  const recentCount = sortedAndFilteredImages.filteredImages.length
-  const randomCount = Math.min(20, sortedAndFilteredImages.filteredImages.length)
+  // Use intersection observer for infinite scroll
+  const { targetRef } = useIntersectionObserver({
+    onIntersect: loadMoreFiles,
+    enabled: hasMore && !isLoadingMore && !searchQuery,
+    threshold: 0.1,
+    rootMargin: "100px",
+  })
+
+  // Calculate counts for each filter mode - use totalCount for recent, actual counts for others
+  const recentCount = totalCount
+  const randomCount = Math.min(20, totalCount)
   const noTagCount = sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length
 
   return (
     <>
+      {/* Search loading indicator */}
+      {searchQuery && isLoadingSearch && (
+        <div className="mb-4 flex items-center justify-center">
+          <div className="flex items-center gap-2 text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Loading all files for search...</span>
+          </div>
+        </div>
+      )}
+
       {!searchQuery && (
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -68,7 +99,7 @@ export function GalleryGrid({
                     <Clock className="h-4 w-4" />
                     Recent
                     <Badge variant="secondary" className="ml-1 text-xs">
-                      {recentCount}
+                      <AnimatedCounter value={recentCount} />
                     </Badge>
                   </Button>
                 </TooltipTrigger>
@@ -89,7 +120,7 @@ export function GalleryGrid({
                     <Shuffle className="h-4 w-4" />
                     Random
                     <Badge variant="secondary" className="ml-1 text-xs">
-                      {randomCount}
+                      <AnimatedCounter value={randomCount} />
                     </Badge>
                   </Button>
                 </TooltipTrigger>
@@ -111,7 +142,7 @@ export function GalleryGrid({
                   <Tag className="h-4 w-4" />
                   No Tag
                   <Badge variant="secondary" className="ml-1 text-xs">
-                    {noTagCount}
+                    <AnimatedCounter value={noTagCount} />
                   </Badge>
                 </Button>
               </TooltipTrigger>
@@ -180,6 +211,29 @@ export function GalleryGrid({
             ))}
           </AnimatePresence>
         </motion.div>
+      )}
+
+      {/* Infinite scroll trigger and loading indicator */}
+      {!searchQuery && sortedAndFilteredImages.displayImages.length > 0 && (
+        <div className="mt-8 flex justify-center">
+          {hasMore && (
+            <div ref={targetRef} className="flex items-center justify-center py-4">
+              {isLoadingMore ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Loading more...</span>
+                </div>
+              ) : (
+                <div className="h-4 w-4" /> // Invisible trigger element
+              )}
+            </div>
+          )}
+          {!hasMore && sortedAndFilteredImages.displayImages.length >= 20 && (
+            <div className="flex items-center justify-center py-4 text-muted-foreground">
+              <span className="text-sm">No more items to load</span>
+            </div>
+          )}
+        </div>
       )}
     </>
   )

@@ -116,7 +116,7 @@ export function PreviewModal({
                   </>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setPreviewItem(null)} className="h-8 w-8 shrink-0 ml-2">
+              <Button variant="ghost" size="icon" onClick={() => setPreviewItem(null)} className="h-8 w-8 shrink-0 ml-2 cursor-pointer">
                 <X className="h-4 w-4" />
               </Button>
             </div>

@@ -36,6 +36,7 @@ export function GalleryCard({
 }: GalleryCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
+  const [isHovered, setIsHovered] = useState(false)
 
   const handleSaveRename = async () => {
     if (editTitle.trim() && editTitle !== image.title) {
@@ -67,10 +68,18 @@ export function GalleryCard({
 
   return (
     <Card
-      className={`group hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
+      className={`hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
       onClick={() => !isEditing && onPreview(image)}
+      onMouseEnter={() => {
+        setIsHovered(true)
+        console.log('Card hover enter:', image.title)
+      }}
+      onMouseLeave={() => {
+        setIsHovered(false)
+        console.log('Card hover leave:', image.title)
+      }}
     >
       <div 
         className="relative overflow-hidden"
@@ -103,7 +112,7 @@ export function GalleryCard({
         } : undefined}
       >
         {/* Media Element - Consistent styling for both video and image */}
-        <div className={`w-full transition-transform duration-300 group-hover:scale-105 ${
+        <div className={`w-full transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'} ${
           viewMode === "list" ? "h-auto" : "h-48"
         }`}>
           {image.type === "video" ? (
@@ -172,14 +181,22 @@ export function GalleryCard({
         </div>
         
         {/* Hover Overlay - Consistent for both types */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div 
+          className={`absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent transition-opacity duration-300 ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`} 
+        />
 
         {/* Action Buttons - Left Side */}
-        <div className="absolute top-2 left-2 flex gap-1">
+        <div 
+          className={`absolute top-2 left-2 flex gap-1 z-20 transition-opacity duration-300 ${
+            isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <Button
             size="sm"
             variant="ghost"
-            className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/90 text-white hover:bg-black/100 backdrop-blur-sm"
+            className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm cursor-pointer border border-white/10"
             onClick={(e) => {
               e.stopPropagation()
               setIsEditing(true)
@@ -191,7 +208,7 @@ export function GalleryCard({
             <Button
               size="sm"
               variant="ghost"
-              className="opacity-0 group-hover:opacity-100 transition-all duration-300 h-6 w-6 p-0 bg-black/90 text-white hover:bg-red-600/100 backdrop-blur-sm"
+              className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-red-600 backdrop-blur-sm cursor-pointer border border-white/10"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(image.id)
@@ -202,12 +219,12 @@ export function GalleryCard({
           )}
         </div>
 
-        {/* Media Type Indicator - Right Side */}
-        <div className="absolute top-2 right-2">
+        {/* Media Type Indicator - Right Side - Always Visible */}
+        <div className="absolute top-2 right-2 z-10">
           <Button 
             variant="ghost" 
             size="sm" 
-            className="h-6 w-6 p-0 bg-black/90 text-white hover:bg-black/100 transition-colors backdrop-blur-sm"
+            className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
             {image.type === "video" ? (
