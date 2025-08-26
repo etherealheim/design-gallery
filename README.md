@@ -7,6 +7,8 @@
 
 A clean, high-performance gallery app for your design assets. Drag, drop, search, and organize with smart compression and lazy loading.
 
+<img width="2954" height="1534" alt="2025-08-26-1660" src="https://github.com/user-attachments/assets/1fc08f02-daf6-45f8-a5b8-5fcf70dcce18" />
+
 > **Open Source** - Free to use, modify, and contribute to!
 
 ## Quick Setup
