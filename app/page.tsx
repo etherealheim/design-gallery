@@ -46,6 +46,7 @@ export default function DesignVault() {
     setUploadedFiles,
     handleFileUpload,
     addTagToFile,
+    addMultipleTagsToFile,
     hasMore,
     isLoadingMore,
     loadMoreFiles,
@@ -140,16 +141,14 @@ export default function DesignVault() {
       })
     }
 
-    // Add tags in background without blocking UI
-    uniqueTags.forEach(async (tag) => {
-      console.log("Main Page - Adding tag:", tag)
-      try {
-        await addTagToFile(previewItem.id, tag)
-        console.log("Main Page - Successfully added tag:", tag)
-      } catch (error) {
-        console.error("Main Page - Failed to add tag:", tag, error)
-      }
-    })
+    // Add all tags in a single batch to prevent race conditions
+    console.log("Main Page - Adding tags in batch:", uniqueTags)
+    try {
+      await addMultipleTagsToFile(previewItem.id, uniqueTags)
+      console.log("Main Page - Successfully added all tags")
+    } catch (error) {
+      console.error("Main Page - Failed to add tags:", error)
+    }
 
     return true
   }
@@ -336,6 +335,7 @@ export default function DesignVault() {
               rejectTag={rejectTag}
               handleRename={handleRename}
               handleAddTag={addTagToFile}
+              handleAddMultipleTags={addMultipleTagsToFile}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               loadMoreFiles={loadMoreFiles}

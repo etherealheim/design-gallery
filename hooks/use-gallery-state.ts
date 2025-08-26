@@ -442,6 +442,52 @@ export function useGalleryState({
     }
   }, [updateFile])
 
+  // Add multiple tags to file in a single operation
+  const addMultipleTagsToFile = useCallback(async (fileId: string, newTags: string[]) => {
+    if (newTags.length === 0) return
+
+    let currentFile: UploadedFile | undefined
+    let updatedTags: string[] = []
+    
+    // Optimistically update UI and capture current state
+    setUploadedFiles(prev => {
+      currentFile = prev.find(f => f.id === fileId)
+      if (!currentFile) return prev
+      
+      // Merge new tags with existing ones, removing duplicates
+      updatedTags = [...new Set([...currentFile.tags, ...newTags])]
+      
+      // Return updated state
+      return prev.map(file => 
+        file.id === fileId 
+          ? { ...file, tags: updatedTags }
+          : file
+      )
+    })
+
+    if (!currentFile) return
+
+    try {
+      // Single API call with all tags
+      await updateFile(fileId, { tags: updatedTags })
+      console.log("Successfully added multiple tags:", newTags)
+    } catch (error) {
+      console.error("Failed to add multiple tags:", error)
+      // Revert optimistic update
+      setUploadedFiles(prev => 
+        prev.map(file => 
+          file.id === fileId 
+            ? { ...file, tags: currentFile!.tags }
+            : file
+        )
+      )
+      toast.error("Failed to add tags", {
+        description: createUserFriendlyMessage(error),
+      })
+      throw error
+    }
+  }, [updateFile])
+
   // Initialize data on mount
   useEffect(() => {
     loadFiles()
@@ -513,6 +559,7 @@ export function useGalleryState({
     
     // Tag management
     addTagToFile,
+    addMultipleTagsToFile,
     
     // Pagination state
     hasMore,

@@ -25,6 +25,7 @@ interface GalleryCardProps {
   onRejectTag: (id: string, tag: string) => void
   onRename: (item: GalleryItem) => void
   onAddTag?: (id: string, tag: string) => void
+  onAddMultipleTags?: (id: string, tags: string[]) => void
 }
 
 export function GalleryCard({
@@ -39,6 +40,7 @@ export function GalleryCard({
   onRejectTag,
   onRename,
   onAddTag,
+  onAddMultipleTags,
 }: GalleryCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
@@ -179,16 +181,16 @@ export function GalleryCard({
       })
     }
 
-    // Add tags in background without blocking UI
-    uniqueTags.forEach(async (tag) => {
-      console.log("Gallery Card - Adding tag:", tag)
+    // Add all tags in a single batch to prevent race conditions
+    if (onAddMultipleTags) {
+      console.log("Gallery Card - Adding tags in batch:", uniqueTags)
       try {
-        await onAddTag?.(image.id, tag)
-        console.log("Gallery Card - Successfully added tag:", tag)
+        await onAddMultipleTags(image.id, uniqueTags)
+        console.log("Gallery Card - Successfully added all tags")
       } catch (error) {
-        console.error("Gallery Card - Failed to add tag:", tag, error)
+        console.error("Gallery Card - Failed to add tags:", error)
       }
-    })
+    }
   }
 
   const handleCancelAddTag = () => {

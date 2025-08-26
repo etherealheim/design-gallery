@@ -32,6 +32,7 @@ interface GalleryGridProps {
   rejectTag: (fileId: string, tag: string) => void
   handleRename: (item: GalleryItem) => void
   handleAddTag: (id: string, tag: string) => void
+  handleAddMultipleTags: (id: string, tags: string[]) => void
   // Infinite scroll props
   hasMore: boolean
   isLoadingMore: boolean
@@ -56,6 +57,7 @@ export function GalleryGrid({
   rejectTag,
   handleRename,
   handleAddTag,
+  handleAddMultipleTags,
   hasMore,
   isLoadingMore,
   loadMoreFiles,
@@ -240,6 +242,7 @@ export function GalleryGrid({
                   onRejectTag={rejectTag}
                   onRename={handleRename}
                   onAddTag={handleAddTag}
+                  onAddMultipleTags={handleAddMultipleTags}
                 />
               </motion.div>
             ))}
