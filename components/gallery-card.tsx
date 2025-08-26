@@ -164,16 +164,9 @@ export function GalleryCard({
       return
     }
     
-    // Add tags one by one with proper error handling
-    for (const tag of uniqueTags) {
-      console.log("Gallery Card - Adding tag:", tag)
-      try {
-        await onAddTag?.(image.id, tag) // Wait for each tag to be processed
-        console.log("Gallery Card - Successfully added tag:", tag)
-      } catch (error) {
-        console.error("Gallery Card - Failed to add tag:", tag, error)
-      }
-    }
+    // INSTANT UI UPDATE - Clear input and close immediately for snappy feel
+    setNewTag("")
+    setIsAddingTag(false)
     
     // Show success toast immediately
     if (uniqueTags.length === 1) {
@@ -185,9 +178,17 @@ export function GalleryCard({
         description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${image.title}`,
       })
     }
-    
-    setNewTag("")
-    setIsAddingTag(false)
+
+    // Add tags in background without blocking UI
+    uniqueTags.forEach(async (tag) => {
+      console.log("Gallery Card - Adding tag:", tag)
+      try {
+        await onAddTag?.(image.id, tag)
+        console.log("Gallery Card - Successfully added tag:", tag)
+      } catch (error) {
+        console.error("Gallery Card - Failed to add tag:", tag, error)
+      }
+    })
   }
 
   const handleCancelAddTag = () => {

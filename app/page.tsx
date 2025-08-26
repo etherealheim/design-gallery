@@ -125,22 +125,11 @@ export default function DesignVault() {
       return false
     }
 
-    // Add tags one by one using addTagToFile (same as gallery card)
-    for (const tag of uniqueTags) {
-      console.log("Main Page - Adding tag:", tag)
-      try {
-        await addTagToFile(previewItem.id, tag)
-        console.log("Main Page - Successfully added tag:", tag)
-      } catch (error) {
-        console.error("Main Page - Failed to add tag:", tag, error)
-      }
-    }
-
-    // Clear input and close adding state
+    // INSTANT UI UPDATE - Clear input and close immediately for snappy feel
     setNewTag("")
     setIsAddingTag(false)
 
-    // Show success toast
+    // Show success toast immediately
     if (uniqueTags.length === 1) {
       toast.success("Tag added", {
         description: `"${uniqueTags[0]}" added to ${previewItem.title}`,
@@ -150,6 +139,17 @@ export default function DesignVault() {
         description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${previewItem.title}`,
       })
     }
+
+    // Add tags in background without blocking UI
+    uniqueTags.forEach(async (tag) => {
+      console.log("Main Page - Adding tag:", tag)
+      try {
+        await addTagToFile(previewItem.id, tag)
+        console.log("Main Page - Successfully added tag:", tag)
+      } catch (error) {
+        console.error("Main Page - Failed to add tag:", tag, error)
+      }
+    })
 
     return true
   }
