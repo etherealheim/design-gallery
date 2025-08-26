@@ -109,10 +109,10 @@ export default function DesignVault() {
     
     // First try comma separation
     if (rawTags.includes(',')) {
-      tags = rawTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+      tags = rawTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
     } else {
       // Fall back to space separation - split on any whitespace
-      tags = rawTags.split(/\s+/).map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+      tags = rawTags.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
     }
     
     console.log("Main Page - Raw input:", rawTags)
@@ -125,7 +125,9 @@ export default function DesignVault() {
     
     if (uniqueTags.length === 0) {
       console.log("Main Page - No unique tags to add")
-      return false
+      setNewTag("")
+      setIsAddingTag(false)
+      return
     }
 
     // INSTANT UI UPDATE - Clear input and close immediately for snappy feel
@@ -139,7 +141,7 @@ export default function DesignVault() {
       })
     } else {
       toast.success(`${uniqueTags.length} tags added`, {
-        description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${previewItem.title}`,
+        description: `Added ${uniqueTags.length} tags to ${previewItem.title}`,
       })
     }
 
@@ -151,8 +153,6 @@ export default function DesignVault() {
     } catch (error) {
       console.error("Main Page - Failed to add tags:", error)
     }
-
-    return true
   }
   const handleRemoveTag = (tag: string) => removeTag(tag, updateFile)
 
