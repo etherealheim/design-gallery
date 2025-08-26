@@ -56,18 +56,45 @@ export function GalleryHeader({
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <div className="relative w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search designs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-10 w-full text-base md:text-sm"
-                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                
+                {/* Container for input and tags */}
+                <div className="relative">
+                  <Input
+                    placeholder={selectedTags.length > 0 ? "" : "Search designs..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10 w-full text-base md:text-sm"
+                    style={{ paddingTop: selectedTags.length > 0 ? "2.5rem" : undefined }}
+                  />
+                  
+                  {/* Selected Tag Chips inside input */}
+                  {selectedTags.length > 0 && (
+                    <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-1">
+                      {selectedTags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors h-5"
+                        >
+                          <span className="text-xs">{tag === "__no_tags__" ? "No tags" : tag}</span>
+                          <button
+                            className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                            onClick={() => onRemoveTag(tag)}
+                          >
+                            <X className="h-2 w-2" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
                 {searchQuery && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer z-10"
                     onClick={() => setSearchQuery("")}
                   >
                     <X className="h-3 w-3" />
@@ -105,29 +132,7 @@ export function GalleryHeader({
               </div>
             </div>
           </div>
-          
-          {/* Mobile Selected Tag Chips */}
-          {selectedTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="secondary"
-                  className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors"
-                >
-                  {tag === "__no_tags__" ? "No tags" : tag}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-3 w-3 p-0 hover:bg-transparent"
-                    onClick={() => onRemoveTag(tag)}
-                  >
-                    <X className="h-2 w-2" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
-          )}
+
         </div>
 
         {/* Desktop Layout */}
@@ -135,13 +140,40 @@ export function GalleryHeader({
           {/* Search Input */}
           <div className="flex-1">
             <div className="relative flex-1" style={{ minWidth: "300px", maxWidth: "800px" }}>
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search by tags or title..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-12 w-full"
-              />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+              
+              {/* Container for input and tags */}
+              <div className="relative">
+                <Input
+                  placeholder={selectedTags.length > 0 ? "" : "Search by tags or title..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-12 w-full"
+                  style={{ paddingTop: selectedTags.length > 0 ? "2.5rem" : undefined }}
+                />
+                
+                {/* Selected Tag Chips inside input */}
+                {selectedTags.length > 0 && (
+                  <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-1">
+                    {selectedTags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors h-5"
+                      >
+                        <span className="text-xs">{tag === "__no_tags__" ? "No tags" : tag}</span>
+                        <button
+                          className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                          onClick={() => onRemoveTag(tag)}
+                        >
+                          <X className="h-2 w-2" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
               {searchQuery && (
                 <TooltipProvider>
                   <Tooltip>
@@ -149,7 +181,7 @@ export function GalleryHeader({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer z-10"
                         onClick={() => setSearchQuery("")}
                       >
                         <X className="h-3 w-3" />
@@ -160,29 +192,6 @@ export function GalleryHeader({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
-              
-              {/* Selected Tag Chips */}
-              {selectedTags.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 flex flex-wrap gap-2 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg">
-                  {selectedTags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors"
-                    >
-                      {tag === "__no_tags__" ? "No tags" : tag}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-3 w-3 p-0 hover:bg-transparent"
-                        onClick={() => onRemoveTag(tag)}
-                      >
-                        <X className="h-2 w-2" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
               )}
             </div>
           </div>
