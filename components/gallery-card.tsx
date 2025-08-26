@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Edit3, X, Play, ImageIcon, Check, Trash2 } from "lucide-react"
+import { Play, ImageIcon, Trash2 } from "lucide-react"
+import CheckIcon from "pqoqubbw-icons/icons/check"
+import XIcon from "pqoqubbw-icons/icons/x"
+import EditIcon from "pqoqubbw-icons/icons/square-pen"
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
@@ -398,40 +401,18 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleSaveRename()
                 }}
-                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                style={{
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'hsl(142.1 76.2% 36.3% / 0.1)'
-                  e.currentTarget.style.color = 'hsl(142.1 70.6% 45.3%)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = 'inherit'
-                }}
+                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <Check className="h-3 w-3" />
+                <CheckIcon size={14} className="text-black dark:text-white" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   handleCancelRename()
                 }}
-                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                style={{
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'hsl(0 84.2% 60.2% / 0.1)'
-                  e.currentTarget.style.color = 'hsl(0 72.2% 50.6%)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = 'inherit'
-                }}
+                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <X className="h-3 w-3" />
+                <XIcon size={14} className="text-black dark:text-white" />
               </button>
             </div>
           ) : (
@@ -477,36 +458,18 @@ export function GalleryCard({
                     e.stopPropagation()
                     handleAddTag()
                   }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
-                    e.currentTarget.style.color = 'rgb(34, 197, 94)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = 'inherit'
-                  }}
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <Check className="h-3 w-3" />
+                  <CheckIcon size={12} className="text-black dark:text-white" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleCancelAddTag()
                   }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                    e.currentTarget.style.color = 'rgb(239, 68, 68)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = 'inherit'
-                  }}
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <X className="h-3 w-3" />
+                  <XIcon size={12} className="text-black dark:text-white" />
                 </button>
               </motion.div>
             ) : (
@@ -542,36 +505,18 @@ export function GalleryCard({
                         e.stopPropagation()
                         onConfirmTag(image.id, tag)
                       }}
-                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
-                        e.currentTarget.style.color = 'rgb(34, 197, 94)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.color = 'inherit'
-                      }}
+                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                      <Check className="h-3 w-3" />
+                      <CheckIcon size={12} className="text-black dark:text-white" />
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         onRejectTag(image.id, tag)
                       }}
-                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                        e.currentTarget.style.color = 'rgb(239, 68, 68)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.color = 'inherit'
-                      }}
+                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                      <X className="h-3 w-3" />
+                      <XIcon size={12} className="text-black dark:text-white" />
                     </button>
                   </div>
                 ))}

@@ -4,7 +4,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { X, Edit3, Check } from "lucide-react"
+import CheckIcon from "pqoqubbw-icons/icons/check"
+import XIcon from "pqoqubbw-icons/icons/x"
+import EditIcon from "pqoqubbw-icons/icons/square-pen"
 import type { GalleryItem } from "@/types"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -89,67 +91,35 @@ export function PreviewModal({
                       autoFocus
                     />
                     <button
-                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                      style={{ cursor: 'pointer' }}
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleSaveTitle}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'hsl(142.1 76.2% 36.3% / 0.1)'
-                        e.currentTarget.style.color = 'hsl(142.1 70.6% 45.3%)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.color = 'inherit'
-                      }}
                     >
-                      <Check className="h-3 w-3" />
+                      <CheckIcon size={16} className="text-black dark:text-white" />
                     </button>
                     <button
-                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                      style={{ cursor: 'pointer' }}
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleCancelTitle}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'hsl(0 84.2% 60.2% / 0.1)'
-                        e.currentTarget.style.color = 'hsl(0 72.2% 50.6%)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                        e.currentTarget.style.color = 'inherit'
-                      }}
                     >
-                      <X className="h-3 w-3" />
+                      <XIcon size={16} className="text-black dark:text-white" />
                     </button>
                   </div>
                 ) : (
                   <>
                     <h2 className="text-lg sm:text-xl font-semibold flex-1 min-w-0 truncate">{previewItem.title}</h2>
                     <button
-                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-colors duration-200"
-                      style={{ cursor: 'pointer' }}
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleStartRename}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'hsl(25 5.3% 44.7% / 0.1)'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent'
-                      }}
                     >
-                      <Edit3 className="h-3 w-3" />
+                      <EditIcon size={16} className="text-black dark:text-white" />
                     </button>
                   </>
                 )}
               </div>
               <button 
                 onClick={() => setPreviewItem(null)} 
-                className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent transition-colors duration-200"
-                style={{ cursor: 'pointer' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
+                className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <X className="h-4 w-4" />
+                <XIcon size={18} className="text-black dark:text-white" />
               </button>
             </div>
 
@@ -226,36 +196,18 @@ export function PreviewModal({
                       />
                       <button
                         onClick={handleAddTag}
-                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
-                          e.currentTarget.style.color = 'rgb(34, 197, 94)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                          e.currentTarget.style.color = 'inherit'
-                        }}
+                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <Check className="h-3 w-3" />
+                        <CheckIcon size={14} className="text-black dark:text-white" />
                       </button>
                       <button
                         onClick={() => {
                           setIsAddingTag(false)
                           setNewTag("")
                         }}
-                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                          e.currentTarget.style.color = 'rgb(239, 68, 68)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent'
-                          e.currentTarget.style.color = 'inherit'
-                        }}
+                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <X className="h-3 w-3" />
+                        <XIcon size={14} className="text-black dark:text-white" />
                       </button>
                     </motion.div>
                   ) : (
@@ -278,18 +230,9 @@ export function PreviewModal({
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(tag)}
-                            className="ml-1 rounded-sm p-0.5 transition-all duration-200"
-                            style={{ cursor: 'pointer' }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                              e.currentTarget.style.color = 'rgb(239, 68, 68)'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent'
-                              e.currentTarget.style.color = 'inherit'
-                            }}
+                            className="ml-1 rounded-sm p-0.5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                           >
-                            <X className="h-3 w-3" />
+                            <XIcon size={12} className="text-black dark:text-white" />
                           </button>
                         </Badge>
                       ))}
