@@ -12,6 +12,7 @@ import { useGalleryState } from "@/hooks/use-gallery-state"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { usePreviewModal } from "@/hooks/use-preview-modal"
 import { BatchOperationsService } from "@/lib/services/file-service"
+import type { ZipProgress } from "@/lib/services/zip-service"
 import { toast } from "sonner"
 import type { GalleryItem, PendingTags } from "@/types"
 
@@ -108,22 +109,90 @@ export default function DesignVault() {
 
   // Handle download all files
   const handleDownloadAll = async () => {
-    const toastId = toast.loading("Preparing downloads...", {
-      description: "Getting ready to download all files",
+    const files = processedItems.displayItems
+    const estimatedSize = BatchOperationsService.getEstimatedZipSize(files)
+    
+    const toastId = toast.loading("Preparing zip archive...", {
+      description: `Packaging ${files.length} files (~${estimatedSize})`,
     })
     
     try {
-      await BatchOperationsService.downloadAllFiles(processedItems.displayItems)
+      await BatchOperationsService.downloadAllFiles(files, (progress: ZipProgress) => {
+        // Update toast with progress
+        const statusMessages = {
+          preparing: "Preparing files...",
+          downloading: `Downloading: ${progress.currentFileName}`,
+          compressing: "Creating zip archive...",
+          complete: "Download ready!",
+          error: "Download failed"
+        }
+        
+        toast.loading(statusMessages[progress.status], {
+          id: toastId,
+          description: `${progress.currentFile}/${progress.totalFiles} files (${progress.percentage}%)`,
+        })
+      })
       
-      toast.success("Download started!", {
+      toast.success("Zip download complete!", {
         id: toastId,
-        description: `Downloading ${processedItems.displayItems.length} files`,
+        description: `Successfully packaged ${files.length} files`,
       })
     } catch (error) {
       console.error("Download failed:", error)
       toast.error("Download failed", {
         id: toastId,
-        description: "Unable to download files. Please try again.",
+        description: "Unable to create zip archive. Please try again.",
+      })
+    }
+  }
+
+  // Handle download selected files
+  const handleDownloadSelected = async () => {
+    // Get the actual GalleryItem objects for selected file IDs
+    const selectedFileIds = Array.from(viewState.selectedFiles)
+    const selectedFiles = processedItems.displayItems.filter(item => 
+      selectedFileIds.includes(item.id)
+    )
+    
+    if (selectedFiles.length === 0) {
+      toast.error("No files selected", {
+        description: "Please select files to download.",
+      })
+      return
+    }
+
+    const estimatedSize = BatchOperationsService.getEstimatedZipSize(selectedFiles)
+    
+    const toastId = toast.loading("Preparing selected files...", {
+      description: `Packaging ${selectedFiles.length} selected files (~${estimatedSize})`,
+    })
+    
+    try {
+      await BatchOperationsService.downloadSelectedFiles(selectedFiles, (progress: ZipProgress) => {
+        // Update toast with progress
+        const statusMessages = {
+          preparing: "Preparing files...",
+          downloading: `Downloading: ${progress.currentFileName}`,
+          compressing: "Creating zip archive...",
+          complete: "Download ready!",
+          error: "Download failed"
+        }
+        
+        toast.loading(statusMessages[progress.status], {
+          id: toastId,
+          description: `${progress.currentFile}/${progress.totalFiles} files (${progress.percentage}%)`,
+        })
+      })
+      
+      toast.success("Selected files downloaded!", {
+        id: toastId,
+        description: `Successfully packaged ${selectedFiles.length} selected files`,
+      })
+    } catch (error) {
+      console.error("Download failed:", error)
+      toast.error("Download failed", {
+        id: toastId,
+        description: "Unable to create zip archive. Please try again.",
       })
     }
   }
@@ -149,6 +218,7 @@ export default function DesignVault() {
         handleBatchDelete={batchDelete}
         onUploadClick={triggerFileInput}
         onDownloadAllClick={handleDownloadAll}
+        onDownloadSelectedClick={handleDownloadSelected}
       />
 
       <div className="flex">

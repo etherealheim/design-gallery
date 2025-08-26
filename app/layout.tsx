@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   title: "Design Vault - UI Inspiration Gallery",
   description: "Organize and discover UI design inspirations with powerful tagging and search",
   generator: "v0.app",
+  icons: {
+    icon: "/favicon.svg",
+  },
 }
 
 export default function RootLayout({

@@ -98,33 +98,28 @@ export function GalleryGrid({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={galleryViewMode === "no-tag" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleViewModeChange("no-tag")}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Tag className="h-4 w-4" />
-                    No Tag
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {noTagCount}
-                    </Badge>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Show files without any tags</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {sortedAndFilteredImages.displayImages.length} designs{" "}
-            {galleryViewMode === "random" ? "(showing 20 random)" : 
-             galleryViewMode === "no-tag" ? "(without tags)" : ""}
-          </p>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={galleryViewMode === "no-tag" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleViewModeChange("no-tag")}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Tag className="h-4 w-4" />
+                  No Tag
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {noTagCount}
+                  </Badge>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Show files without any tags</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       )}
 
