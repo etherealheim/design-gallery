@@ -74,15 +74,17 @@ export function GalleryHeader({
                         <Badge
                           key={tag}
                           variant="default"
-                          className="flex items-center gap-1 text-xs hover:bg-primary/90 transition-colors h-5 px-1.5 bg-primary text-primary-foreground"
+                          className="text-xs h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => onRemoveTag(tag)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                          }}
                         >
-                          <span className="text-xs font-medium">{tag === "__no_tags__" ? "No tags" : tag}</span>
-                          <button
-                            className="ml-0.5 hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                            onClick={() => onRemoveTag(tag)}
-                          >
-                            <X className="h-2.5 w-2.5" />
-                          </button>
+                          {tag === "__no_tags__" ? "No tags" : tag}
                         </Badge>
                       ))}
                     </div>
@@ -157,15 +159,17 @@ export function GalleryHeader({
                       <Badge
                         key={tag}
                         variant="default"
-                        className="flex items-center gap-1 text-xs hover:bg-primary/90 transition-colors h-5 px-1.5 bg-primary text-primary-foreground"
+                        className="text-xs h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => onRemoveTag(tag)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                        }}
                       >
-                        <span className="text-xs font-medium">{tag === "__no_tags__" ? "No tags" : tag}</span>
-                        <button
-                          className="ml-0.5 hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                          onClick={() => onRemoveTag(tag)}
-                        >
-                          <X className="h-2.5 w-2.5" />
-                        </button>
+                        {tag === "__no_tags__" ? "No tags" : tag}
                       </Badge>
                     ))}
                   </div>
