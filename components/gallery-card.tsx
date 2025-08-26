@@ -186,13 +186,13 @@ export function GalleryCard({
       >
         {/* Media Element - Consistent styling for both video and image */}
         <div className={`w-full transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'} ${
-          viewMode === "list" ? "h-auto" : "h-48"
+          viewMode === "list" ? "h-auto" : "h-auto sm:h-48"
         }`}>
           {image.type === "video" ? (
             <video
               key={image.url} // Force re-render when URL changes
               src={image.url}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain sm:object-cover"
               muted
               loop
               playsInline
@@ -243,7 +243,7 @@ export function GalleryCard({
             <img
               src={image.url || "/placeholder.svg"}
               alt={image.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain sm:object-cover"
               loading="lazy"
               onError={(e) => {
                 console.error('Gallery image loading error for:', image.url);
