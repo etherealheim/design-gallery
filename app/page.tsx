@@ -95,6 +95,8 @@ export default function DesignVault() {
     handleTagInputChange,
     addTag,
     removeTag,
+    setIsAddingTag,
+    setNewTag,
   } = usePreviewModal()
 
   // Handle tag operations with the preview modal
