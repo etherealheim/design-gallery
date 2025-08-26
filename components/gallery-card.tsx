@@ -459,8 +459,8 @@ export function GalleryCard({
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="tag1 tag2 or tag1, tag2"
-                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto"
+                placeholder="Separate with comma or space"
+                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto placeholder:text-muted-foreground/60"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleAddTag()
@@ -497,13 +497,13 @@ export function GalleryCard({
           ) : (
             /* Show "Add tag" dashed badge */
             <div
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/70 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 transition-colors"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsAddingTag(true)
               }}
             >
-              <span className="text-muted-foreground">Add tag</span>
+              <span className="text-muted-foreground/70">Add tag</span>
             </div>
           )}
         </div>
