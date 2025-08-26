@@ -429,10 +429,8 @@ export function GalleryCard({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ 
-                  type: "spring", 
-                  stiffness: 800, 
-                  damping: 15,
-                  duration: 0.08
+                  duration: 0.15,
+                  ease: "easeOut"
                 }}
                 className="flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm"
               >
@@ -478,10 +476,8 @@ export function GalleryCard({
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ 
-                  type: "spring", 
-                  stiffness: 800, 
-                  damping: 15,
-                  duration: 0.08
+                  duration: 0.15,
+                  ease: "easeOut"
                 }}
                 className="flex flex-wrap gap-1"
               >

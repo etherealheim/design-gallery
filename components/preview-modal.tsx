@@ -171,10 +171,8 @@ export function PreviewModal({
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
                       transition={{ 
-                        type: "spring", 
-                        stiffness: 800, 
-                        damping: 15,
-                        duration: 0.08
+                        duration: 0.15,
+                        ease: "easeOut"
                       }}
                       className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg"
                     >
@@ -216,10 +214,8 @@ export function PreviewModal({
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}
                       transition={{ 
-                        type: "spring", 
-                        stiffness: 800, 
-                        damping: 15,
-                        duration: 0.08
+                        duration: 0.15,
+                        ease: "easeOut"
                       }}
                       className="flex flex-wrap gap-2 items-center justify-center sm:justify-start"
                     >
