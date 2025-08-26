@@ -64,11 +64,13 @@ export function PreviewModal({
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:max-h-[95vh] sm:w-auto sm:h-auto p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" showCloseButton={false}>
         {previewItem && (
-          <div className="flex flex-col max-w-full h-full">
+          <div className="flex flex-col h-full max-h-full overflow-hidden">
             <DialogTitle className="sr-only">
               {previewItem.title} - Preview
             </DialogTitle>
-            <div className="flex items-center justify-between min-w-0 mb-4 shrink-0">
+            
+            {/* Header - Fixed at top */}
+            <div className="flex items-center justify-between min-w-0 pb-4 shrink-0">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isEditingTitle ? (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -108,7 +110,7 @@ export function PreviewModal({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted shrink-0"
+                      className="h-8 w-8 p-0 hover:bg-muted shrink-0 transition-colors duration-200"
                       onClick={handleStartRename}
                     >
                       <Edit3 className="h-3 w-3" />
@@ -116,11 +118,18 @@ export function PreviewModal({
                   </>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setPreviewItem(null)} className="h-8 w-8 shrink-0 ml-2 cursor-pointer">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setPreviewItem(null)} 
+                className="h-8 w-8 shrink-0 ml-2 cursor-pointer hover:bg-muted transition-colors duration-200"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center justify-center overflow-hidden flex-1 min-h-0">
+
+            {/* Media - Takes available space */}
+            <div className="flex-1 min-h-0 flex items-center justify-center mb-4">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
@@ -156,66 +165,70 @@ export function PreviewModal({
                 />
               )}
             </div>
-            <div className="space-y-3 min-w-0 flex flex-col items-center sm:items-start shrink-0 mt-4">
-              <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
-                {previewItem.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
-                    {tag}
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="ml-1 hover:bg-red-500/20 hover:text-red-600 rounded-sm p-0.5 transition-all duration-200"
+
+            {/* Tags - Fixed at bottom with overlay input design */}
+            <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start">
+              <div className="relative w-full max-w-full">
+                {isAddingTag ? (
+                  /* Overlay input that covers the entire tag area */
+                  <div className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg">
+                    <Input
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Space or comma"
+                      className="flex-1 border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleAddTag()
+                        if (e.key === "Escape") {
+                          setIsAddingTag(false)
+                          setNewTag("")
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleAddTag}
+                      className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                    >
+                      <Check className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingTag(false)
+                        setNewTag("")
+                      }}
+                      className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
                     >
                       <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-                {!isAddingTag && (
-                  <div
-                    className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200 h-6"
-                    onClick={() => setIsAddingTag(true)}
-                  >
-                    <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+                    </Button>
+                  </div>
+                ) : (
+                  /* Normal tag display */
+                  <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
+                    {previewItem.tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 hover:bg-red-500/20 hover:text-red-600 rounded-sm p-0.5 transition-all duration-200"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                    <div
+                      className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200 h-6"
+                      onClick={() => setIsAddingTag(true)}
+                    >
+                      <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+                    </div>
                   </div>
                 )}
               </div>
-
-              {isAddingTag && (
-                <div className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/50 rounded-md bg-transparent h-6">
-                  <Input
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Space or comma"
-                    className="border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto placeholder:text-muted-foreground/60"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleAddTag()
-                      if (e.key === "Escape") {
-                        setIsAddingTag(false)
-                        setNewTag("")
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleAddTag}
-                    className="h-4 w-4 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
-                  >
-                    <Check className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsAddingTag(false)
-                      setNewTag("")
-                    }}
-                    className="h-4 w-4 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         )}

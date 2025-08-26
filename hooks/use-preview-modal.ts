@@ -57,27 +57,36 @@ export function usePreviewModal() {
       tags = rawTags.split(/\s+/).map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
     }
     
+    console.log("Preview Modal - Raw input:", rawTags)
+    console.log("Preview Modal - Parsed tags:", tags)
+    console.log("Preview Modal - Current tags:", previewItem.tags)
+    
     // Remove duplicates and filter out existing tags
     const uniqueTags = [...new Set(tags)].filter(tag => !previewItem.tags.includes(tag))
+    console.log("Preview Modal - Unique tags to add:", uniqueTags)
     
     if (uniqueTags.length === 0) {
+      console.log("Preview Modal - No unique tags to add")
       setNewTag("")
       setIsAddingTag(false)
       return false
     }
 
+    // Update local state instantly first
+    const updatedTags = [...previewItem.tags, ...uniqueTags]
+    setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: updatedTags } : null)
+    setNewTag("")
+    setIsAddingTag(false)
+
     try {
-      const updatedTags = [...previewItem.tags, ...uniqueTags]
+      // Then update via API
       await onSave(previewItem.id, { tags: updatedTags })
-      
-      // Update local state instantly
-      setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: updatedTags } : null)
-      setNewTag("")
-      setIsAddingTag(false)
-      
+      console.log("Preview Modal - Successfully saved tags:", updatedTags)
       return true
     } catch (error) {
-      console.error("Failed to add tags:", error)
+      console.error("Preview Modal - Failed to save tags:", error)
+      // Revert local state on error
+      setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: previewItem.tags } : null)
       return false
     }
   }, [previewItem, newTag])

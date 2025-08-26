@@ -147,10 +147,16 @@ export function GalleryCard({
       tags = rawTags.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
     }
     
+    console.log("Gallery Card - Raw input:", rawTags)
+    console.log("Gallery Card - Parsed tags:", tags)
+    console.log("Gallery Card - Current tags:", image.tags)
+    
     // Remove duplicates and filter out existing tags
     const uniqueTags = [...new Set(tags)].filter(tag => !image.tags.includes(tag))
+    console.log("Gallery Card - Unique tags to add:", uniqueTags)
     
     if (uniqueTags.length === 0) {
+      console.log("Gallery Card - No unique tags to add")
       setNewTag("")
       setIsAddingTag(false)
       return
@@ -158,6 +164,7 @@ export function GalleryCard({
     
     // Add tags instantly on client-side, API calls happen in background
     for (const tag of uniqueTags) {
+      console.log("Gallery Card - Adding tag:", tag)
       onAddTag?.(image.id, tag) // Fire and forget - no await
     }
     
@@ -410,53 +417,15 @@ export function GalleryCard({
 
         </div>
 
-        <div className="flex flex-wrap gap-1">
-          {image.tags.map((tag, tagIndex) => (
-            <Badge key={tagIndex} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-
-          {/* Keep pending tags for backward compatibility */}
-          {pendingTags.map((tag, tagIndex) => (
-            <div
-              key={`pending-${tagIndex}`}
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
-            >
-              <span className="text-muted-foreground">{tag}</span>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onConfirmTag(image.id, tag)
-                }}
-                className="h-4 w-4 p-0 hover:bg-muted"
-              >
-                <Check className="h-3 w-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRejectTag(image.id, tag)
-                }}
-                className="h-4 w-4 p-0 hover:bg-muted"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
-
-          {/* Manual tag input system */}
+        <div className="relative">
           {isAddingTag ? (
-            <div className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent">
+            /* Overlay input that covers the entire tag area */
+            <div className="flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm">
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Space or comma"
-                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto placeholder:text-muted-foreground/60"
+                className="flex-1 h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleAddTag()
@@ -474,7 +443,7 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleAddTag()
                 }}
-                className="h-4 w-4 p-0 hover:bg-muted"
+                className="h-4 w-4 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
               >
                 <Check className="h-3 w-3" />
               </Button>
@@ -485,21 +454,62 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleCancelAddTag()
                 }}
-                className="h-4 w-4 p-0 hover:bg-muted"
+                className="h-4 w-4 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
               >
                 <X className="h-3 w-3" />
               </Button>
             </div>
           ) : (
-            /* Show "Add tag" dashed badge */
-            <div
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200"
-              onClick={(e) => {
-                e.stopPropagation()
-                setIsAddingTag(true)
-              }}
-            >
-              <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+            /* Normal tag display */
+            <div className="flex flex-wrap gap-1">
+              {image.tags.map((tag, tagIndex) => (
+                <Badge key={tagIndex} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+
+              {/* Keep pending tags for backward compatibility */}
+              {pendingTags.map((tag, tagIndex) => (
+                <div
+                  key={`pending-${tagIndex}`}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
+                >
+                  <span className="text-muted-foreground">{tag}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onConfirmTag(image.id, tag)
+                    }}
+                    className="h-4 w-4 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                  >
+                    <Check className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onRejectTag(image.id, tag)
+                    }}
+                    className="h-4 w-4 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+
+              {/* Show "Add tag" dashed badge */}
+              <div
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsAddingTag(true)
+                }}
+              >
+                <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+              </div>
             </div>
           )}
         </div>
