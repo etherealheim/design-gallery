@@ -111,7 +111,7 @@ export function PreviewModal({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted shrink-0 transition-colors duration-200"
+                      className="h-8 w-8 p-0 hover:bg-muted-foreground/10 shrink-0 transition-colors duration-200"
                       onClick={handleStartRename}
                     >
                       <Edit3 className="h-3 w-3" />
@@ -123,7 +123,7 @@ export function PreviewModal({
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setPreviewItem(null)} 
-                className="h-8 w-8 shrink-0 ml-2 cursor-pointer hover:bg-muted transition-colors duration-200"
+                className="h-8 w-8 shrink-0 ml-2 cursor-pointer hover:bg-muted-foreground/10 transition-colors duration-200"
               >
                 <X className="h-4 w-4" />
               </Button>

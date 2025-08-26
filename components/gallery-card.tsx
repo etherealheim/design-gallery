@@ -400,7 +400,7 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleSaveRename()
                 }}
-                className="h-6 w-6 p-0 hover:bg-muted"
+                className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
               >
                 <Check className="h-3 w-3" />
               </Button>
@@ -411,7 +411,7 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleCancelRename()
                 }}
-                className="h-6 w-6 p-0 hover:bg-muted"
+                className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
               >
                 <X className="h-3 w-3" />
               </Button>
