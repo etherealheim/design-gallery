@@ -97,7 +97,62 @@ export default function DesignVault() {
   } = usePreviewModal()
 
   // Handle tag operations with the preview modal
-  const handleAddTag = () => addTag(updateFile)
+  const handleAddTag = async () => {
+    if (!previewItem || !newTag.trim()) return
+
+    // Parse multiple tags from input - support both space and comma separation
+    const rawTags = newTag.trim()
+    let tags: string[] = []
+    
+    // First try comma separation
+    if (rawTags.includes(',')) {
+      tags = rawTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+    } else {
+      // Fall back to space separation - split on any whitespace
+      tags = rawTags.split(/\s+/).map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+    }
+    
+    console.log("Main Page - Raw input:", rawTags)
+    console.log("Main Page - Parsed tags:", tags)
+    console.log("Main Page - Current tags:", previewItem.tags)
+    
+    // Remove duplicates and filter out existing tags
+    const uniqueTags = [...new Set(tags)].filter(tag => !previewItem.tags.includes(tag))
+    console.log("Main Page - Unique tags to add:", uniqueTags)
+    
+    if (uniqueTags.length === 0) {
+      console.log("Main Page - No unique tags to add")
+      return false
+    }
+
+    // Add tags one by one using addTagToFile (same as gallery card)
+    for (const tag of uniqueTags) {
+      console.log("Main Page - Adding tag:", tag)
+      try {
+        await addTagToFile(previewItem.id, tag)
+        console.log("Main Page - Successfully added tag:", tag)
+      } catch (error) {
+        console.error("Main Page - Failed to add tag:", tag, error)
+      }
+    }
+
+    // Clear input and close adding state
+    setNewTag("")
+    setIsAddingTag(false)
+
+    // Show success toast
+    if (uniqueTags.length === 1) {
+      toast.success("Tag added", {
+        description: `"${uniqueTags[0]}" added to ${previewItem.title}`,
+      })
+    } else {
+      toast.success(`${uniqueTags.length} tags added`, {
+        description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${previewItem.title}`,
+      })
+    }
+
+    return true
+  }
   const handleRemoveTag = (tag: string) => removeTag(tag, updateFile)
 
   // Handle item actions

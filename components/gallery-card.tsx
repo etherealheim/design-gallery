@@ -162,10 +162,15 @@ export function GalleryCard({
       return
     }
     
-    // Add tags instantly on client-side, API calls happen in background
+    // Add tags one by one with proper error handling
     for (const tag of uniqueTags) {
       console.log("Gallery Card - Adding tag:", tag)
-      onAddTag?.(image.id, tag) // Fire and forget - no await
+      try {
+        await onAddTag?.(image.id, tag) // Wait for each tag to be processed
+        console.log("Gallery Card - Successfully added tag:", tag)
+      } catch (error) {
+        console.error("Gallery Card - Failed to add tag:", tag, error)
+      }
     }
     
     // Show success toast immediately

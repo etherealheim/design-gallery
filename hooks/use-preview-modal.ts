@@ -72,21 +72,26 @@ export function usePreviewModal() {
       return false
     }
 
-    // Update local state instantly first
-    const updatedTags = [...previewItem.tags, ...uniqueTags]
-    setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: updatedTags } : null)
-    setNewTag("")
-    setIsAddingTag(false)
-
     try {
-      // Then update via API
+      // Update via API first
+      const updatedTags = [...previewItem.tags, ...uniqueTags]
+      console.log("Preview Modal - About to save tags:", updatedTags)
       await onSave(previewItem.id, { tags: updatedTags })
-      console.log("Preview Modal - Successfully saved tags:", updatedTags)
+      console.log("Preview Modal - Successfully saved tags to API")
+      
+      // Then update local state only after successful API call
+      setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: updatedTags } : null)
+      setNewTag("")
+      setIsAddingTag(false)
+      
       return true
     } catch (error) {
       console.error("Preview Modal - Failed to save tags:", error)
-      // Revert local state on error
-      setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: previewItem.tags } : null)
+      console.error("Preview Modal - Error details:", JSON.stringify(error, null, 2))
+      
+      // Don't update local state if API fails
+      setNewTag("")
+      setIsAddingTag(false)
       return false
     }
   }, [previewItem, newTag])

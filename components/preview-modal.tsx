@@ -128,8 +128,8 @@ export function PreviewModal({
               </Button>
             </div>
 
-            {/* Media - Takes available space */}
-            <div className="flex-1 min-h-0 flex items-center justify-center mb-4">
+            {/* Media - Takes available space but reserves space for tags */}
+            <div className="flex-1 min-h-0 flex items-center justify-center mb-4 max-h-[calc(100%-8rem)]">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
