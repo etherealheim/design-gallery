@@ -327,6 +327,7 @@ export default function DesignVault() {
               searchQuery={searchQuery}
               galleryViewMode={viewState.galleryMode}
               handleViewModeChange={handleViewModeChange}
+              hasActiveFilters={filters.fileTypes.length > 0 || filters.selectedTags.length > 0}
               sortedAndFilteredImages={{
                 displayImages: processedItems.displayItems,
                 filteredImages: processedItems.filteredItems,

@@ -16,6 +16,7 @@ interface GalleryGridProps {
   searchQuery: string
   galleryViewMode: "recent" | "random" | "no-tag"
   handleViewModeChange: (mode: "recent" | "random" | "no-tag") => void
+  hasActiveFilters: boolean
   sortedAndFilteredImages: {
     displayImages: GalleryItem[]
     filteredImages: GalleryItem[]
@@ -45,6 +46,7 @@ export function GalleryGrid({
   searchQuery,
   galleryViewMode,
   handleViewModeChange,
+  hasActiveFilters,
   sortedAndFilteredImages,
   viewMode,
   newlyUploadedFiles,
@@ -67,7 +69,7 @@ export function GalleryGrid({
   // Use intersection observer for infinite scroll
   const { targetRef } = useIntersectionObserver({
     onIntersect: loadMoreFiles,
-    enabled: hasMore && !isLoadingMore && !searchQuery,
+    enabled: hasMore && !isLoadingMore && !searchQuery && galleryViewMode === "recent" && !hasActiveFilters,
     threshold: 0.1,
     rootMargin: "100px",
   })
@@ -251,7 +253,7 @@ export function GalleryGrid({
       )}
 
       {/* Infinite scroll trigger and loading indicator */}
-      {!searchQuery && sortedAndFilteredImages.displayImages.length > 0 && (
+      {!searchQuery && galleryViewMode === "recent" && !hasActiveFilters && sortedAndFilteredImages.displayImages.length > 0 && (
         <div className="mt-8 flex justify-center">
           {hasMore && (
             <div ref={targetRef} className="flex items-center justify-center py-4">
