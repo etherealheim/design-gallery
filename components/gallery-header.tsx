@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils"
 
-
 import { Search, Settings, Grid3X3, List, X, Upload, Download } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -41,8 +40,12 @@ export function GalleryHeader({
   onDownloadSelectedClick,
 }: GalleryHeaderProps) {
   return (
-    <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-      <div className="container mx-auto px-4 py-4">
+         <header className="fixed top-4 left-4 right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
+      <div className="absolute inset-0 backdrop-invert pointer-events-none" style={{ 
+        maskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)', 
+        WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)' 
+      }}></div>
+      <div className="w-full px-4 py-4">
         {/* Mobile Layout */}
         <div className="lg:hidden flex items-center gap-3">
           <div className="flex-1">
@@ -100,8 +103,8 @@ export function GalleryHeader({
         {/* Desktop Layout */}
         <div className="hidden lg:flex items-center gap-4">
           {/* Search Input */}
-          <div className="flex-1 max-w-2xl">
-            <div className="relative flex-1" style={{ minWidth: "300px" }}>
+          <div className="flex-1">
+            <div className="relative flex-1" style={{ minWidth: "300px", maxWidth: "800px" }}>
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search by tags or title..."
@@ -238,16 +241,7 @@ export function GalleryHeader({
 
             {/* Theme Toggle - 8px gap */}
             <div className="ml-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <ThemeToggle />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle theme</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <ThemeToggle />
             </div>
           </div>
 

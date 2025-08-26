@@ -82,8 +82,8 @@ export function FilterSidebar({
     onFiltersChange({
       fileTypes: [],
       selectedTags: [],
-      sortBy: "title",
-      sortOrder: "asc",
+      sortBy: "date",
+      sortOrder: "desc",
     })
   }
 
@@ -92,12 +92,7 @@ export function FilterSidebar({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 lg:relative lg:inset-auto animate-fade-in">
-      {/* Backdrop for mobile */}
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm lg:hidden" onClick={onClose} />
-
-      {/* Sidebar */}
-      <Card className="absolute left-0 top-0 h-full w-80 lg:relative lg:w-full lg:h-auto glass-effect shadow-strong lg:shadow-soft animate-slide-up lg:animate-none">
+    <Card className="w-full h-fit bg-background/95 backdrop-blur-md border border-border shadow-xl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Settings className="h-5 w-5 text-muted-foreground" />
@@ -106,7 +101,7 @@ export function FilterSidebar({
               {filteredItems} items
             </Badge>
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose} className="lg:hidden hover-lift">
+          <Button variant="ghost" size="sm" onClick={onClose} className="hover-lift">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
@@ -231,6 +226,5 @@ export function FilterSidebar({
           )}
         </CardContent>
       </Card>
-    </div>
   )
 }

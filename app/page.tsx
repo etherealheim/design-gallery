@@ -231,7 +231,7 @@ export default function DesignVault() {
         {/* Filter Sidebar - Slide Out */}
         <div
           className={cn(
-            "fixed left-0 top-20 bottom-0 w-80 bg-background/95 backdrop-blur-md border-r border-border shadow-xl z-50 transition-transform duration-300",
+            "fixed left-4 top-24 bottom-4 w-80 z-40 transition-transform duration-300 rounded-2xl",
             viewState.isFilterOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
@@ -249,8 +249,8 @@ export default function DesignVault() {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 bg-background">
-          <div className="container mx-auto px-4 py-8 animate-fade-in">
+        <main className="flex-1 bg-background pt-24">
+          <div className="container mx-auto px-4 py-8">
             {/* Hidden File Input */}
             <input
               ref={fileInputRef}

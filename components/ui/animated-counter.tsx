@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 
 interface AnimatedCounterProps {
   value: number
@@ -56,7 +56,11 @@ function AnimatedDigit({ digit, position, overallDirection, delay = 0 }: Animate
             damping: 30,
             mass: 0.4,
             duration: 0.2,
-            delay: delay
+            delay: delay,
+            opacity: {
+              duration: 0.15,
+              ease: "easeInOut"
+            }
           }}
           className="absolute inset-0 flex items-center justify-center tabular-nums"
         >
@@ -68,22 +72,21 @@ function AnimatedDigit({ digit, position, overallDirection, delay = 0 }: Animate
 }
 
 export function AnimatedCounter({ value, className = "" }: AnimatedCounterProps) {
-  const [prevValue, setPrevValue] = useState(value)
+  const prevValueRef = useRef(value)
   const [overallDirection, setOverallDirection] = useState<'up' | 'down'>('up')
   
   useEffect(() => {
-    if (value !== prevValue) {
-      // Simple rule: if number increases, animate up; if decreases, animate down
-      // This makes the animation intuitive regardless of individual digit changes
-      const direction = value > prevValue ? 'up' : 'down'
+    if (value !== prevValueRef.current) {
+      // Use ref for more reliable direction detection during rapid updates
+      const direction = value > prevValueRef.current ? 'up' : 'down'
       setOverallDirection(direction)
-      setPrevValue(value)
+      prevValueRef.current = value
     }
-  }, [value, prevValue])
+  }, [value])
   
   // Convert number to string - no padding needed, let it be natural
   const digits = value.toString().split('')
-  const prevDigits = prevValue.toString().split('')
+  const prevDigits = prevValueRef.current.toString().split('')
   
   // Calculate which digits have changed to determine delay
   const changedDigits = digits.map((digit, index) => {

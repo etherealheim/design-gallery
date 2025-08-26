@@ -97,7 +97,7 @@ export function GalleryGrid({
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Clock className="h-4 w-4" />
-                    Recent
+                    <span className="hidden sm:inline">Recent</span>
                     <Badge variant="secondary" className="ml-1 text-xs">
                       <AnimatedCounter value={recentCount} />
                     </Badge>
@@ -118,7 +118,7 @@ export function GalleryGrid({
                     className="flex items-center gap-2 cursor-pointer"
                   >
                     <Shuffle className="h-4 w-4" />
-                    Random
+                    <span className="hidden sm:inline">Random</span>
                     <Badge variant="secondary" className="ml-1 text-xs">
                       <AnimatedCounter value={randomCount} />
                     </Badge>
@@ -140,7 +140,7 @@ export function GalleryGrid({
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Tag className="h-4 w-4" />
-                  No Tag
+                  <span className="hidden sm:inline">No Tag</span>
                   <Badge variant="secondary" className="ml-1 text-xs">
                     <AnimatedCounter value={noTagCount} />
                   </Badge>

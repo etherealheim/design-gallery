@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Edit3, X, Play, ImageIcon, Check } from "lucide-react"
+import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Edit3, X, Play, ImageIcon, Check, Trash2 } from "lucide-react"
 import type { GalleryItem } from "@/types"
-import { useState } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 
 interface GalleryCardProps {
   image: GalleryItem
@@ -37,6 +38,11 @@ export function GalleryCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
   const [isHovered, setIsHovered] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
   const handleSaveRename = async () => {
     if (editTitle.trim() && editTitle !== image.title) {
@@ -66,12 +72,76 @@ export function GalleryCard({
     setIsEditing(false)
   }
 
+  // Long press handlers for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isEditing) return
+    
+    const touch = e.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
+    
+    longPressTimerRef.current = setTimeout(() => {
+      // Calculate menu position relative to the touch point
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = touch.clientX - rect.left
+      const y = touch.clientY - rect.top
+      
+      setMenuPosition({ x, y })
+      setShowMobileMenu(true)
+      
+      // Add haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+    }, 500) // 500ms long press
+  }, [isEditing])
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    touchStartRef.current = null
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || !longPressTimerRef.current) return
+    
+    const touch = e.touches[0]
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x)
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y)
+    
+    // Cancel long press if finger moves too much (more than 10px)
+    if (deltaX > 10 || deltaY > 10) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleMobileRename = () => {
+    setShowMobileMenu(false)
+    setIsEditing(true)
+  }
+
+  const handleMobileDelete = () => {
+    setShowMobileMenu(false)
+    onDelete(image.id)
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+      }
+    }
+  }, [])
+
   return (
     <Card
-      className={`hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 ${
+      className={`hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
-      onClick={() => !isEditing && onPreview(image)}
+      onClick={() => !isEditing && !showMobileMenu && onPreview(image)}
       onMouseEnter={() => {
         setIsHovered(true)
         console.log('Card hover enter:', image.title)
@@ -80,6 +150,9 @@ export function GalleryCard({
         setIsHovered(false)
         console.log('Card hover leave:', image.title)
       }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
       <div 
         className="relative overflow-hidden"
@@ -322,6 +395,29 @@ export function GalleryCard({
           ))}
         </div>
       </div>
+
+      {/* Mobile Long Press Menu */}
+      <DropdownMenu
+        isOpen={showMobileMenu}
+        onClose={() => setShowMobileMenu(false)}
+        className="top-0 left-0"
+        style={{
+          top: `${menuPosition.y}px`,
+          left: `${menuPosition.x}px`,
+          transform: 'translate(-50%, -50%)'
+        }}
+      >
+        <DropdownMenuItem onSelect={handleMobileRename}>
+          <Edit3 className="h-4 w-4 mr-2" />
+          Rename
+        </DropdownMenuItem>
+        {!image.id.match(/^\d+$/) && (
+          <DropdownMenuItem onSelect={handleMobileDelete} destructive>
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        )}
+      </DropdownMenu>
     </Card>
   )
 }

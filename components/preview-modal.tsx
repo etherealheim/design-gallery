@@ -62,7 +62,7 @@ export function PreviewModal({
 
   return (
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-auto h-auto p-3 sm:p-6" showCloseButton={false}>
+      <DialogContent className="max-w-[99vw] max-h-[99vh] w-auto h-auto p-2 sm:p-4" showCloseButton={false}>
         {previewItem && (
           <div className="space-y-4 flex flex-col max-w-full">
             <DialogTitle className="sr-only">
@@ -124,7 +124,7 @@ export function PreviewModal({
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
-                  className="max-w-full max-h-[60vh] sm:max-h-[70vh] w-auto h-auto object-contain rounded-lg"
+                  className="max-w-full max-h-[85vh] sm:max-h-[90vh] lg:max-h-[92vh] w-auto h-auto object-contain rounded-lg"
                   controls
                   autoPlay
                   muted
@@ -147,7 +147,7 @@ export function PreviewModal({
                 <img
                   src={previewItem.url || "/placeholder.svg"}
                   alt={previewItem.title}
-                  className="max-w-full max-h-[60vh] sm:max-h-[70vh] w-auto h-auto object-contain rounded-lg"
+                  className="max-w-full max-h-[85vh] sm:max-h-[90vh] lg:max-h-[92vh] w-auto h-auto object-contain rounded-lg"
                   onLoad={() => console.log('Image loaded:', previewItem.url)}
                   onError={(e) => {
                     console.error('Image loading error for:', previewItem.url);

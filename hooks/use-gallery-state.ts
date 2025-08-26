@@ -293,32 +293,20 @@ export function useGalleryState({
 
   const processedItems = useMemo(() => {
     let items = [...combinedItems]
-
-    // For search queries, apply client-side filtering since we need to search all data
-    if (searchQuery) {
-      const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
-      const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
-      const displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
-      const availableTags = FileFilterService.extractAvailableTags(items)
-      
-      return {
-        displayItems,
-        filteredItems,
-        availableTags,
-        totalItems: filteredItems.length, // Use filtered count for search
-      }
-    }
-
-    // For non-search queries, use paginated data as-is since filtering happens on server
-    const filteredItems = items // Already filtered by pagination
+    
+    // Always apply client-side filtering to get accurate filtered results
+    const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
     const availableTags = FileFilterService.extractAvailableTags(items)
     
-    // Handle view mode specific logic for paginated data
-    let displayItems = items
+    // Apply sorting
+    const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
+    
+    // Handle view mode specific logic
+    let displayItems = sortedItems
     
     if (viewState.galleryMode === "random") {
       // Apply seeded shuffle for consistent random view
-      const shuffled = [...items]
+      const shuffled = [...sortedItems]
       const seededRandom = (seed: number) => {
         const x = Math.sin(seed) * 10000
         return x - Math.floor(x)
@@ -330,18 +318,18 @@ export function useGalleryState({
       }
       displayItems = shuffled
     } else if (viewState.galleryMode === "no-tag") {
-      // Filter items without tags
-      displayItems = items.filter(item => item.tags.length === 0)
+      // Filter items without tags from the already filtered items
+      displayItems = sortedItems.filter(item => item.tags.length === 0)
     } else {
       // Prioritize newly uploaded files
-      displayItems = FileFilterService.prioritizeNewlyUploaded(items, newlyUploadedFiles)
+      displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
     }
     
     return {
       displayItems,
       filteredItems,
       availableTags,
-      totalItems: totalCount, // Use actual total count from database
+      totalItems: searchQuery ? filteredItems.length : totalCount, // Use filtered count for search, total count for pagination
     }
   }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles, totalCount])
 
@@ -414,12 +402,8 @@ export function useGalleryState({
     }
   }, [searchQuery, hasAllFilesLoaded, loadAllFilesForSearch, loadFiles, uploadedFiles.length])
 
-  // Reload data when filters change (but not search)
-  useEffect(() => {
-    if (!searchQuery) {
-      loadFiles()
-    }
-  }, [filters, loadFiles, searchQuery])
+  // Note: Removed automatic reload on filter changes since we now use client-side filtering
+  // This allows real-time filtering without server requests
 
   return {
     // Data state
