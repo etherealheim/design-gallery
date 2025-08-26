@@ -53,7 +53,7 @@ export function useFileUpload({
       onUploadStart(skeletalId)
 
       // Show upload progress toast
-      const uploadToastId = toast.loading(`☁️ Uploading ${file.name}...`, {
+      const uploadToastId = toast.loading(`Uploading ${file.name}...`, {
         description: "Uploading to storage",
       })
 
@@ -65,7 +65,7 @@ export function useFileUpload({
         (progress) => {
           setUploadProgress({ fileName: file.name, progress: progress.progress })
           if (progress.stage === "uploading") {
-            toast.loading(`☁️ Uploading ${file.name}... ${Math.round(progress.progress)}%`, {
+            toast.loading(`Uploading ${file.name}... ${Math.round(progress.progress)}%`, {
               id: uploadToastId,
               description: "Uploading to storage",
             })
@@ -74,7 +74,7 @@ export function useFileUpload({
       )
 
       // Show tag generation progress
-      toast.loading(`🤖 Generating tags for ${file.name}...`, {
+      toast.loading(`Generating tags for ${file.name}...`, {
         id: uploadToastId,
         description: "AI is analyzing your content",
       })
@@ -102,7 +102,7 @@ export function useFileUpload({
       onUploadEnd(skeletalId)
 
       // Show completion
-      toast.success(`✅ ${file.name} uploaded successfully!`, {
+      toast.success(`${file.name} uploaded successfully`, {
         id: uploadToastId,
         description: `Generated ${tags.length} tag${tags.length !== 1 ? 's' : ''}: ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}`,
       })
@@ -121,7 +121,7 @@ export function useFileUpload({
       toast.dismiss(uploadToastId)
 
       // Show error toast
-      toast.error(`❌ Upload failed: ${file.name}`, {
+      toast.error(`Upload failed: ${file.name}`, {
         description: createUserFriendlyMessage(error),
       })
     }
@@ -160,7 +160,7 @@ export function useFileUpload({
     // Show batch upload start toast if multiple files
     let batchToastId: string | number | undefined
     if (validation.validFiles.length > 1) {
-      batchToastId = toast.loading(`📁 Uploading ${validation.validFiles.length} files...`, {
+      batchToastId = toast.loading(`Uploading ${validation.validFiles.length} files...`, {
         description: "Processing files one by one",
       })
     }
@@ -172,7 +172,7 @@ export function useFileUpload({
         
         // Update batch progress if multiple files
         if (batchToastId && validation.validFiles.length > 1) {
-          toast.loading(`📁 Uploading file ${i + 1} of ${validation.validFiles.length}...`, {
+          toast.loading(`Uploading file ${i + 1} of ${validation.validFiles.length}...`, {
             id: batchToastId,
             description: `Processing: ${file.name}`,
           })
@@ -183,12 +183,12 @@ export function useFileUpload({
       
       // Update final success toast
       if (batchToastId) {
-        toast.success("✅ All files uploaded!", {
+        toast.success("All files uploaded", {
           id: batchToastId,
-          description: `Successfully uploaded ${validation.validFiles.length} files to your gallery`,
+          description: `Successfully uploaded ${validation.validFiles.length} files`,
         })
       } else {
-        toast.success("✅ Upload complete", {
+        toast.success("Upload complete", {
           description: `Successfully uploaded ${validation.validFiles.length} file${validation.validFiles.length > 1 ? 's' : ''}`,
         })
       }

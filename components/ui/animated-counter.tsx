@@ -12,36 +12,23 @@ interface AnimatedDigitProps {
   digit: string
   position: number
   overallDirection: 'up' | 'down'
+  delay?: number
 }
 
-function AnimatedDigit({ digit, position, overallDirection }: AnimatedDigitProps) {
+function AnimatedDigit({ digit, position, overallDirection, delay = 0 }: AnimatedDigitProps) {
   const [currentDigit, setCurrentDigit] = useState(digit)
-  const [direction, setDirection] = useState<'up' | 'down'>('up')
 
   useEffect(() => {
     if (digit !== currentDigit) {
-      // For rollovers (like 9→0), use the overall direction instead of individual digit comparison
-      const oldNum = parseInt(currentDigit) || 0
-      const newNum = parseInt(digit) || 0
-      
-      // Check if this is a rollover case (9→0 when counting up, or 0→9 when counting down)
-      const isRollover = (oldNum === 9 && newNum === 0 && overallDirection === 'up') ||
-                        (oldNum === 0 && newNum === 9 && overallDirection === 'down')
-      
-      if (isRollover) {
-        setDirection(overallDirection)
-      } else {
-        setDirection(newNum > oldNum ? 'up' : 'down')
-      }
-      
-      // Update digit immediately - no delay needed
+      // Update digit when it changes - direction is handled directly via overallDirection
       setCurrentDigit(digit)
     }
-  }, [digit, currentDigit, overallDirection])
+  }, [digit, currentDigit])
 
+  // Use overallDirection directly in variants to avoid state synchronization issues
   const variants = {
     initial: {
-      y: direction === 'up' ? 16 : -16,
+      y: overallDirection === 'up' ? 16 : -16,
       opacity: 0,
     },
     animate: {
@@ -49,7 +36,7 @@ function AnimatedDigit({ digit, position, overallDirection }: AnimatedDigitProps
       opacity: 1,
     },
     exit: {
-      y: direction === 'up' ? -16 : 16,
+      y: overallDirection === 'up' ? -16 : 16,
       opacity: 0,
     }
   }
@@ -68,7 +55,8 @@ function AnimatedDigit({ digit, position, overallDirection }: AnimatedDigitProps
             stiffness: 600,
             damping: 30,
             mass: 0.4,
-            duration: 0.2
+            duration: 0.2,
+            delay: delay
           }}
           className="absolute inset-0 flex items-center justify-center tabular-nums"
         >
@@ -81,27 +69,55 @@ function AnimatedDigit({ digit, position, overallDirection }: AnimatedDigitProps
 
 export function AnimatedCounter({ value, className = "" }: AnimatedCounterProps) {
   const [prevValue, setPrevValue] = useState(value)
+  const [overallDirection, setOverallDirection] = useState<'up' | 'down'>('up')
   
   useEffect(() => {
-    setPrevValue(value)
-  }, [value])
-
-  // Determine overall direction based on value change
-  const overallDirection: 'up' | 'down' = value >= prevValue ? 'up' : 'down'
+    if (value !== prevValue) {
+      // Simple rule: if number increases, animate up; if decreases, animate down
+      // This makes the animation intuitive regardless of individual digit changes
+      const direction = value > prevValue ? 'up' : 'down'
+      setOverallDirection(direction)
+      setPrevValue(value)
+    }
+  }, [value, prevValue])
   
   // Convert number to string - no padding needed, let it be natural
   const digits = value.toString().split('')
+  const prevDigits = prevValue.toString().split('')
+  
+  // Calculate which digits have changed to determine delay
+  const changedDigits = digits.map((digit, index) => {
+    const prevDigit = prevDigits[index] || ''
+    return digit !== prevDigit
+  })
+  
+  // Count total changed digits for cascading effect
+  const totalChangedDigits = changedDigits.filter(Boolean).length
+  
+  // Only apply cascading delay if 2+ digits are changing
+  const shouldCascade = totalChangedDigits >= 2
 
   return (
     <div className={`inline-flex items-center justify-center ${className}`}>
-      {digits.map((digit, index) => (
-        <AnimatedDigit
-          key={`pos-${index}-${digits.length}`} // Unique key per position and total length
-          digit={digit}
-          position={index}
-          overallDirection={overallDirection}
-        />
-      ))}
+      {digits.map((digit, index) => {
+        // Calculate delay: cascade from right to left (units, tens, hundreds, etc.)
+        // Only apply delay if this digit changed and we should cascade
+        let delay = 0
+        if (shouldCascade && changedDigits[index]) {
+          const rightToLeftIndex = digits.length - 1 - index
+          delay = rightToLeftIndex * 0.05 // 50ms delay between each digit
+        }
+        
+        return (
+          <AnimatedDigit
+            key={`pos-${index}-${digits.length}`} // Unique key per position and total length
+            digit={digit}
+            position={index}
+            overallDirection={overallDirection}
+            delay={delay}
+          />
+        )
+      })}
     </div>
   )
 }

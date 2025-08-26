@@ -280,36 +280,7 @@ export function GalleryCard({
           ) : (
             <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
           )}
-          {isNewlyUploaded && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ml-2"
-              style={{ backgroundColor: "#ECF1FF", color: "#1A57DA" }}
-            >
-              <span>new</span>
-              <motion.svg width="12" height="12" viewBox="0 0 24 24" className="text-current">
-                <motion.circle
-                  cx="12"
-                  cy="12"
-                  r="8"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="50.27"
-                  strokeDashoffset="0"
-                  animate={{
-                    strokeDashoffset: [0, 50.27],
-                  }}
-                  transition={{
-                    duration: 5,
-                    ease: "linear",
-                  }}
-                />
-              </motion.svg>
-            </motion.div>
-          )}
+
         </div>
 
         <div className="flex flex-wrap gap-1">

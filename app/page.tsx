@@ -139,7 +139,7 @@ export default function DesignVault() {
         })
       })
       
-      toast.success("Zip download complete!", {
+      toast.success("Download complete", {
         id: toastId,
         description: `Successfully packaged ${files.length} files`,
       })
@@ -190,9 +190,9 @@ export default function DesignVault() {
         })
       })
       
-      toast.success("Selected files downloaded!", {
+      toast.success("Download complete", {
         id: toastId,
-        description: `Successfully packaged ${selectedFiles.length} selected files`,
+        description: `Successfully packaged ${selectedFiles.length} files`,
       })
     } catch (error) {
       console.error("Download failed:", error)

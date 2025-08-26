@@ -164,7 +164,7 @@ export function useGalleryState({
     setTotalCount(prev => Math.max(0, prev - 1))
     
     // Show success toast immediately
-    const toastId = toast.success(`✅ ${fileToDelete.title} deleted`, {
+    const toastId = toast.success(`${fileToDelete.title} deleted`, {
       description: "File removed successfully",
     })
 
@@ -185,7 +185,7 @@ export function useGalleryState({
       
       // Dismiss the success toast and show error
       toast.dismiss(toastId)
-      toast.error(`❌ Failed to delete ${fileToDelete.title}`, {
+      toast.error(`Failed to delete ${fileToDelete.title}`, {
         description: createUserFriendlyMessage(error),
       })
     }
@@ -206,7 +206,7 @@ export function useGalleryState({
     setTotalCount(prev => Math.max(0, prev - selectedFileIds.length))
     
     // Show success toast immediately
-    const toastId = toast.success("✅ Files deleted", {
+    const toastId = toast.success("Files deleted", {
       description: `${selectedFileIds.length} file${selectedFileIds.length !== 1 ? 's' : ''} removed successfully`,
     })
 
@@ -226,7 +226,7 @@ export function useGalleryState({
       setTotalCount(prev => prev + selectedFileIds.length)
       
       toast.dismiss(toastId)
-      toast.error("❌ Batch delete failed", {
+      toast.error("Batch delete failed", {
         description: createUserFriendlyMessage(error),
       })
     }
