@@ -122,7 +122,7 @@ export function PreviewModal({
             </div>
 
             {/* Media - Takes available space but reserves space for tags */}
-            <div className="flex-1 min-h-0 flex items-center justify-center mb-2 max-h-[calc(100%-6rem)]">
+            <div className="flex-1 min-h-0 flex items-center justify-center mb-1 max-h-[calc(100%-4rem)]">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
@@ -175,7 +175,7 @@ export function PreviewModal({
                         duration: 0.15,
                         ease: "easeOut"
                       }}
-                      className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg"
+                      className="flex items-center gap-2 px-2 py-1.5 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg"
                     >
                       <Input
                         value={newTag}
@@ -218,7 +218,7 @@ export function PreviewModal({
                         duration: 0.15,
                         ease: "easeOut"
                       }}
-                      className="flex flex-wrap gap-2 items-center justify-center sm:justify-start"
+                      className="flex flex-wrap gap-1.5 items-center justify-center sm:justify-start"
                     >
                       {previewItem.tags.map((tag, index) => (
                         <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
