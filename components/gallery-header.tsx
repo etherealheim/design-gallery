@@ -70,19 +70,19 @@ export function GalleryHeader({
                   
                   {/* Selected Tag Chips inside input */}
                   {selectedTags.length > 0 && (
-                    <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-1">
+                    <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-2 items-center">
                       {selectedTags.map((tag) => (
                         <Badge
                           key={tag}
-                          variant="secondary"
-                          className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors h-5"
+                          variant="default"
+                          className="flex items-center gap-1.5 text-sm hover:bg-primary/90 transition-colors h-6 px-2 bg-primary text-primary-foreground"
                         >
-                          <span className="text-xs">{tag === "__no_tags__" ? "No tags" : tag}</span>
+                          <span className="text-sm font-medium">{tag === "__no_tags__" ? "No tags" : tag}</span>
                           <button
-                            className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                            className="ml-0.5 hover:bg-white/20 rounded-full p-0.5 transition-colors"
                             onClick={() => onRemoveTag(tag)}
                           >
-                            <X className="h-2 w-2" />
+                            <X className="h-3 w-3" />
                           </button>
                         </Badge>
                       ))}
@@ -154,19 +154,19 @@ export function GalleryHeader({
                 
                 {/* Selected Tag Chips inside input */}
                 {selectedTags.length > 0 && (
-                  <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-1">
+                  <div className="absolute top-2 left-10 right-12 flex flex-wrap gap-2 items-center">
                     {selectedTags.map((tag) => (
                       <Badge
                         key={tag}
-                        variant="secondary"
-                        className="flex items-center gap-1 text-xs hover:bg-secondary/80 transition-colors h-5"
+                        variant="default"
+                        className="flex items-center gap-1.5 text-sm hover:bg-primary/90 transition-colors h-6 px-2 bg-primary text-primary-foreground"
                       >
-                        <span className="text-xs">{tag === "__no_tags__" ? "No tags" : tag}</span>
+                        <span className="text-sm font-medium">{tag === "__no_tags__" ? "No tags" : tag}</span>
                         <button
-                          className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                          className="ml-0.5 hover:bg-white/20 rounded-full p-0.5 transition-colors"
                           onClick={() => onRemoveTag(tag)}
                         >
-                          <X className="h-2 w-2" />
+                          <X className="h-3 w-3" />
                         </button>
                       </Badge>
                     ))}
