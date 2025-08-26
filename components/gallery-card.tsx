@@ -393,28 +393,46 @@ export function GalleryCard({
                 autoFocus
                 onClick={(e) => e.stopPropagation()}
               />
-              <Button
-                size="sm"
-                variant="ghost"
+              <button
                 onClick={(e) => {
                   e.stopPropagation()
                   handleSaveRename()
                 }}
-                className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                style={{
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                  e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'inherit'
+                }}
               >
                 <Check className="h-3 w-3" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
+              </button>
+              <button
                 onClick={(e) => {
                   e.stopPropagation()
                   handleCancelRename()
                 }}
-                className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                style={{
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                  e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'inherit'
+                }}
               >
                 <X className="h-3 w-3" />
-              </Button>
+              </button>
             </div>
           ) : (
             <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
@@ -454,28 +472,42 @@ export function GalleryCard({
                   autoFocus
                   onClick={(e) => e.stopPropagation()}
                 />
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleAddTag()
                   }}
-                  className="h-4 w-4 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                    e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = 'inherit'
+                  }}
                 >
                   <Check className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
+                </button>
+                <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleCancelAddTag()
                   }}
-                  className="h-4 w-4 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                    e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = 'inherit'
+                  }}
                 >
                   <X className="h-3 w-3" />
-                </Button>
+                </button>
               </motion.div>
             ) : (
               /* Normal tag display */
@@ -505,34 +537,48 @@ export function GalleryCard({
                     className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
                   >
                     <span className="text-muted-foreground">{tag}</span>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    <button
                       onClick={(e) => {
                         e.stopPropagation()
                         onConfirmTag(image.id, tag)
                       }}
-                      className="h-4 w-4 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                        e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = 'inherit'
+                      }}
                     >
                       <Check className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    </button>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation()
                         onRejectTag(image.id, tag)
                       }}
-                      className="h-4 w-4 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                        e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = 'inherit'
+                      }}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </div>
                 ))}
 
                 {/* Show "Add tag" dashed badge */}
                 <div
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200"
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 hover:!border-muted-foreground/60 hover:!bg-muted/20"
                   onClick={(e) => {
                     e.stopPropagation()
                     setIsAddingTag(true)

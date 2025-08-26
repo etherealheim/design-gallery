@@ -71,7 +71,7 @@ export function PreviewModal({
             </DialogTitle>
             
             {/* Header - Fixed at top */}
-            <div className="flex items-center justify-between min-w-0 pb-4 shrink-0">
+            <div className="flex items-center justify-between min-w-0 pb-4 pt-2 shrink-0">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isEditingTitle ? (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -88,45 +88,69 @@ export function PreviewModal({
                       }}
                       autoFocus
                     />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-green-500/20 hover:text-green-600 shrink-0 cursor-pointer transition-all duration-200"
+                    <button
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                      style={{ cursor: 'pointer' }}
                       onClick={handleSaveTitle}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                        e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = 'inherit'
+                      }}
                     >
                       <Check className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-600 shrink-0 cursor-pointer transition-all duration-200"
+                    </button>
+                    <button
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                      style={{ cursor: 'pointer' }}
                       onClick={handleCancelTitle}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                        e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                        e.currentTarget.style.color = 'inherit'
+                      }}
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </div>
                 ) : (
                   <>
                     <h2 className="text-lg sm:text-xl font-semibold flex-1 min-w-0 truncate">{previewItem.title}</h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-muted-foreground/10 shrink-0 transition-colors duration-200"
+                    <button
+                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent transition-colors duration-200"
+                      style={{ cursor: 'pointer' }}
                       onClick={handleStartRename}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }}
                     >
                       <Edit3 className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </>
                 )}
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <button 
                 onClick={() => setPreviewItem(null)} 
-                className="h-8 w-8 shrink-0 ml-2 cursor-pointer hover:bg-muted-foreground/10 transition-colors duration-200"
+                className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent transition-colors duration-200"
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
               >
                 <X className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
 
             {/* Media - Takes available space but reserves space for tags */}
@@ -200,25 +224,39 @@ export function PreviewModal({
                         }}
                         autoFocus
                       />
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      <button
                         onClick={handleAddTag}
-                        className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
+                          e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                          e.currentTarget.style.color = 'inherit'
+                        }}
                       >
                         <Check className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
+                      </button>
+                      <button
                         onClick={() => {
                           setIsAddingTag(false)
                           setNewTag("")
                         }}
-                        className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent transition-all duration-200"
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                          e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent'
+                          e.currentTarget.style.color = 'inherit'
+                        }}
                       >
                         <X className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </motion.div>
                   ) : (
                     /* Normal tag display */
@@ -240,14 +278,23 @@ export function PreviewModal({
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(tag)}
-                            className="ml-1 hover:bg-red-500/20 hover:text-red-600 rounded-sm p-0.5 transition-all duration-200"
+                            className="ml-1 rounded-sm p-0.5 transition-all duration-200"
+                            style={{ cursor: 'pointer' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
+                              e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent'
+                              e.currentTarget.style.color = 'inherit'
+                            }}
                           >
                             <X className="h-3 w-3" />
                           </button>
                         </Badge>
                       ))}
                       <div
-                        className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200 h-6"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 h-6 hover:!border-muted-foreground/60 hover:!bg-muted/20"
                         onClick={() => setIsAddingTag(true)}
                       >
                         <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
