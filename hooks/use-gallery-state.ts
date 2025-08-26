@@ -527,6 +527,23 @@ export function useGalleryState({
     }
   }, [searchQuery, hasAllFilesLoaded, loadAllFilesForSearch, loadFiles, uploadedFiles.length])
 
+  // Handle filter changes - load all files when filters are applied for client-side filtering
+  useEffect(() => {
+    const hasActiveFilters = filters.fileTypes.length > 0 || filters.selectedTags.length > 0
+    const isNoTagMode = viewState.galleryMode === "no-tag"
+    const needsAllFiles = hasActiveFilters || isNoTagMode
+    
+    if (needsAllFiles && !hasAllFilesLoaded && !searchQuery) {
+      // Filters applied or no-tag mode - load all files for client-side filtering
+      console.log("Loading all files for filtering/no-tag mode:", { filters, galleryMode: viewState.galleryMode, hasAllFilesLoaded })
+      loadAllFilesForSearch()
+    } else if (!needsAllFiles && hasAllFilesLoaded && !searchQuery) {
+      // Filters cleared and not in no-tag mode - return to paginated view
+      console.log("Clearing filters, returning to paginated view")
+      loadFiles()
+    }
+  }, [filters.fileTypes.length, filters.selectedTags.length, viewState.galleryMode, hasAllFilesLoaded, searchQuery, loadAllFilesForSearch, loadFiles])
+
   // Note: Removed automatic reload on filter changes since we now use client-side filtering
   // This allows real-time filtering without server requests
 
