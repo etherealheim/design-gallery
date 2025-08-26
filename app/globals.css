@@ -234,6 +234,23 @@
   [data-slot="dialog-close"] {
     display: none !important;
   }
+
+  /* Toast icon alignment - align icons to top with proper padding */
+  [data-sonner-toast] [data-icon] {
+    align-self: flex-start !important;
+    margin-top: 2px !important;
+  }
+
+  /* Toast loading spinner alignment */
+  [data-sonner-toast] [data-loading] {
+    align-self: flex-start !important;
+    margin-top: 2px !important;
+  }
+
+  /* Ensure toast content area has proper flex alignment */
+  [data-sonner-toast] [data-content] {
+    align-items: flex-start !important;
+  }
 }
 
 @keyframes fadeIn {
