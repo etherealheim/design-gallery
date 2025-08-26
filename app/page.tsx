@@ -99,9 +99,16 @@ export default function DesignVault() {
     setNewTag,
   } = usePreviewModal()
 
-  // Handle tag operations with the preview modal
+    // Handle tag operations with the preview modal
   const handleAddTag = async () => {
-    if (!previewItem || !newTag.trim()) return
+    console.log("🔥 PREVIEW MODAL - handleAddTag called")
+    console.log("🔥 PREVIEW MODAL - previewItem:", previewItem)
+    console.log("🔥 PREVIEW MODAL - newTag:", newTag)
+    
+    if (!previewItem || !newTag.trim()) {
+      console.log("🔥 PREVIEW MODAL - Early return: no item or empty tag")
+      return
+    }
 
     // Parse multiple tags from input - support both space and comma separation
     const rawTags = newTag.trim()
@@ -115,25 +122,25 @@ export default function DesignVault() {
       tags = rawTags.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
     }
     
-    console.log("Main Page - Raw input:", rawTags)
-    console.log("Main Page - Parsed tags:", tags)
-    console.log("Main Page - Current tags:", previewItem.tags)
+    console.log("🔥 PREVIEW MODAL - Raw input:", rawTags)
+    console.log("🔥 PREVIEW MODAL - Parsed tags:", tags)
+    console.log("🔥 PREVIEW MODAL - Current tags:", previewItem.tags)
     
     // Remove duplicates and filter out existing tags
     const uniqueTags = [...new Set(tags)].filter(tag => !previewItem.tags.includes(tag))
-    console.log("Main Page - Unique tags to add:", uniqueTags)
+    console.log("🔥 PREVIEW MODAL - Unique tags to add:", uniqueTags)
     
     if (uniqueTags.length === 0) {
-      console.log("Main Page - No unique tags to add")
+      console.log("🔥 PREVIEW MODAL - No unique tags to add")
       setNewTag("")
       setIsAddingTag(false)
       return
     }
-
+    
     // INSTANT UI UPDATE - Clear input and close immediately for snappy feel
     setNewTag("")
     setIsAddingTag(false)
-
+    
     // Show success toast immediately
     if (uniqueTags.length === 1) {
       toast.success("Tag added", {
@@ -146,12 +153,13 @@ export default function DesignVault() {
     }
 
     // Add all tags in a single batch to prevent race conditions
-    console.log("Main Page - Adding tags in batch:", uniqueTags)
+    console.log("🔥 PREVIEW MODAL - Adding tags in batch:", uniqueTags)
+    console.log("🔥 PREVIEW MODAL - addMultipleTagsToFile function:", addMultipleTagsToFile)
     try {
       await addMultipleTagsToFile(previewItem.id, uniqueTags)
-      console.log("Main Page - Successfully added all tags")
+      console.log("🔥 PREVIEW MODAL - Successfully added all tags")
     } catch (error) {
-      console.error("Main Page - Failed to add tags:", error)
+      console.error("🔥 PREVIEW MODAL - Failed to add tags:", error)
     }
   }
   const handleRemoveTag = (tag: string) => removeTag(tag, updateFile)

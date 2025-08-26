@@ -71,7 +71,7 @@ export function PreviewModal({
             </DialogTitle>
             
             {/* Header - Fixed at top */}
-            <div className="flex items-center justify-between min-w-0 pb-4 pt-2 shrink-0">
+            <div className="flex items-center justify-between min-w-0 pb-2 shrink-0">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isEditingTitle ? (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -122,7 +122,7 @@ export function PreviewModal({
             </div>
 
             {/* Media - Takes available space but reserves space for tags */}
-            <div className="flex-1 min-h-0 flex items-center justify-center mb-4 max-h-[calc(100%-8rem)]">
+            <div className="flex-1 min-h-0 flex items-center justify-center mb-2 max-h-[calc(100%-6rem)]">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
