@@ -4,9 +4,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import AnimatedCheckIcon from "@/components/icons/animated-check"
-import AnimatedXIcon from "@/components/icons/animated-x"
-import AnimatedEditIcon from "@/components/icons/animated-edit"
+import { X, Edit3, Check } from "lucide-react"
 import type { GalleryItem } from "@/types"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -94,13 +92,13 @@ export function PreviewModal({
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleSaveTitle}
                     >
-                      <AnimatedCheckIcon size={16} className="text-black dark:text-white" />
+                      <Check className="h-3 w-3" />
                     </button>
                     <button
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleCancelTitle}
                     >
-                      <AnimatedXIcon size={16} className="text-black dark:text-white" />
+                      <X className="h-3 w-3" />
                     </button>
                   </div>
                 ) : (
@@ -110,7 +108,7 @@ export function PreviewModal({
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleStartRename}
                     >
-                      <AnimatedEditIcon size={16} className="text-black dark:text-white" />
+                      <Edit3 className="h-3 w-3" />
                     </button>
                   </>
                 )}
@@ -119,7 +117,7 @@ export function PreviewModal({
                 onClick={() => setPreviewItem(null)} 
                 className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <AnimatedXIcon size={18} className="text-black dark:text-white" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -198,7 +196,7 @@ export function PreviewModal({
                         onClick={handleAddTag}
                         className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <AnimatedCheckIcon size={14} className="text-black dark:text-white" />
+                        <Check className="h-3 w-3" />
                       </button>
                       <button
                         onClick={() => {
@@ -207,7 +205,7 @@ export function PreviewModal({
                         }}
                         className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <AnimatedXIcon size={14} className="text-black dark:text-white" />
+                        <X className="h-3 w-3" />
                       </button>
                     </motion.div>
                   ) : (
@@ -232,7 +230,7 @@ export function PreviewModal({
                             onClick={() => handleRemoveTag(tag)}
                             className="ml-1 rounded-sm p-0.5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                           >
-                            <AnimatedXIcon size={12} className="text-black dark:text-white" />
+                            <X className="h-3 w-3" />
                           </button>
                         </Badge>
                       ))}
