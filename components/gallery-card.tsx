@@ -143,8 +143,8 @@ export function GalleryCard({
     if (rawTags.includes(',')) {
       tags = rawTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
     } else {
-      // Fall back to space separation
-      tags = rawTags.split(/\s+/).filter(tag => tag.length > 0)
+      // Fall back to space separation - split on any whitespace
+      tags = rawTags.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
     }
     
     // Remove duplicates and filter out existing tags
@@ -156,28 +156,24 @@ export function GalleryCard({
       return
     }
     
-    try {
-      // Add tags sequentially to avoid race conditions
-      for (const tag of uniqueTags) {
-        await onAddTag(image.id, tag)
-      }
-      
-      // Show success toast
-      if (uniqueTags.length === 1) {
-        toast.success("Tag added", {
-          description: `"${uniqueTags[0]}" added to ${image.title}`,
-        })
-      } else {
-        toast.success(`${uniqueTags.length} tags added`, {
-          description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${image.title}`,
-        })
-      }
-      
-      setNewTag("")
-      setIsAddingTag(false)
-    } catch (error) {
-      console.error("Failed to add tags:", error)
+    // Add tags instantly on client-side, API calls happen in background
+    for (const tag of uniqueTags) {
+      onAddTag?.(image.id, tag) // Fire and forget - no await
     }
+    
+    // Show success toast immediately
+    if (uniqueTags.length === 1) {
+      toast.success("Tag added", {
+        description: `"${uniqueTags[0]}" added to ${image.title}`,
+      })
+    } else {
+      toast.success(`${uniqueTags.length} tags added`, {
+        description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${image.title}`,
+      })
+    }
+    
+    setNewTag("")
+    setIsAddingTag(false)
   }
 
   const handleCancelAddTag = () => {
@@ -459,7 +455,7 @@ export function GalleryCard({
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Separate with comma or space"
+                placeholder="Space or comma"
                 className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[120px] w-auto placeholder:text-muted-foreground/60"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -497,13 +493,13 @@ export function GalleryCard({
           ) : (
             /* Show "Add tag" dashed badge */
             <div
-              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 transition-colors"
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsAddingTag(true)
               }}
             >
-              <span className="text-muted-foreground/70">Add tag</span>
+              <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
             </div>
           )}
         </div>

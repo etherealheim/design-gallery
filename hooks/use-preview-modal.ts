@@ -39,33 +39,45 @@ export function usePreviewModal() {
     setNewTag(value)
   }, [])
 
-  // Add tag to current item
+  // Add tag to current item (supports multi-tag input)
   const addTag = useCallback(async (
     onSave: (id: string, updates: { title?: string; tags?: string[] }) => Promise<void>
   ) => {
     if (!previewItem || !newTag.trim()) return false
 
-    const trimmedTag = newTag.trim().toLowerCase()
+    // Parse multiple tags from input - support both space and comma separation
+    const rawTags = newTag.trim()
+    let tags: string[] = []
     
-    // Check if tag already exists
-    if (previewItem.tags.includes(trimmedTag)) {
+    // First try comma separation
+    if (rawTags.includes(',')) {
+      tags = rawTags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+    } else {
+      // Fall back to space separation - split on any whitespace
+      tags = rawTags.split(/\s+/).map(tag => tag.trim().toLowerCase()).filter(tag => tag.length > 0)
+    }
+    
+    // Remove duplicates and filter out existing tags
+    const uniqueTags = [...new Set(tags)].filter(tag => !previewItem.tags.includes(tag))
+    
+    if (uniqueTags.length === 0) {
       setNewTag("")
       setIsAddingTag(false)
       return false
     }
 
     try {
-      const updatedTags = [...previewItem.tags, trimmedTag]
+      const updatedTags = [...previewItem.tags, ...uniqueTags]
       await onSave(previewItem.id, { tags: updatedTags })
       
-      // Update local state
+      // Update local state instantly
       setPreviewItem((prev: GalleryItem | null) => prev ? { ...prev, tags: updatedTags } : null)
       setNewTag("")
       setIsAddingTag(false)
       
       return true
     } catch (error) {
-      console.error("Failed to add tag:", error)
+      console.error("Failed to add tags:", error)
       return false
     }
   }, [previewItem, newTag])

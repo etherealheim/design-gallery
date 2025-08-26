@@ -385,21 +385,32 @@ export function useGalleryState({
 
   // Add tag to file
   const addTagToFile = useCallback(async (fileId: string, tag: string) => {
-    const currentFile = uploadedFiles.find(f => f.id === fileId)
-    if (!currentFile || currentFile.tags.includes(tag)) return
-
-    // Optimistically update UI immediately
-    setUploadedFiles(prev => 
-      prev.map(file => 
+    let currentTags: string[] = []
+    let fileExists = false
+    
+    // Optimistically update UI and capture current tags for API call
+    setUploadedFiles(prev => {
+      const currentFile = prev.find(f => f.id === fileId)
+      if (!currentFile || currentFile.tags.includes(tag)) {
+        return prev
+      }
+      
+      fileExists = true
+      currentTags = [...currentFile.tags, tag]
+      
+      // Return updated state with new tag
+      return prev.map(file => 
         file.id === fileId 
-          ? { ...file, tags: [...file.tags, tag] }
+          ? { ...file, tags: currentTags }
           : file
       )
-    )
+    })
+
+    if (!fileExists) return
 
     try {
-      // Update in background
-      await updateFile(fileId, { tags: [...currentFile.tags, tag] })
+      // Update in background with the captured current tags
+      await updateFile(fileId, { tags: currentTags })
       // Note: Toast will be handled by the component for multiple tags
     } catch (error) {
       console.error("Failed to add tag:", error)
@@ -407,7 +418,7 @@ export function useGalleryState({
       setUploadedFiles(prev => 
         prev.map(file => 
           file.id === fileId 
-            ? { ...file, tags: currentFile.tags }
+            ? { ...file, tags: file.tags.filter(t => t !== tag) }
             : file
         )
       )
@@ -416,7 +427,7 @@ export function useGalleryState({
       })
       throw error
     }
-  }, [uploadedFiles, updateFile])
+  }, [updateFile])
 
   // Initialize data on mount
   useEffect(() => {
