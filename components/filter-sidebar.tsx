@@ -68,7 +68,7 @@ export function FilterSidebar({
   if (!isOpen) return null
 
   return (
-    <Card className="w-full h-fit bg-background/95 backdrop-blur-md border border-border shadow-xl">
+    <Card className="w-full h-fit bg-background/95 backdrop-blur-md border border-border shadow-xl transition-all duration-300 ease-out">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <Settings className="h-5 w-5 text-muted-foreground" />
@@ -79,7 +79,7 @@ export function FilterSidebar({
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 transition-all duration-300 ease-out">
           <Collapsible open={isFileTypesOpen} onOpenChange={setIsFileTypesOpen}>
             <CollapsibleTrigger asChild>
               <button className="w-full flex justify-between p-0 h-auto items-center cursor-pointer">
@@ -91,7 +91,7 @@ export function FilterSidebar({
                 </div>
               </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3">
+            <CollapsibleContent className="mt-3 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-up-1 data-[state=open]:slide-down-1">
               <div className="flex gap-2">
                 <Button
                   variant={filters.fileTypes.includes("image") ? "default" : "outline"}
@@ -126,7 +126,7 @@ export function FilterSidebar({
                 </div>
               </button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="mt-3">
+            <CollapsibleContent className="mt-3 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-up-1 data-[state=open]:slide-down-1">
               {availableTags.length > 0 && (
                 <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
                   {availableTags.map((tag) => (
