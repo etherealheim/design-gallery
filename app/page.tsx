@@ -352,6 +352,15 @@ export default function DesignVault() {
               handleRename={handleRename}
               handleAddTag={addTagToFile}
               handleAddMultipleTags={addMultipleTagsToFile}
+              selectedTags={filters.selectedTags}
+              onToggleTagFilter={(tag) => {
+                setFilters(prev => ({
+                  ...prev,
+                  selectedTags: prev.selectedTags.includes(tag)
+                    ? prev.selectedTags.filter(t => t !== tag)
+                    : [...prev.selectedTags, tag]
+                }))
+              }}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               loadMoreFiles={loadMoreFiles}

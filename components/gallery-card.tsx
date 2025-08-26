@@ -26,6 +26,8 @@ interface GalleryCardProps {
   onRename: (item: GalleryItem) => void
   onAddTag?: (id: string, tag: string) => void
   onAddMultipleTags?: (id: string, tags: string[]) => void
+  selectedTags: string[]
+  onToggleTagFilter: (tag: string) => void
 }
 
 export function GalleryCard({
@@ -41,6 +43,8 @@ export function GalleryCard({
   onRename,
   onAddTag,
   onAddMultipleTags,
+  selectedTags,
+  onToggleTagFilter,
 }: GalleryCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
@@ -485,11 +489,41 @@ export function GalleryCard({
                 }}
                 className="flex flex-wrap gap-1"
               >
-                {image.tags.map((tag, tagIndex) => (
-                  <Badge key={tagIndex} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
+                {image.tags.map((tag, tagIndex) => {
+                  const isActive = selectedTags.includes(tag)
+                  return (
+                    <Badge 
+                      key={tagIndex} 
+                      variant={isActive ? "default" : "secondary"} 
+                      className={`text-xs transition-colors cursor-pointer ${
+                        isActive 
+                          ? "bg-primary text-primary-foreground hover:bg-primary/80" 
+                          : "hover:bg-secondary/80"
+                      }`}
+                      style={{ cursor: 'pointer' }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleTagFilter(tag)
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isActive) {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                        } else {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--secondary) / 0.8)'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (isActive) {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                        } else {
+                          e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))'
+                        }
+                      }}
+                    >
+                      {tag}
+                    </Badge>
+                  )
+                })}
 
                 {/* Keep pending tags for backward compatibility */}
                 {pendingTags.map((tag, tagIndex) => (
