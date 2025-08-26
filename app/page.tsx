@@ -158,11 +158,27 @@ export default function DesignVault() {
     try {
       await addMultipleTagsToFile(previewItem.id, uniqueTags)
       console.log("🔥 PREVIEW MODAL - Successfully added all tags")
+      
+      // Update the preview item to show the new tags immediately
+      const updatedTags = [...previewItem.tags, ...uniqueTags]
+      const updatedPreviewItem = { ...previewItem, tags: updatedTags }
+      openPreview(updatedPreviewItem)
+      console.log("🔥 PREVIEW MODAL - Updated preview item with new tags:", updatedTags)
     } catch (error) {
       console.error("🔥 PREVIEW MODAL - Failed to add tags:", error)
     }
   }
-  const handleRemoveTag = (tag: string) => removeTag(tag, updateFile)
+  const handleRemoveTag = (tag: string) => {
+    if (!previewItem) return
+    
+    // Remove tag from preview item immediately
+    const updatedTags = previewItem.tags.filter(t => t !== tag)
+    const updatedPreviewItem = { ...previewItem, tags: updatedTags }
+    openPreview(updatedPreviewItem)
+    
+    // Remove tag from database
+    removeTag(tag, updateFile)
+  }
 
   // Handle item actions
   const handleEditTags = (item: GalleryItem) => openPreview(item)
