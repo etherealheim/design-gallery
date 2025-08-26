@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Play, ImageIcon, Trash2 } from "lucide-react"
-import CheckIcon from "pqoqubbw-icons/icons/check"
-import XIcon from "pqoqubbw-icons/icons/x"
-import EditIcon from "pqoqubbw-icons/icons/square-pen"
+import { Play, ImageIcon, Trash2, Edit3 } from "lucide-react"
+import AnimatedCheckIcon from "@/components/icons/animated-check"
+import AnimatedXIcon from "@/components/icons/animated-x"
+import AnimatedEditIcon from "@/components/icons/animated-edit"
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
@@ -344,7 +344,7 @@ export function GalleryCard({
               setIsEditing(true)
             }}
           >
-            <Edit3 className="h-3 w-3" />
+            <AnimatedEditIcon size={12} className="text-black dark:text-white" />
           </Button>
           {!image.id.match(/^\d+$/) && (
             <Button
@@ -403,7 +403,7 @@ export function GalleryCard({
                 }}
                 className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <CheckIcon size={14} className="text-black dark:text-white" />
+                <AnimatedCheckIcon size={14} className="text-black dark:text-white" />
               </button>
               <button
                 onClick={(e) => {
@@ -412,7 +412,7 @@ export function GalleryCard({
                 }}
                 className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <XIcon size={14} className="text-black dark:text-white" />
+                <AnimatedXIcon size={14} className="text-black dark:text-white" />
               </button>
             </div>
           ) : (
@@ -460,7 +460,7 @@ export function GalleryCard({
                   }}
                   className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <CheckIcon size={12} className="text-black dark:text-white" />
+                  <AnimatedCheckIcon size={12} className="text-black dark:text-white" />
                 </button>
                 <button
                   onClick={(e) => {
@@ -469,7 +469,7 @@ export function GalleryCard({
                   }}
                   className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <XIcon size={12} className="text-black dark:text-white" />
+                  <AnimatedXIcon size={12} className="text-black dark:text-white" />
                 </button>
               </motion.div>
             ) : (
@@ -507,7 +507,7 @@ export function GalleryCard({
                       }}
                       className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                      <CheckIcon size={12} className="text-black dark:text-white" />
+                      <AnimatedCheckIcon size={12} className="text-black dark:text-white" />
                     </button>
                     <button
                       onClick={(e) => {
@@ -516,7 +516,7 @@ export function GalleryCard({
                       }}
                       className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                     >
-                      <XIcon size={12} className="text-black dark:text-white" />
+                      <AnimatedXIcon size={12} className="text-black dark:text-white" />
                     </button>
                   </div>
                 ))}
@@ -549,7 +549,7 @@ export function GalleryCard({
         }}
       >
         <DropdownMenuItem onSelect={handleMobileRename}>
-          <Edit3 className="h-4 w-4 mr-2" />
+          <AnimatedEditIcon size={16} className="text-black dark:text-white mr-2" />
           Rename
         </DropdownMenuItem>
         {!image.id.match(/^\d+$/) && (

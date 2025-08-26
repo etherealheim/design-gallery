@@ -4,9 +4,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import CheckIcon from "pqoqubbw-icons/icons/check"
-import XIcon from "pqoqubbw-icons/icons/x"
-import EditIcon from "pqoqubbw-icons/icons/square-pen"
+import AnimatedCheckIcon from "@/components/icons/animated-check"
+import AnimatedXIcon from "@/components/icons/animated-x"
+import AnimatedEditIcon from "@/components/icons/animated-edit"
 import type { GalleryItem } from "@/types"
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -94,13 +94,13 @@ export function PreviewModal({
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleSaveTitle}
                     >
-                      <CheckIcon size={16} className="text-black dark:text-white" />
+                      <AnimatedCheckIcon size={16} className="text-black dark:text-white" />
                     </button>
                     <button
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleCancelTitle}
                     >
-                      <XIcon size={16} className="text-black dark:text-white" />
+                      <AnimatedXIcon size={16} className="text-black dark:text-white" />
                     </button>
                   </div>
                 ) : (
@@ -110,7 +110,7 @@ export function PreviewModal({
                       className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       onClick={handleStartRename}
                     >
-                      <EditIcon size={16} className="text-black dark:text-white" />
+                      <AnimatedEditIcon size={16} className="text-black dark:text-white" />
                     </button>
                   </>
                 )}
@@ -119,7 +119,7 @@ export function PreviewModal({
                 onClick={() => setPreviewItem(null)} 
                 className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <XIcon size={18} className="text-black dark:text-white" />
+                <AnimatedXIcon size={18} className="text-black dark:text-white" />
               </button>
             </div>
 
@@ -198,7 +198,7 @@ export function PreviewModal({
                         onClick={handleAddTag}
                         className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <CheckIcon size={14} className="text-black dark:text-white" />
+                        <AnimatedCheckIcon size={14} className="text-black dark:text-white" />
                       </button>
                       <button
                         onClick={() => {
@@ -207,7 +207,7 @@ export function PreviewModal({
                         }}
                         className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <XIcon size={14} className="text-black dark:text-white" />
+                        <AnimatedXIcon size={14} className="text-black dark:text-white" />
                       </button>
                     </motion.div>
                   ) : (
@@ -232,7 +232,7 @@ export function PreviewModal({
                             onClick={() => handleRemoveTag(tag)}
                             className="ml-1 rounded-sm p-0.5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                           >
-                            <XIcon size={12} className="text-black dark:text-white" />
+                            <AnimatedXIcon size={12} className="text-black dark:text-white" />
                           </button>
                         </Badge>
                       ))}
