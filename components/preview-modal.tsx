@@ -93,8 +93,8 @@ export function PreviewModal({
                       style={{ cursor: 'pointer' }}
                       onClick={handleSaveTitle}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'
-                        e.currentTarget.style.color = 'rgb(34, 197, 94)'
+                        e.currentTarget.style.backgroundColor = 'hsl(142.1 76.2% 36.3% / 0.1)'
+                        e.currentTarget.style.color = 'hsl(142.1 70.6% 45.3%)'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent'
@@ -108,8 +108,8 @@ export function PreviewModal({
                       style={{ cursor: 'pointer' }}
                       onClick={handleCancelTitle}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'
-                        e.currentTarget.style.color = 'rgb(239, 68, 68)'
+                        e.currentTarget.style.backgroundColor = 'hsl(0 84.2% 60.2% / 0.1)'
+                        e.currentTarget.style.color = 'hsl(0 72.2% 50.6%)'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent'
@@ -127,7 +127,7 @@ export function PreviewModal({
                       style={{ cursor: 'pointer' }}
                       onClick={handleStartRename}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(100, 116, 139, 0.2)'
+                        e.currentTarget.style.backgroundColor = 'hsl(25 5.3% 44.7% / 0.1)'
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent'
