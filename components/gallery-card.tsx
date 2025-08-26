@@ -263,7 +263,7 @@ export function GalleryCard({
             <video
               key={image.url} // Force re-render when URL changes
               src={image.url}
-              className="w-full h-full object-contain sm:object-cover"
+              className="w-full h-full object-contain sm:object-cover cursor-pointer"
               muted
               loop
               playsInline
@@ -314,7 +314,7 @@ export function GalleryCard({
             <img
               src={image.url || "/placeholder.svg"}
               alt={image.title}
-              className="w-full h-full object-contain sm:object-cover"
+              className="w-full h-full object-contain sm:object-cover cursor-pointer"
               loading="lazy"
               onError={(e) => {
                 console.error('Gallery image loading error for:', image.url);

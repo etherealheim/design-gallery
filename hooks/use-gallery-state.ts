@@ -28,6 +28,7 @@ export function useGalleryState({
   const [totalCount, setTotalCount] = useState(0)
   const [hasAllFilesLoaded, setHasAllFilesLoaded] = useState(false)
   const [isLoadingSearch, setIsLoadingSearch] = useState(false)
+  const [allTags, setAllTags] = useState<string[]>([])
   
   // Filter and view state
   const [filters, setFilters] = useState<FilterState>({
@@ -76,6 +77,16 @@ export function useGalleryState({
       setIsLoading(false)
     }
   }, []) // Removed filters dependency - we use client-side filtering now
+
+  // Load all tags from database
+  const loadAllTags = useCallback(async () => {
+    try {
+      const tags = await DataService.getAllTags()
+      setAllTags(tags)
+    } catch (error) {
+      console.error("Failed to load all tags:", error)
+    }
+  }, [])
 
   // Load more files for infinite scrolling
   const loadMoreFiles = useCallback(async () => {
@@ -309,7 +320,7 @@ export function useGalleryState({
     
     // Always apply client-side filtering to get accurate filtered results
     const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
-    const availableTags = FileFilterService.extractAvailableTags(items)
+    const availableTags = allTags // Use all tags from database instead of just visible items
     
     // Apply sorting
     const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
@@ -344,7 +355,7 @@ export function useGalleryState({
       availableTags,
       totalItems: searchQuery ? filteredItems.length : totalCount, // Use filtered count for search, total count for pagination
     }
-  }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles, totalCount])
+  }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles, totalCount, allTags])
 
   // View state actions
   const updateViewState = useCallback((updates: Partial<ViewState>) => {
@@ -424,6 +435,10 @@ export function useGalleryState({
     try {
       // Update in background with the captured current tags
       await updateFile(fileId, { tags: currentTags })
+      
+      // Reload all tags to include the new tag in sidebar
+      loadAllTags()
+      
       // Note: Toast will be handled by the component for multiple tags
     } catch (error) {
       console.error("Failed to add tag:", error)
@@ -470,6 +485,10 @@ export function useGalleryState({
     try {
       // Single API call with all tags
       await updateFile(fileId, { tags: updatedTags })
+      
+      // Reload all tags to include the new tags in sidebar
+      loadAllTags()
+      
       console.log("Successfully added multiple tags:", newTags)
     } catch (error) {
       console.error("Failed to add multiple tags:", error)
@@ -491,7 +510,8 @@ export function useGalleryState({
   // Initialize data on mount
   useEffect(() => {
     loadFiles()
-  }, [loadFiles])
+    loadAllTags()
+  }, [loadFiles, loadAllTags])
 
   // Handle search query changes - only load all files when search starts
   useEffect(() => {

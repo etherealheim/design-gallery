@@ -281,6 +281,14 @@ export default function DesignVault() {
       />
 
       <div className="flex">
+        {/* Filter Sidebar Backdrop */}
+        {viewState.isFilterOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity duration-300"
+            onClick={() => updateViewState({ isFilterOpen: false })}
+          />
+        )}
+
         {/* Filter Sidebar - Slide Out */}
         <div
           className={cn(
