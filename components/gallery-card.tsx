@@ -21,6 +21,7 @@ interface GalleryCardProps {
   onConfirmTag: (id: string, tag: string) => void
   onRejectTag: (id: string, tag: string) => void
   onRename: (item: GalleryItem) => void
+  onAddTag?: (id: string, tag: string) => void
 }
 
 export function GalleryCard({
@@ -34,12 +35,15 @@ export function GalleryCard({
   onConfirmTag,
   onRejectTag,
   onRename,
+  onAddTag,
 }: GalleryCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(image.title)
   const [isHovered, setIsHovered] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [isAddingTag, setIsAddingTag] = useState(false)
+  const [newTag, setNewTag] = useState("")
   
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -125,6 +129,23 @@ export function GalleryCard({
   const handleMobileDelete = () => {
     setShowMobileMenu(false)
     onDelete(image.id)
+  }
+
+  const handleAddTag = async () => {
+    if (!newTag.trim() || !onAddTag) return
+    
+    try {
+      await onAddTag(image.id, newTag.trim())
+      setNewTag("")
+      setIsAddingTag(false)
+    } catch (error) {
+      console.error("Failed to add tag:", error)
+    }
+  }
+
+  const handleCancelAddTag = () => {
+    setNewTag("")
+    setIsAddingTag(false)
   }
 
   // Cleanup timer on unmount
@@ -363,6 +384,7 @@ export function GalleryCard({
             </Badge>
           ))}
 
+          {/* Keep pending tags for backward compatibility */}
           {pendingTags.map((tag, tagIndex) => (
             <div
               key={`pending-${tagIndex}`}
@@ -394,19 +416,58 @@ export function GalleryCard({
             </div>
           ))}
 
-          {/* Show "Add tag" badge when no tags and no pending tags */}
-          {image.tags.length === 0 && pendingTags.length === 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 bg-transparent cursor-pointer text-xs"
+          {/* Manual tag input system */}
+          {isAddingTag ? (
+            <div className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent">
+              <Input
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Tag name..."
+                className="h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-w-[60px] w-auto"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleAddTag()
+                  } else if (e.key === "Escape") {
+                    handleCancelAddTag()
+                  }
+                }}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddTag()
+                }}
+                className="h-4 w-4 p-0 hover:bg-muted"
+              >
+                <Check className="h-3 w-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCancelAddTag()
+                }}
+                className="h-4 w-4 p-0 hover:bg-muted"
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            /* Show "Add tag" dashed badge */
+            <div
+              className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/70 transition-colors"
               onClick={(e) => {
                 e.stopPropagation()
-                onEdit(image)
+                setIsAddingTag(true)
               }}
             >
-              Add tag
-            </Button>
+              <span className="text-muted-foreground">Add tag</span>
+            </div>
           )}
         </div>
       </div>

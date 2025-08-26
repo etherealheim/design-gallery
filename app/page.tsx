@@ -45,6 +45,7 @@ export default function DesignVault() {
     handleTagClick,
     setUploadedFiles,
     handleFileUpload,
+    addTagToFile,
     hasMore,
     isLoadingMore,
     loadMoreFiles,
@@ -78,9 +79,7 @@ export default function DesignVault() {
         })
       }, 5000)
     },
-    onPendingTags: (fileId, tags) => {
-      setPendingTags((prev: PendingTags) => ({ ...prev, [fileId]: tags }))
-    },
+
   })
 
   // Preview modal management
@@ -281,6 +280,7 @@ export default function DesignVault() {
               confirmTag={confirmTag}
               rejectTag={rejectTag}
               handleRename={handleRename}
+              handleAddTag={addTagToFile}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               loadMoreFiles={loadMoreFiles}

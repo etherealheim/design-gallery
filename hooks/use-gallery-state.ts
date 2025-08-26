@@ -383,6 +383,43 @@ export function useGalleryState({
     setTotalCount(prev => prev + 1)
   }, [])
 
+  // Add tag to file
+  const addTagToFile = useCallback(async (fileId: string, tag: string) => {
+    const currentFile = uploadedFiles.find(f => f.id === fileId)
+    if (!currentFile || currentFile.tags.includes(tag)) return
+
+    // Optimistically update UI immediately
+    setUploadedFiles(prev => 
+      prev.map(file => 
+        file.id === fileId 
+          ? { ...file, tags: [...file.tags, tag] }
+          : file
+      )
+    )
+
+    try {
+      // Update in background
+      await updateFile(fileId, { tags: [...currentFile.tags, tag] })
+      toast.success("Tag added", {
+        description: `"${tag}" added to ${currentFile.title}`,
+      })
+    } catch (error) {
+      console.error("Failed to add tag:", error)
+      // Revert optimistic update
+      setUploadedFiles(prev => 
+        prev.map(file => 
+          file.id === fileId 
+            ? { ...file, tags: currentFile.tags }
+            : file
+        )
+      )
+      toast.error("Failed to add tag", {
+        description: createUserFriendlyMessage(error),
+      })
+      throw error
+    }
+  }, [uploadedFiles, updateFile])
+
   // Initialize data on mount
   useEffect(() => {
     loadFiles()
@@ -451,6 +488,9 @@ export function useGalleryState({
     // Upload management
     setUploadedFiles,
     handleFileUpload,
+    
+    // Tag management
+    addTagToFile,
     
     // Pagination state
     hasMore,

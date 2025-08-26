@@ -11,7 +11,6 @@ interface UseFileUploadProps {
   onUploadStart: (skeletalId: string) => void
   onUploadEnd: (skeletalId: string) => void
   onNewlyUploaded: (fileId: string) => void
-  onPendingTags: (fileId: string, tags: string[]) => void
 }
 
 export function useFileUpload({
@@ -19,7 +18,6 @@ export function useFileUpload({
   onUploadStart,
   onUploadEnd,
   onNewlyUploaded,
-  onPendingTags,
 }: UseFileUploadProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<{ fileName: string; progress: number } | null>(null)
@@ -27,19 +25,7 @@ export function useFileUpload({
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Generate AI tags with fallback
-  const generateTagsForFile = useCallback(async (filename: string, imageUrl: string, isVideo: boolean): Promise<string[]> => {
-    if (isVideo) {
-      return FileOperationsService.generateFallbackTags(filename)
-    }
-    
-    try {
-      return await FileOperationsService.generateTags(filename, imageUrl)
-    } catch (error) {
-      console.error("AI tag generation failed, using fallback:", error)
-      return FileOperationsService.generateFallbackTags(filename)
-    }
-  }, [])
+  // Tags will be added manually by users
 
   // Upload a single file
   const uploadSingleFile = useCallback(async (file: File): Promise<void> => {
@@ -73,14 +59,7 @@ export function useFileUpload({
         }
       )
 
-      // Show tag generation progress
-      toast.loading(`Generating tags for ${file.name}...`, {
-        id: uploadToastId,
-        description: "AI is analyzing your content",
-      })
-
-      // Generate tags
-      const tags = await generateTagsForFile(title, dbFile.file_path, isVideo)
+      // No AI tag generation - users will add tags manually
 
       // Create uploaded file object
       uploadedFile = {
@@ -98,13 +77,12 @@ export function useFileUpload({
       // Update state
       onUploadComplete(uploadedFile)
       onNewlyUploaded(dbFile.id)
-      onPendingTags(dbFile.id, tags)
       onUploadEnd(skeletalId)
 
       // Show completion
       toast.success(`${file.name} uploaded successfully`, {
         id: uploadToastId,
-        description: `Generated ${tags.length} tag${tags.length !== 1 ? 's' : ''}: ${tags.slice(0, 3).join(', ')}${tags.length > 3 ? '...' : ''}`,
+        description: "Ready for tagging",
       })
 
       // Remove from newly uploaded after delay
@@ -125,7 +103,7 @@ export function useFileUpload({
         description: createUserFriendlyMessage(error),
       })
     }
-  }, [generateTagsForFile, onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded, onPendingTags])
+  }, [onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded])
 
   // Upload a single file without showing individual toasts (for batch uploads)
   const uploadSingleFileWithoutToast = useCallback(async (file: File): Promise<void> => {
@@ -148,16 +126,13 @@ export function useFileUpload({
         }
       )
 
-      // Generate tags
-      const tags = await generateTagsForFile(title, dbFile.file_path, isVideo)
-
       // Create uploaded file object
       uploadedFile = {
         id: dbFile.id,
         file,
         url: dbFile.file_path,
         title: dbFile.title,
-        tags: [], // Tags will be added when confirmed
+        tags: [], // Tags will be added manually
         type: isVideo ? "video" : "image",
         dateAdded: new Date(dbFile.created_at),
         fileSize: dbFile.file_size,
@@ -167,7 +142,6 @@ export function useFileUpload({
       // Update state
       onUploadComplete(uploadedFile)
       onNewlyUploaded(dbFile.id)
-      onPendingTags(dbFile.id, tags)
       onUploadEnd(skeletalId)
 
     } catch (error) {
@@ -175,7 +149,7 @@ export function useFileUpload({
       onUploadEnd(skeletalId)
       throw error
     }
-  }, [generateTagsForFile, onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded, onPendingTags])
+  }, [onUploadComplete, onUploadStart, onUploadEnd, onNewlyUploaded])
 
   // Handle file drop (multiple files)
   const handleFileDrop = useCallback(async (files: FileList) => {
