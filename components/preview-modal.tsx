@@ -62,13 +62,13 @@ export function PreviewModal({
 
   return (
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-      <DialogContent className="max-w-[99vw] max-h-[99vh] w-auto h-auto p-2 sm:p-4" showCloseButton={false}>
+      <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:max-h-[95vh] sm:w-auto sm:h-auto p-4 sm:p-6" showCloseButton={false}>
         {previewItem && (
-          <div className="space-y-4 flex flex-col max-w-full">
+          <div className="flex flex-col max-w-full h-full">
             <DialogTitle className="sr-only">
               {previewItem.title} - Preview
             </DialogTitle>
-            <div className="flex items-center justify-between min-w-0">
+            <div className="flex items-center justify-between min-w-0 mb-4">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {isEditingTitle ? (
                   <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -120,11 +120,11 @@ export function PreviewModal({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex items-center justify-center overflow-hidden">
+            <div className="flex items-center justify-center overflow-hidden mb-4">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
-                  className="max-w-full max-h-[85vh] sm:max-h-[90vh] lg:max-h-[92vh] w-auto h-auto object-contain rounded-lg"
+                  className="max-w-full max-h-[calc(100vh-16rem)] sm:max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-10rem)] w-auto h-auto object-contain rounded-lg"
                   controls
                   autoPlay
                   muted
@@ -147,7 +147,7 @@ export function PreviewModal({
                 <img
                   src={previewItem.url || "/placeholder.svg"}
                   alt={previewItem.title}
-                  className="max-w-full max-h-[85vh] sm:max-h-[90vh] lg:max-h-[92vh] w-auto h-auto object-contain rounded-lg"
+                  className="max-w-full max-h-[calc(100vh-16rem)] sm:max-h-[calc(100vh-12rem)] lg:max-h-[calc(100vh-10rem)] w-auto h-auto object-contain rounded-lg"
                   onLoad={() => console.log('Image loaded:', previewItem.url)}
                   onError={(e) => {
                     console.error('Image loading error for:', previewItem.url);
@@ -156,7 +156,7 @@ export function PreviewModal({
                 />
               )}
             </div>
-            <div className="mt-4 space-y-3 min-w-0">
+            <div className="space-y-3 min-w-0">
               <div className="flex flex-wrap gap-2 items-center">
                 {previewItem.tags.map((tag, index) => (
                   <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
