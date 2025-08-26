@@ -17,6 +17,7 @@ export function useIntersectionObserver({
 }: UseIntersectionObserverProps) {
   const targetRef = useRef<HTMLDivElement>(null)
   const [isIntersecting, setIsIntersecting] = useState(false)
+  const lastIntersectTime = useRef(0)
 
   useEffect(() => {
     const target = targetRef.current
@@ -28,7 +29,12 @@ export function useIntersectionObserver({
         setIsIntersecting(entry.isIntersecting)
         
         if (entry.isIntersecting) {
-          onIntersect()
+          // Debounce rapid intersection calls
+          const now = Date.now()
+          if (now - lastIntersectTime.current > 500) {
+            lastIntersectTime.current = now
+            onIntersect()
+          }
         }
       },
       {

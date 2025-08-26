@@ -79,13 +79,23 @@ export function useGalleryState({
 
   // Load more files for infinite scrolling
   const loadMoreFiles = useCallback(async () => {
-    if (!hasMore || isLoadingMore) return
+    if (!hasMore || isLoadingMore) {
+      console.log("Skipping loadMoreFiles:", { hasMore, isLoadingMore })
+      return
+    }
 
     try {
       setIsLoadingMore(true)
       const nextPage = currentPage + 1
+      console.log("Loading page:", nextPage)
       const result = await DataService.loadFilesWithPagination(nextPage, 20, filters)
       const newFiles = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      
+      console.log("Loaded files:", { 
+        newFilesCount: newFiles.length, 
+        totalCount: result.totalCount, 
+        hasMore: result.hasMore 
+      })
       
       setUploadedFiles(prev => [...prev, ...newFiles])
       setCurrentPage(nextPage)
@@ -93,9 +103,12 @@ export function useGalleryState({
       setTotalCount(result.totalCount)
     } catch (error) {
       console.error("Failed to load more files:", error)
-      toast.error("Failed to load more files", {
-        description: createUserFriendlyMessage(error),
-      })
+      // Only show toast for actual errors, not for "no more files" scenarios
+      if (error instanceof Error && !error.message.includes("no more")) {
+        toast.error("Failed to load more files", {
+          description: createUserFriendlyMessage(error),
+        })
+      }
     } finally {
       setIsLoadingMore(false)
     }
