@@ -55,7 +55,7 @@ export function GalleryHeader({
                 placeholder="Search designs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-10 w-full text-sm"
+                className="pl-10 pr-10 w-full text-base md:text-sm"
               />
               {searchQuery && (
                 <Button
