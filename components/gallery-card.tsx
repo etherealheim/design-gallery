@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -443,7 +443,7 @@ export function GalleryCard({
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="Space or comma"
-                  className="flex-1 h-4 text-xs border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                  className="flex-1 h-4 text-base md:text-xs border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleAddTag()

@@ -190,7 +190,7 @@ export function PreviewModal({
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder="Space or comma"
-                        className="flex-1 border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                        className="flex-1 border-0 p-0 pl-2 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 text-base md:text-sm"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleAddTag()
                           if (e.key === "Escape") {
