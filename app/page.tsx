@@ -52,6 +52,7 @@ export default function DesignVault() {
     loadMoreFiles,
     totalCount,
     isLoadingSearch,
+    noTagCount,
   } = useGalleryState()
 
   // File upload management
@@ -177,7 +178,9 @@ export default function DesignVault() {
     openPreview(updatedPreviewItem)
     
     // Remove tag from database
-    removeTag(tag, updateFile)
+    removeTag(tag, async (id, updates) => {
+      await updateFile(id, updates)
+    })
   }
 
   // Handle item actions
@@ -313,37 +316,36 @@ export default function DesignVault() {
         }}
       />
 
-      <div className="flex">
-        {/* Filter Sidebar Backdrop */}
-        {viewState.isFilterOpen && (
-          <div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity duration-300"
-            onClick={() => updateViewState({ isFilterOpen: false })}
-          />
-        )}
-
-        {/* Filter Sidebar - Slide Out */}
+      {/* Filter Sidebar Backdrop */}
+      {viewState.isFilterOpen && (
         <div
-          className={cn(
-            "fixed left-4 top-24 bottom-4 w-80 z-40 transition-transform duration-300 rounded-2xl",
-            viewState.isFilterOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <div className="p-4 h-full overflow-y-auto">
-            <FilterSidebar
-              isOpen={viewState.isFilterOpen}
-              onClose={() => updateViewState({ isFilterOpen: false })}
-              filters={filters}
-              onFiltersChange={setFilters}
-              availableTags={processedItems.availableTags}
-              totalItems={processedItems.displayItems.length}
-              filteredItems={processedItems.filteredItems.length}
-            />
-          </div>
-        </div>
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity duration-300"
+          onClick={() => updateViewState({ isFilterOpen: false })}
+        />
+      )}
 
-        {/* Main Content */}
-        <main className="flex-1 bg-background pt-24">
+      {/* Filter Sidebar - Slide Out (completely independent of layout) */}
+      <div
+        className={cn(
+          "fixed left-4 top-24 bottom-4 w-80 z-40 transition-transform duration-300 rounded-2xl",
+          viewState.isFilterOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="p-4 h-full overflow-y-auto scrollable-container">
+          <FilterSidebar
+            isOpen={viewState.isFilterOpen}
+            onClose={() => updateViewState({ isFilterOpen: false })}
+            filters={filters}
+            onFiltersChange={setFilters}
+            availableTags={processedItems.availableTags}
+            totalItems={processedItems.displayItems.length}
+            filteredItems={processedItems.filteredItems.length}
+          />
+        </div>
+      </div>
+
+      {/* Main Content - No flex container to prevent any layout shift */}
+      <main className="w-full bg-background pt-24">
           <div className="container mx-auto px-4 py-8">
             {/* Hidden File Input */}
             <input
@@ -392,10 +394,10 @@ export default function DesignVault() {
               loadMoreFiles={loadMoreFiles}
               totalCount={totalCount}
               isLoadingSearch={isLoadingSearch}
+              noTagCount={noTagCount}
             />
           </div>
         </main>
-      </div>
 
       {/* Preview Modal */}
       <PreviewModal

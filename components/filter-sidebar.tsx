@@ -8,13 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 import { cn } from "@/lib/utils"
-
-export interface FilterState {
-  fileTypes: ("image" | "video")[]
-  selectedTags: string[]
-  sortBy: "title" | "date" | "tags"
-  sortOrder: "asc" | "desc"
-}
+import { FilterState } from "@/types"
 
 interface FilterSidebarProps {
   isOpen: boolean
@@ -128,7 +122,7 @@ export function FilterSidebar({
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-up-1 data-[state=open]:slide-down-1">
               {availableTags.length > 0 && (
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto scrollable-container">
                   {availableTags.map((tag) => (
                     <Badge
                       key={tag}

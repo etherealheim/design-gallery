@@ -29,6 +29,7 @@ export function useGalleryState({
   const [hasAllFilesLoaded, setHasAllFilesLoaded] = useState(false)
   const [isLoadingSearch, setIsLoadingSearch] = useState(false)
   const [allTags, setAllTags] = useState<string[]>([])
+  const [noTagCount, setNoTagCount] = useState(0)
   
   // Filter and view state
   const [filters, setFilters] = useState<FilterState>({
@@ -93,6 +94,16 @@ export function useGalleryState({
       setAllTags(tags)
     } catch (error) {
       console.error("Failed to load all tags:", error)
+    }
+  }, [])
+
+  // Load no-tag count from database
+  const loadNoTagCount = useCallback(async () => {
+    try {
+      const count = await DataService.getNoTagCount()
+      setNoTagCount(count)
+    } catch (error) {
+      console.error("Failed to load no-tag count:", error)
     }
   }, [])
 
@@ -173,6 +184,11 @@ export function useGalleryState({
         )
       )
       
+      // If tags were updated, reload the no-tag count
+      if (updates.tags !== undefined) {
+        loadNoTagCount()
+      }
+      
       return updatedFile
     } catch (error) {
       console.error("Failed to update file:", error)
@@ -181,7 +197,7 @@ export function useGalleryState({
       })
       throw error
     }
-  }, [])
+  }, [loadNoTagCount])
 
   const deleteFile = useCallback(async (fileId: string) => {
     // Find the file to delete
@@ -294,6 +310,8 @@ export function useGalleryState({
     try {
       // Update in background
       await updateFile(fileId, { tags: [...currentFile.tags, tag] })
+      // Reload no-tag count since tags were modified
+      loadNoTagCount()
     } catch (error) {
       console.error("Failed to confirm tag:", error)
       // Revert optimistic update
@@ -453,6 +471,8 @@ export function useGalleryState({
       
       // Reload all tags to include the new tag in sidebar
       loadAllTags()
+      // Reload no-tag count since tags were modified
+      loadNoTagCount()
       
       // Note: Toast will be handled by the component for multiple tags
     } catch (error) {
@@ -503,6 +523,8 @@ export function useGalleryState({
       
       // Reload all tags to include the new tags in sidebar
       loadAllTags()
+      // Reload no-tag count since tags were modified
+      loadNoTagCount()
       
       console.log("Successfully added multiple tags:", newTags)
     } catch (error) {
@@ -526,7 +548,8 @@ export function useGalleryState({
   useEffect(() => {
     loadFiles()
     loadAllTags()
-  }, [loadFiles, loadAllTags])
+    loadNoTagCount()
+  }, [loadFiles, loadAllTags, loadNoTagCount])
 
   // Handle data loading based on search, filters, and view mode
   useEffect(() => {
@@ -628,5 +651,6 @@ export function useGalleryState({
     loadMoreFiles,
     totalCount,
     isLoadingSearch,
+    noTagCount,
   }
 }

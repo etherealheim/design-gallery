@@ -42,6 +42,7 @@ interface GalleryGridProps {
   loadMoreFiles: () => void
   totalCount: number
   isLoadingSearch: boolean
+  noTagCount: number
 }
 
 export function GalleryGrid({
@@ -69,6 +70,7 @@ export function GalleryGrid({
   loadMoreFiles,
   totalCount,
   isLoadingSearch,
+  noTagCount,
 }: GalleryGridProps) {
   // Use intersection observer for infinite scroll
   const { targetRef } = useIntersectionObserver({
@@ -99,10 +101,10 @@ export function GalleryGrid({
   // Calculate counts for each filter mode - use totalCount for recent, actual counts for others
   const recentCount = totalCount
   const randomCount = Math.min(20, totalCount)
-  // For no-tag count, count from all available items (not limited by pagination)
-  const noTagCount = searchQuery 
-    ? sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length
-    : sortedAndFilteredImages.displayImages.filter(item => item.tags.length === 0).length
+  // For no-tag count, use real database count when on recent page, otherwise count from filtered items
+  const displayNoTagCount = galleryViewMode === "recent" && !searchQuery && !hasActiveFilters
+    ? noTagCount  // Use real database count for recent page
+    : sortedAndFilteredImages.filteredImages.filter(item => item.tags.length === 0).length  // Count from loaded items for other modes
 
   return (
     <>
@@ -174,7 +176,7 @@ export function GalleryGrid({
                   <Tag className="h-4 w-4 shrink-0" />
                   <span className="hidden sm:inline shrink-0">No Tag</span>
                   <Badge variant="secondary" className="ml-auto text-xs min-w-[24px] justify-center">
-                    <AnimatedCounter value={noTagCount} />
+                    <AnimatedCounter value={displayNoTagCount} />
                   </Badge>
                 </Button>
               </TooltipTrigger>

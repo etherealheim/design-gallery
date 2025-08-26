@@ -222,6 +222,36 @@ export class DataService {
   }
 
   /**
+   * Get count of files with no tags
+   */
+  static async getNoTagCount(): Promise<number> {
+    try {
+      // Get all files and count those with empty tags arrays on the client side
+      // This is more reliable than complex Supabase JSON queries
+      const { data, error } = await supabase
+        .from("uploaded_files")
+        .select("tags")
+
+      if (error) {
+        logError(error, "DataService.getNoTagCount")
+        throw createAppError(ERROR_CODES.DATABASE_ERROR, `Failed to get no-tag count: ${error.message}`)
+      }
+
+      // Count files with no tags (null, undefined, or empty array)
+      const noTagCount = (data || []).filter(item => 
+        !item.tags || 
+        !Array.isArray(item.tags) || 
+        item.tags.length === 0
+      ).length
+
+      return noTagCount
+    } catch (error) {
+      logError(error, "DataService.getNoTagCount")
+      throw error
+    }
+  }
+
+  /**
    * Get files created within a date range
    */
   static async getFilesByDateRange(

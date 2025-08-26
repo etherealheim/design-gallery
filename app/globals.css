@@ -141,6 +141,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  html {
+    /* Reserve space for scrollbar to prevent layout shift */
+    scrollbar-gutter: stable;
+  }
+  
   body {
     @apply bg-background text-foreground font-sans;
     min-height: 100vh;
@@ -165,6 +171,11 @@
 
   ::-webkit-scrollbar-thumb:hover {
     opacity: 1;
+  }
+  
+  /* Prevent layout shift in scrollable containers */
+  .scrollable-container {
+    scrollbar-gutter: stable;
   }
 }
 
