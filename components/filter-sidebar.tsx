@@ -63,7 +63,7 @@ export function FilterSidebar({
     })
   }
 
-  const hasActiveFilters = filters.fileTypes.length > 0 || filters.selectedTags.length > 0
+
 
   if (!isOpen) return null
 
@@ -149,47 +149,7 @@ export function FilterSidebar({
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Active Filters */}
-          {hasActiveFilters && (
-            <div className="space-y-2 bg-muted/20 rounded-lg p-3 backdrop-blur-sm">
-              <span className="text-sm font-medium">Active Filters:</span>
-              <div className="flex flex-wrap gap-2">
-                {filters.fileTypes.map((type) => (
-                  <Badge key={type} variant="default" className="text-xs gradient-primary shadow-soft">
-                    {type === "image" ? <FileImage className="h-3 w-3 mr-1" /> : <FileVideo className="h-3 w-3 mr-1" />}
-                    {type}
-                    <div
-                      className="h-4 w-4 ml-1 flex items-center justify-center cursor-pointer hover:bg-transparent"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleFileType(type)
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </div>
-                  </Badge>
-                ))}
-                {filters.selectedTags.map((tag) => (
-                  <Badge key={tag} variant="default" className="text-xs gradient-primary shadow-soft">
-                    {tag === "__no_tags__" ? "No tags" : tag}
-                    <div
-                      className="h-4 w-4 ml-1 flex items-center justify-center cursor-pointer hover:bg-transparent"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (tag === "__no_tags__") {
-                          toggleNoTags()
-                        } else {
-                          toggleTag(tag)
-                        }
-                      }}
-                    >
-                      <X className="h-3 w-3" />
-                    </div>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
+
         </CardContent>
       </Card>
   )

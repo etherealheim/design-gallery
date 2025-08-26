@@ -60,7 +60,7 @@ export function useGalleryState({
       setIsLoading(true)
       setCurrentPage(1)
       setHasAllFilesLoaded(false)
-      const result = await DataService.loadFilesWithPagination(1, 20, filters)
+      const result = await DataService.loadFilesWithPagination(1, 20) // No filters - we filter client-side
       const uploadedFilesList = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       setUploadedFiles(uploadedFilesList)
       setHasMore(result.hasMore)
@@ -75,7 +75,7 @@ export function useGalleryState({
     } finally {
       setIsLoading(false)
     }
-  }, [filters])
+  }, []) // Removed filters dependency - we use client-side filtering now
 
   // Load more files for infinite scrolling
   const loadMoreFiles = useCallback(async () => {
@@ -88,7 +88,7 @@ export function useGalleryState({
       setIsLoadingMore(true)
       const nextPage = currentPage + 1
       console.log("Loading page:", nextPage)
-      const result = await DataService.loadFilesWithPagination(nextPage, 20, filters)
+      const result = await DataService.loadFilesWithPagination(nextPage, 20) // No filters - we filter client-side
       const newFiles = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       
       console.log("Loaded files:", { 
@@ -112,7 +112,7 @@ export function useGalleryState({
     } finally {
       setIsLoadingMore(false)
     }
-  }, [currentPage, hasMore, isLoadingMore, filters])
+  }, [currentPage, hasMore, isLoadingMore]) // Removed filters - using client-side filtering
 
   // Load all files for search (only when needed)
   const loadAllFilesForSearch = useCallback(async () => {
