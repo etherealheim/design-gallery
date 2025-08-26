@@ -3,7 +3,6 @@ import {
   SUPPORTED_IMAGE_TYPES, 
   SUPPORTED_VIDEO_TYPES, 
   MAX_FILE_SIZE,
-  MAX_FILES_PER_UPLOAD,
   type FilterState,
   type GalleryItem 
 } from "@/types"
@@ -20,7 +19,7 @@ export const fileSchema = z.object({
 
 export const fileListSchema = z
   .array(fileSchema)
-  .max(MAX_FILES_PER_UPLOAD, `Maximum ${MAX_FILES_PER_UPLOAD} files allowed`)
+  // No maximum limit on files per upload
 
 // API request schemas
 export const uploadRequestSchema = z.object({

@@ -71,7 +71,7 @@ export function DragDropOverlay() {
                 transition={{ delay: 0.3 }}
                 className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed"
               >
-                Upload multiple images and videos at once (up to 10 files)
+                Upload multiple images and videos at once
               </motion.p>
             </div>
 

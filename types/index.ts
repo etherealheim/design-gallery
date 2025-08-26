@@ -130,7 +130,7 @@ export const SUPPORTED_VIDEO_TYPES = [
 ] as const
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
-export const MAX_FILES_PER_UPLOAD = 10
+// No limit on files per upload
 
 // Type guards
 export function isGalleryItem(item: unknown): item is GalleryItem {

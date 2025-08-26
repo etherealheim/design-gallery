@@ -179,7 +179,7 @@ export function createUserFriendlyMessage(error: unknown): string {
     case ERROR_CODES.FILE_TOO_LARGE:
       return "File is too large. Please select a file smaller than 50MB"
     case ERROR_CODES.TOO_MANY_FILES:
-      return "Too many files selected. Please select up to 10 files at once"
+      return "Too many files selected. Please try uploading in smaller batches if you experience issues"
     case ERROR_CODES.NETWORK_ERROR:
       return "Network connection error. Please check your internet connection"
     case ERROR_CODES.UPLOAD_FAILED:
