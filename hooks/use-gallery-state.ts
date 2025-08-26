@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { GalleryItem, UploadedFile, FilterState, ViewState, PendingTags } from "@/types"
 import { DataService } from "@/lib/services/data-service"
 import { FileFilterService, FileOperationsService } from "@/lib/services/file-service"
+import { RealtimeService, type RealtimeEvent } from "@/lib/services/realtime-service"
+import { useIdleDetection } from "./use-idle-detection"
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
 
@@ -60,7 +62,45 @@ export function useGalleryState({
     hasAllFilesLoaded: boolean
   }>({ needsAllFiles: false, hasAllFilesLoaded: false })
 
+  // Real-time and idle detection state - Simplified for stability
+  const [realtimeConnected, setRealtimeConnected] = useState(false)
+  const [pendingChanges, setPendingChanges] = useState(0)
+  const [isIdle, setIsIdle] = useState(false)
+  
+  // Stable refs to prevent re-renders
+  const lastAutoRefreshRef = useRef(0)
+  const MINIMUM_AUTO_REFRESH_INTERVAL = 5000 // 5 seconds minimum between auto-refreshes
+  
+  // Simple idle detection without external hook
+  const resetTimer = useCallback(() => {
+    setIsIdle(false)
+  }, [])
 
+  // Simple idle detection - set user as idle after 30 seconds of no activity
+  useEffect(() => {
+    let idleTimer: NodeJS.Timeout
+
+    const handleActivity = () => {
+      setIsIdle(false)
+      clearTimeout(idleTimer)
+      idleTimer = setTimeout(() => setIsIdle(true), 30000) // 30 seconds
+    }
+
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart']
+    events.forEach(event => {
+      document.addEventListener(event, handleActivity, { passive: true })
+    })
+
+    // Initialize timer
+    handleActivity()
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleActivity)
+      })
+      clearTimeout(idleTimer)
+    }
+  }, []) // No dependencies to prevent re-creation
 
   // Load initial data with pagination
   const loadFiles = useCallback(async () => {
@@ -95,6 +135,76 @@ export function useGalleryState({
       console.error("Failed to load all tags:", error)
     }
   }, [])
+
+  // Load all files for search (only when needed)
+  const loadAllFilesForSearch = useCallback(async () => {
+    if (isLoadingAllFilesRef.current) {
+      console.log("Already loading all files, skipping...")
+      return
+    }
+    
+    try {
+      isLoadingAllFilesRef.current = true
+      setIsLoadingSearch(true)
+      const files = await DataService.loadAllFiles()
+      const uploadedFilesList = files.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      setUploadedFiles(uploadedFilesList)
+      setTotalCount(files.length)
+      setHasMore(false) // No pagination for search
+      setHasAllFilesLoaded(true)
+    } catch (error) {
+      console.error("Failed to load files for search:", error)
+      toast.error("Search failed", {
+        description: createUserFriendlyMessage(error),
+      })
+    } finally {
+      setIsLoadingSearch(false)
+      isLoadingAllFilesRef.current = false
+    }
+  }, [])
+
+  // Simplified auto-refresh handler
+  const handleAutoRefresh = useCallback(async () => {
+    const now = Date.now()
+    if (now - lastAutoRefreshRef.current < MINIMUM_AUTO_REFRESH_INTERVAL) {
+      console.log("Skipping auto-refresh due to rate limiting")
+      return
+    }
+
+    console.log("🔄 Auto-refreshing gallery")
+    lastAutoRefreshRef.current = now
+    setPendingChanges(0)
+
+    // Simple refresh - just reload the files
+    try {
+      const result = await DataService.loadFilesWithPagination(1, 20)
+      const uploadedFilesList = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
+      setUploadedFiles(uploadedFilesList)
+      setTotalCount(result.totalCount)
+      
+      toast.info("Gallery updated", {
+        description: "Latest changes loaded",
+        duration: 2000,
+      })
+    } catch (error) {
+      console.error("Auto-refresh failed:", error)
+    }
+  }, []) // No dependencies to prevent re-creation
+
+  // Simplified real-time event handler
+  const handleRealtimeEvent = useCallback((event: RealtimeEvent) => {
+    console.log("📡 Real-time event:", event)
+    
+    // For now, just increment pending changes and let user manually refresh
+    // This prevents complex state updates that could cause infinite loops
+    setPendingChanges(prev => prev + 1)
+    
+    // Simple notification
+    toast.info("New changes available", {
+      description: "Click refresh to see updates",
+      duration: 3000,
+    })
+  }, []) // No dependencies
 
   // Load more files for infinite scrolling
   const loadMoreFiles = useCallback(async () => {
@@ -132,33 +242,6 @@ export function useGalleryState({
       setIsLoadingMore(false)
     }
   }, [currentPage, hasMore, isLoadingMore]) // Removed filters - using client-side filtering
-
-  // Load all files for search (only when needed)
-  const loadAllFilesForSearch = useCallback(async () => {
-    if (isLoadingAllFilesRef.current) {
-      console.log("Already loading all files, skipping...")
-      return
-    }
-    
-    try {
-      isLoadingAllFilesRef.current = true
-      setIsLoadingSearch(true)
-      const files = await DataService.loadAllFiles()
-      const uploadedFilesList = files.map(file => ({ ...file, file: undefined })) as UploadedFile[]
-      setUploadedFiles(uploadedFilesList)
-      setTotalCount(files.length)
-      setHasMore(false) // No pagination for search
-      setHasAllFilesLoaded(true)
-    } catch (error) {
-      console.error("Failed to load files for search:", error)
-      toast.error("Search failed", {
-        description: createUserFriendlyMessage(error),
-      })
-    } finally {
-      setIsLoadingSearch(false)
-      isLoadingAllFilesRef.current = false
-    }
-  }, [])
 
   // File operations
   const updateFile = useCallback(async (fileId: string, updates: { title?: string; tags?: string[] }) => {
@@ -526,7 +609,29 @@ export function useGalleryState({
   useEffect(() => {
     loadFiles()
     loadAllTags()
-  }, [loadFiles, loadAllTags])
+  }, []) // Remove dependencies to prevent infinite loops
+
+  // Set up real-time subscription - Simple version
+  useEffect(() => {
+    console.log("🔗 Setting up real-time subscription")
+    
+    const unsubscribe = RealtimeService.subscribe(handleRealtimeEvent)
+    
+    // Simple connection status check without complex state updates
+    const connectionInterval = setInterval(() => {
+      const isConnected = RealtimeService.getConnectionStatus()
+      setRealtimeConnected(isConnected)
+    }, 10000) // Check every 10 seconds
+    
+    // Initial connection status
+    setRealtimeConnected(RealtimeService.getConnectionStatus())
+    
+    return () => {
+      console.log("🔌 Cleaning up real-time subscription")
+      unsubscribe()
+      clearInterval(connectionInterval)
+    }
+  }, []) // No dependencies to prevent re-creation
 
   // Handle data loading based on search, filters, and view mode
   useEffect(() => {
@@ -628,5 +733,11 @@ export function useGalleryState({
     loadMoreFiles,
     totalCount,
     isLoadingSearch,
+    
+    // Real-time state - Gradually re-enabling
+    realtimeConnected,
+    pendingChanges,
+    isIdle,
+    handleAutoRefresh,
   }
 }
