@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { X, Edit3, Check } from "lucide-react"
 import type { GalleryItem } from "@/types"
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface PreviewModalProps {
   previewItem: GalleryItem | null
@@ -169,65 +170,91 @@ export function PreviewModal({
             {/* Tags - Fixed at bottom with overlay input design */}
             <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start">
               <div className="relative w-full max-w-full">
-                {isAddingTag ? (
-                  /* Overlay input that covers the entire tag area */
-                  <div className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg">
-                    <Input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      placeholder="Space or comma"
-                      className="flex-1 border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddTag()
-                        if (e.key === "Escape") {
+                <AnimatePresence mode="wait">
+                  {isAddingTag ? (
+                    /* Overlay input that covers the entire tag area */
+                    <motion.div
+                      key="input"
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 25,
+                        duration: 0.2
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-background/95 backdrop-blur-sm border border-dashed border-muted-foreground/50 rounded-lg"
+                    >
+                      <Input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Space or comma"
+                        className="flex-1 border-0 p-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleAddTag()
+                          if (e.key === "Escape") {
+                            setIsAddingTag(false)
+                            setNewTag("")
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleAddTag}
+                        className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
                           setIsAddingTag(false)
                           setNewTag("")
-                        }
+                        }}
+                        className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    /* Normal tag display */
+                    <motion.div
+                      key="tags"
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      transition={{ 
+                        type: "spring", 
+                        stiffness: 400, 
+                        damping: 25,
+                        duration: 0.2
                       }}
-                      autoFocus
-                    />
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleAddTag}
-                      className="h-6 w-6 p-0 hover:bg-green-500/20 hover:text-green-600 transition-all duration-200"
+                      className="flex flex-wrap gap-2 items-center justify-center sm:justify-start"
                     >
-                      <Check className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsAddingTag(false)
-                        setNewTag("")
-                      }}
-                      className="h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-600 transition-all duration-200"
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ) : (
-                  /* Normal tag display */
-                  <div className="flex flex-wrap gap-2 items-center justify-center sm:justify-start">
-                    {previewItem.tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
-                        {tag}
-                        <button
-                          onClick={() => handleRemoveTag(tag)}
-                          className="ml-1 hover:bg-red-500/20 hover:text-red-600 rounded-sm p-0.5 transition-all duration-200"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                    <div
-                      className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200 h-6"
-                      onClick={() => setIsAddingTag(true)}
-                    >
-                      <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
-                    </div>
-                  </div>
-                )}
+                      {previewItem.tags.map((tag, index) => (
+                        <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
+                          {tag}
+                          <button
+                            onClick={() => handleRemoveTag(tag)}
+                            className="ml-1 hover:bg-red-500/20 hover:text-red-600 rounded-sm p-0.5 transition-all duration-200"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                      <div
+                        className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer hover:border-muted-foreground/60 hover:bg-muted/20 transition-all duration-200 h-6"
+                        onClick={() => setIsAddingTag(true)}
+                      >
+                        <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
