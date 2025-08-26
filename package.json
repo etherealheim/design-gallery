@@ -2,7 +2,7 @@
   "name": "design-gallery",
   "version": "1.0.0",
   "private": false,
-  "description": "A clean gallery app for design assets with AI-powered tagging",
+  "description": "A high-performance gallery app for design assets with smart compression and lazy loading",
   "author": "Design Gallery Contributors",
   "license": "MIT",
   "keywords": [
@@ -10,8 +10,9 @@
     "gallery",
     "nextjs",
     "supabase",
-    "ai",
-    "tagging"
+    "performance",
+    "webp",
+    "lazy-loading"
   ],
   "repository": {
     "type": "git",

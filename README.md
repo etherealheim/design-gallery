@@ -5,7 +5,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
 ![Tailwind](https://img.shields.io/badge/Tailwind-4-38bdf8)
 
-A clean gallery app for your design assets. Drag, drop, search, and let AI tag your stuff automatically.
+A clean, high-performance gallery app for your design assets. Drag, drop, search, and organize with smart compression and lazy loading.
 
 > **Open Source** - Free to use, modify, and contribute to!
 
@@ -41,7 +41,7 @@ That's it! Visit `localhost:3000` and start dropping your design files.
 - **Smart Upload System**: Drag & drop images/videos with unlimited file support
 - **Auto Image Compression**: Automatically compresses images to WebP format, saving up to 70% bandwidth
 - **Lazy Loading**: Images load only when needed, improving page performance
-- **AI Tagging**: Generates tags automatically (needs OpenAI key)
+- **Manual Tagging**: Add custom tags to organize your files
 - **Advanced Search**: Search and filter by tags, file types, and more
 - **Mobile Optimized**: Touch-friendly interface with responsive design
 - **Dark/Light Themes**: Seamless theme switching
