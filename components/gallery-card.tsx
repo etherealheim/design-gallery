@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Play, ImageIcon, Trash2, Edit3 } from "lucide-react"
+import { Play, ImageIcon, Trash2, Edit3, X, Check } from "lucide-react"
 import AnimatedCheckIcon from "@/components/icons/animated-check"
 import AnimatedXIcon from "@/components/icons/animated-x"
 import AnimatedEditIcon from "@/components/icons/animated-edit"
@@ -356,7 +356,7 @@ export function GalleryCard({
                 onDelete(image.id)
               }}
             >
-              <X className="h-3 w-3" />
+              <AnimatedXIcon size={12} className="text-black dark:text-white" />
             </Button>
           )}
         </div>
