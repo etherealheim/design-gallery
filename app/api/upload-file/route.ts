@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { uploadRequestSchema } from "@/lib/validation"
 import { handleApiError, createAppError, ERROR_CODES } from "@/lib/errors"
+import { ImageCompressionService } from "@/lib/services/image-compression"
 import type { ApiResponse } from "@/types"
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
@@ -99,19 +100,45 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       throw createAppError(ERROR_CODES.STORAGE_ERROR, "Storage configuration failed")
     }
 
-    // Generate unique filename
-    const fileExt = file.name.split(".").pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    // Compress image if applicable
+    let fileToUpload: File | Buffer = file
+    let finalFileSize = file.size
+    let compressionInfo = ""
+
+    if (ImageCompressionService.shouldCompress(file.type, file.size)) {
+      try {
+        console.log("[v0] Compressing image:", file.name, "Original size:", Math.round(file.size / 1024), "KB")
+        
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const compressionSettings = ImageCompressionService.getOptimalSettings(file.type, file.size)
+        const compressed = await ImageCompressionService.compressImage(buffer, compressionSettings)
+        
+        fileToUpload = compressed.buffer
+        finalFileSize = compressed.size
+        compressionInfo = ` (compressed from ${Math.round(compressed.originalSize / 1024)}KB to ${Math.round(compressed.size / 1024)}KB, ${Math.round(compressed.compressionRatio * 100) / 100}x ratio)`
+        
+        console.log("[v0] Compression complete:", compressionInfo)
+      } catch (error) {
+        console.warn("[v0] Compression failed, using original file:", error)
+        // Continue with original file if compression fails
+      }
+    }
+
+    // Generate unique filename with appropriate extension
+    const originalExt = file.name.split(".").pop()
+    const finalExt = fileToUpload instanceof Buffer ? 'webp' : originalExt
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${finalExt}`
     const filePath = `uploads/${fileName}`
 
-    console.log("[v0] Uploading file to:", filePath)
+    console.log("[v0] Uploading file to:", filePath + compressionInfo)
 
     // Upload file to storage
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("design-vault")
-      .upload(filePath, file, {
+      .upload(filePath, fileToUpload, {
         cacheControl: "3600",
         upsert: false,
+        contentType: fileToUpload instanceof Buffer ? 'image/webp' : file.type,
       })
 
     if (uploadError) {
@@ -133,8 +160,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .insert({
         title: validatedData.title,
         file_path: publicUrl,
-        file_type: file.type,
-        file_size: file.size,
+        file_type: fileToUpload instanceof Buffer ? 'image/webp' : file.type,
+        file_size: finalFileSize,
         tags: validatedData.tags,
       })
       .select()

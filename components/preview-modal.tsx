@@ -150,6 +150,7 @@ export function PreviewModal({
                   src={previewItem.url || "/placeholder.svg"}
                   alt={previewItem.title}
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                  loading="lazy"
                   onLoad={() => console.log('Image loaded:', previewItem.url)}
                   onError={(e) => {
                     console.error('Image loading error for:', previewItem.url);

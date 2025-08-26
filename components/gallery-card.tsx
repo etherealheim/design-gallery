@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Play, ImageIcon, Trash2, Edit3, X, Check } from "lucide-react"
+import Image from "next/image"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
