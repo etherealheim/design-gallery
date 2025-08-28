@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { getVersion } from "@/lib/version"
 
 interface GalleryHeaderProps {
   searchQuery: string
@@ -64,12 +65,17 @@ export function GalleryHeader({
                     placeholder={selectedTags.length > 0 ? "" : "Search designs..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10 w-full text-base md:text-sm"
+                    className="pl-10 pr-16 w-full text-base md:text-sm"
                   />
+                  
+                  {/* Version display - positioned to avoid clear button */}
+                  <div className={`absolute top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground font-mono font-medium pointer-events-none z-10 ${searchQuery ? 'right-10' : 'right-2'}`}>
+                    {getVersion()}
+                  </div>
                   
                   {/* Selected Tag Chips inside input */}
                   {selectedTags.length > 0 && (
-                    <div className="absolute top-1/2 transform -translate-y-1/2 left-10 right-12 flex flex-wrap gap-1.5 items-center">
+                    <div className={`absolute top-1/2 transform -translate-y-1/2 left-10 flex flex-wrap gap-1.5 items-center ${searchQuery ? 'right-16' : 'right-12'}`}>
                       {selectedTags.map((tag) => {
                         const isFileTypeTag = tag.startsWith('type:')
                         const fileType = isFileTypeTag ? tag.replace('type:', '') : null
@@ -159,12 +165,17 @@ export function GalleryHeader({
                   placeholder={selectedTags.length > 0 ? "" : "Search by tags or title..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-12 w-full"
+                  className="pl-10 pr-16 w-full"
                 />
+                
+                {/* Version display - positioned to avoid clear button */}
+                <div className={`absolute top-1/2 transform -translate-y-1/2 text-xs text-muted-foreground font-mono font-medium pointer-events-none z-10 ${searchQuery ? 'right-10' : 'right-2'}`}>
+                  {getVersion()}
+                </div>
                 
                 {/* Selected Tag Chips inside input */}
                 {selectedTags.length > 0 && (
-                  <div className="absolute top-1/2 transform -translate-y-1/2 left-10 right-12 flex flex-wrap gap-1.5 items-center">
+                  <div className={`absolute top-1/2 transform -translate-y-1/2 left-10 flex flex-wrap gap-1.5 items-center ${searchQuery ? 'right-16' : 'right-12'}`}>
                     {selectedTags.map((tag) => {
                       const isFileTypeTag = tag.startsWith('type:')
                       const fileType = isFileTypeTag ? tag.replace('type:', '') : null
