@@ -360,7 +360,10 @@ export class DataService {
    */
   private static applyTagFilters(items: GalleryItem[], selectedTags: string[]): GalleryItem[] {
     const hasNoTagsFilter = selectedTags.includes("__no_tags__")
-    const otherTags = selectedTags.filter(tag => tag !== "__no_tags__")
+    // Filter out file type tags from regular tag filtering since they're handled separately
+    const otherTags = selectedTags.filter(tag => 
+      tag !== "__no_tags__" && !tag.startsWith("type:")
+    )
 
     if (hasNoTagsFilter && otherTags.length > 0) {
       // Show items with no tags OR items with selected tags
@@ -371,11 +374,13 @@ export class DataService {
     } else if (hasNoTagsFilter) {
       // Show only items with no tags
       return items.filter(item => item.tags.length === 0)
-    } else {
+    } else if (otherTags.length > 0) {
       // Show items with any of the selected tags
       return items.filter(item =>
         otherTags.some(selectedTag => item.tags.includes(selectedTag))
       )
     }
+    
+    return items
   }
 }

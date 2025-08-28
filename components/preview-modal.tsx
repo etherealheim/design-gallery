@@ -111,6 +111,7 @@ export function PreviewModal({
       <DialogContent 
         className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] sm:w-[95vw] sm:h-[95vh] sm:!max-w-[95vw] sm:!max-h-[95vh] lg:w-[90vw] lg:h-[90vh] lg:!max-w-[90vw] lg:!max-h-[90vh] p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" 
         showCloseButton={false}
+        onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {previewItem && (
           <div className="flex flex-col h-full max-h-full min-h-0">
@@ -229,7 +230,7 @@ export function PreviewModal({
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         placeholder="Space or comma"
-                        className="flex-1 h-4 text-base md:text-sm border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                        className="flex-1 h-4 text-base md:text-sm font-mono font-medium border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleAddTag()
                           if (e.key === "Escape") {
@@ -274,7 +275,7 @@ export function PreviewModal({
                       className="flex flex-wrap gap-1.5 items-center justify-center sm:justify-start"
                     >
                       {previewItem.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-sm flex items-center gap-1 pr-1 h-6">
+                        <Badge key={index} variant="secondary" className="text-sm font-mono font-medium flex items-center gap-1 pr-1 h-6">
                           {tag}
                           <button
                             onClick={() => handleRemoveTag(tag)}
@@ -285,7 +286,7 @@ export function PreviewModal({
                         </Badge>
                       ))}
                       <div
-                        className="inline-flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 h-6 hover:!border-muted-foreground/60 hover:!bg-muted/20"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-sm font-mono font-medium border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 h-6 hover:!border-muted-foreground/60 hover:!bg-muted/20"
                         onClick={() => setIsAddingTag(true)}
                       >
                         <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>

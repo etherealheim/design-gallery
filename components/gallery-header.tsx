@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 
-import { Search, Settings, Grid3X3, List, X, Upload, Download } from "lucide-react"
+import { Search, Settings, Grid3X3, List, X, Upload, Download, FileImage, FileVideo } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -70,23 +70,33 @@ export function GalleryHeader({
                   {/* Selected Tag Chips inside input */}
                   {selectedTags.length > 0 && (
                     <div className="absolute top-1/2 transform -translate-y-1/2 left-10 right-12 flex flex-wrap gap-1.5 items-center">
-                      {selectedTags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="default"
-                          className="text-xs h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer"
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => onRemoveTag(tag)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
-                          }}
-                        >
-                          {tag === "__no_tags__" ? "No tags" : tag}
-                        </Badge>
-                      ))}
+                      {selectedTags.map((tag) => {
+                        const isFileTypeTag = tag.startsWith('type:')
+                        const fileType = isFileTypeTag ? tag.replace('type:', '') : null
+                        const displayText = isFileTypeTag 
+                          ? (fileType === 'image' ? 'Images' : fileType === 'video' ? 'Videos' : fileType)
+                          : (tag === "__no_tags__" ? "No tags" : tag)
+                        
+                        return (
+                          <Badge
+                            key={tag}
+                            variant="default"
+                            className="text-xs font-mono font-medium h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer flex items-center gap-1"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => onRemoveTag(tag)}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                            }}
+                          >
+                            {isFileTypeTag && fileType === 'image' && <FileImage className="h-3 w-3" />}
+                            {isFileTypeTag && fileType === 'video' && <FileVideo className="h-3 w-3" />}
+                            {displayText}
+                          </Badge>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
@@ -137,10 +147,10 @@ export function GalleryHeader({
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden lg:flex items-center">
           {/* Search Input */}
-          <div className="flex-1">
-            <div className="relative flex-1" style={{ minWidth: "300px", maxWidth: "800px" }}>
+          <div className="flex-1 mr-4">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
               
               {/* Container for input and tags */}
@@ -155,23 +165,33 @@ export function GalleryHeader({
                 {/* Selected Tag Chips inside input */}
                 {selectedTags.length > 0 && (
                   <div className="absolute top-1/2 transform -translate-y-1/2 left-10 right-12 flex flex-wrap gap-1.5 items-center">
-                    {selectedTags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="default"
-                        className="text-xs h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => onRemoveTag(tag)}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
-                        }}
-                      >
-                        {tag === "__no_tags__" ? "No tags" : tag}
-                      </Badge>
-                    ))}
+                    {selectedTags.map((tag) => {
+                      const isFileTypeTag = tag.startsWith('type:')
+                      const fileType = isFileTypeTag ? tag.replace('type:', '') : null
+                      const displayText = isFileTypeTag 
+                        ? (fileType === 'image' ? 'Images' : fileType === 'video' ? 'Videos' : fileType)
+                        : (tag === "__no_tags__" ? "No tags" : tag)
+                      
+                      return (
+                        <Badge
+                          key={tag}
+                          variant="default"
+                          className="text-xs font-mono font-medium h-5 px-1.5 bg-primary text-primary-foreground transition-colors cursor-pointer flex items-center gap-1"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => onRemoveTag(tag)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                          }}
+                        >
+                          {isFileTypeTag && fileType === 'image' && <FileImage className="h-3 w-3" />}
+                          {isFileTypeTag && fileType === 'video' && <FileVideo className="h-3 w-3" />}
+                          {displayText}
+                        </Badge>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -198,7 +218,7 @@ export function GalleryHeader({
             </div>
           </div>
 
-          {/* Navigation Controls with specific gaps */}
+          {/* Navigation Controls: 16px between Upload/Grid/Download, 8px between Download/Filters/Theme */}
           <div className="flex items-center">
             {/* Upload Button */}
             {onUploadClick && (
@@ -260,7 +280,7 @@ export function GalleryHeader({
               </TooltipProvider>
             </div>
 
-            {/* Download All Button - 16px gap */}
+            {/* Download All Button */}
             {onDownloadAllClick && (
               <TooltipProvider>
                 <Tooltip>
@@ -281,7 +301,7 @@ export function GalleryHeader({
               </TooltipProvider>
             )}
 
-            {/* Toggle Filters Button - 8px gap, fixed to be icon size */}
+            {/* Toggle Filters Button */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -303,7 +323,7 @@ export function GalleryHeader({
               </Tooltip>
             </TooltipProvider>
 
-            {/* Theme Toggle - 8px gap */}
+            {/* Theme Toggle */}
             <div className="ml-2">
               <ThemeToggle />
             </div>

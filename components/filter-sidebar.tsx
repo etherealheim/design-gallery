@@ -33,11 +33,22 @@ export function FilterSidebar({
   const [isTagsOpen, setIsTagsOpen] = useState(true)
 
   const toggleFileType = (type: "image" | "video") => {
-    const newFileTypes = filters.fileTypes.includes(type)
+    const typeTag = `type:${type}`
+    const isCurrentlySelected = filters.fileTypes.includes(type)
+    
+    const newFileTypes = isCurrentlySelected
       ? filters.fileTypes.filter((t) => t !== type)
       : [...filters.fileTypes, type]
 
-    onFiltersChange({ ...filters, fileTypes: newFileTypes })
+    const newSelectedTags = isCurrentlySelected
+      ? filters.selectedTags.filter((t) => t !== typeTag)
+      : [...filters.selectedTags, typeTag]
+
+    onFiltersChange({ 
+      ...filters, 
+      fileTypes: newFileTypes,
+      selectedTags: newSelectedTags
+    })
   }
 
   const toggleTag = (tag: string) => {
@@ -52,7 +63,7 @@ export function FilterSidebar({
     onFiltersChange({
       fileTypes: [],
       selectedTags: [],
-      sortBy: "date",
+      sortBy: "date", 
       sortOrder: "desc",
     })
   }
@@ -91,18 +102,18 @@ export function FilterSidebar({
                   variant={filters.fileTypes.includes("image") ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleFileType("image")}
-                  className="flex-1 justify-center"
+                  className="flex-1 justify-center cursor-pointer"
                 >
-                  <FileImage className="h-4 w-4 mr-2" />
+                  <FileImage className="h-4 w-4 mr-1" />
                   Images
                 </Button>
                 <Button
                   variant={filters.fileTypes.includes("video") ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleFileType("video")}
-                  className="flex-1 justify-center"
+                  className="flex-1 justify-center cursor-pointer"
                 >
-                  <FileVideo className="h-4 w-4 mr-2" />
+                  <FileVideo className="h-4 w-4 mr-1" />
                   Videos
                 </Button>
               </div>
@@ -128,7 +139,7 @@ export function FilterSidebar({
                       key={tag}
                       variant={filters.selectedTags.includes(tag) ? "default" : "secondary"}
                       className={cn(
-                        "text-xs font-medium cursor-pointer transition-colors",
+                        "text-xs font-mono font-medium cursor-pointer transition-colors",
                         filters.selectedTags.includes(tag)
                           ? "bg-primary text-primary-foreground"
                           : "bg-secondary text-secondary-foreground hover:bg-secondary/80",

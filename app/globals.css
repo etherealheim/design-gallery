@@ -145,32 +145,40 @@
   html {
     /* Reserve space for scrollbar to prevent layout shift */
     scrollbar-gutter: stable;
+    overflow-y: scroll; /* Force scrollbar to always be visible */
   }
   
   body {
     @apply bg-background text-foreground font-sans;
     min-height: 100vh;
+    /* Prevent horizontal scrollbar */
+    overflow-x: hidden;
   }
 
-  /* Simplified scrollbar styling for stone theme */
+  /* Subtle scrollbar styling to minimize visual distraction */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-    border-radius: 4px;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground));
-    border-radius: 4px;
-    opacity: 0.7;
+    background: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    opacity: 1;
+    background: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  /* Firefox scrollbar styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
   }
   
   /* Prevent layout shift in scrollable containers */

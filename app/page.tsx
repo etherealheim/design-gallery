@@ -24,6 +24,7 @@ export default function DesignVault() {
     setSearchQuery,
     filters,
     setFilters,
+    hasActiveFilters,
     viewState,
     updateViewState,
     handleViewModeChange,
@@ -309,10 +310,20 @@ export default function DesignVault() {
         onDownloadSelectedClick={handleDownloadSelected}
         selectedTags={filters.selectedTags}
         onRemoveTag={(tag) => {
-          setFilters(prev => ({
-            ...prev,
-            selectedTags: prev.selectedTags.filter(t => t !== tag)
-          }))
+          setFilters(prev => {
+            let newFilters = {
+              ...prev,
+              selectedTags: prev.selectedTags.filter(t => t !== tag)
+            }
+            
+            // If removing a file type tag, also remove from fileTypes
+            if (tag.startsWith('type:')) {
+              const fileType = tag.replace('type:', '') as "image" | "video"
+              newFilters.fileTypes = prev.fileTypes.filter(t => t !== fileType)
+            }
+            
+            return newFilters
+          })
         }}
       />
 
@@ -362,7 +373,7 @@ export default function DesignVault() {
               searchQuery={searchQuery}
               galleryViewMode={viewState.galleryMode}
               handleViewModeChange={handleViewModeChange}
-              hasActiveFilters={filters.fileTypes.length > 0 || filters.selectedTags.length > 0}
+              hasActiveFilters={hasActiveFilters}
               sortedAndFilteredImages={{
                 displayImages: processedItems.displayItems,
                 filteredImages: processedItems.filteredItems,

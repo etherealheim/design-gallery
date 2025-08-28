@@ -98,7 +98,10 @@ export class FileFilterService {
     // Tag filter
     if (filters.selectedTags.length > 0) {
       const hasNoTagsFilter = filters.selectedTags.includes("__no_tags__")
-      const otherTags = filters.selectedTags.filter(tag => tag !== "__no_tags__")
+      // Filter out file type tags from regular tag filtering since they're handled separately
+      const otherTags = filters.selectedTags.filter(tag => 
+        tag !== "__no_tags__" && !tag.startsWith("type:")
+      )
 
       if (hasNoTagsFilter && otherTags.length > 0) {
         // Show items with no tags OR items with selected tags
@@ -109,7 +112,7 @@ export class FileFilterService {
       } else if (hasNoTagsFilter) {
         // Show only items with no tags
         filtered = filtered.filter(item => item.tags.length === 0)
-      } else {
+      } else if (otherTags.length > 0) {
         // Show items with any of the selected tags
         filtered = filtered.filter(item =>
           otherTags.some(selectedTag => item.tags.includes(selectedTag))

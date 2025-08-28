@@ -551,10 +551,14 @@ export function useGalleryState({
     loadNoTagCount()
   }, [loadFiles, loadAllTags, loadNoTagCount])
 
+  // Memoize the active filters state to prevent unnecessary effect triggers
+  const hasActiveFilters = useMemo(() => {
+    return filters.fileTypes.length > 0 || filters.selectedTags.length > 0
+  }, [filters.fileTypes.length, filters.selectedTags.length])
+
   // Handle data loading based on search, filters, and view mode
   useEffect(() => {
     const isSearching = searchQuery.trim().length > 0
-    const hasActiveFilters = filters.fileTypes.length > 0 || filters.selectedTags.length > 0
     const isNoTagMode = viewState.galleryMode === "no-tag"
     const needsAllFiles = isSearching || hasActiveFilters || isNoTagMode
     
@@ -579,16 +583,24 @@ export function useGalleryState({
       })
       loadAllFilesForSearch()
     } else if (!needsAllFiles && hasAllFilesLoaded && viewState.galleryMode === "recent") {
-      // No longer need all files and we're in recent mode - return to paginated view
-      console.log("Returning to paginated view")
-      loadFiles()
+      // Only reload if we're actually switching away from filters, not just modifying them
+      // Add a small delay to prevent immediate reload when quickly changing filters
+      const timeoutId = setTimeout(() => {
+        if (!hasActiveFilters && hasAllFilesLoaded && viewState.galleryMode === "recent") {
+          console.log("Returning to paginated view")
+          loadFiles()
+        }
+      }, 300) // 300ms delay to allow for quick filter changes
+      
+      return () => clearTimeout(timeoutId)
     }
   }, [
     searchQuery, 
-    filters.fileTypes.length, 
-    filters.selectedTags.length, 
+    hasActiveFilters,
     viewState.galleryMode, 
-    hasAllFilesLoaded
+    hasAllFilesLoaded,
+    loadAllFilesForSearch,
+    loadFiles
   ])
 
   // Note: Removed automatic reload on filter changes since we now use client-side filtering
@@ -607,6 +619,7 @@ export function useGalleryState({
     // Filter state  
     filters,
     setFilters,
+    hasActiveFilters,
     
     // View state
     viewState,

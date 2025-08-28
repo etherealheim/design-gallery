@@ -126,7 +126,8 @@ export const SUPPORTED_VIDEO_TYPES = [
   "video/webm",
   "video/ogg",
   "video/avi",
-  "video/mov"
+  "video/mov",
+  "video/quicktime" // Additional support for QuickTime H.264
 ] as const
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB

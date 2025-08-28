@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { BorderTrail } from "@/components/ui/border-trail"
 import { Play, ImageIcon, Trash2, Edit3, X, Check } from "lucide-react"
 import Image from "next/image"
+import { GalleryCardAddTag } from "@/components/gallery-card-add-tag"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
@@ -51,8 +53,7 @@ export function GalleryCard({
   const [isHovered, setIsHovered] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
-  const [isAddingTag, setIsAddingTag] = useState(false)
-  const [newTag, setNewTag] = useState("")
+
   
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -140,67 +141,7 @@ export function GalleryCard({
     onDelete(image.id)
   }
 
-  const handleAddTag = async () => {
-    if (!newTag.trim() || !onAddTag) return
-    
-    // Parse multiple tags from input - support both space and comma separation
-    const rawTags = newTag.trim()
-    let tags: string[] = []
-    
-    // First try comma separation
-    if (rawTags.includes(',')) {
-      tags = rawTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-    } else {
-      // Fall back to space separation - split on any whitespace
-      tags = rawTags.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
-    }
-    
-    console.log("Gallery Card - Raw input:", rawTags)
-    console.log("Gallery Card - Parsed tags:", tags)
-    console.log("Gallery Card - Current tags:", image.tags)
-    
-    // Remove duplicates and filter out existing tags
-    const uniqueTags = [...new Set(tags)].filter(tag => !image.tags.includes(tag))
-    console.log("Gallery Card - Unique tags to add:", uniqueTags)
-    
-    if (uniqueTags.length === 0) {
-      console.log("Gallery Card - No unique tags to add")
-      setNewTag("")
-      setIsAddingTag(false)
-      return
-    }
-    
-    // INSTANT UI UPDATE - Clear input and close immediately for snappy feel
-    setNewTag("")
-    setIsAddingTag(false)
-    
-    // Show success toast immediately
-    if (uniqueTags.length === 1) {
-      toast.success("Tag added", {
-        description: `"${uniqueTags[0]}" added to ${image.title}`,
-      })
-    } else {
-      toast.success(`${uniqueTags.length} tags added`, {
-        description: `${uniqueTags.map(tag => `"${tag}"`).join(', ')} added to ${image.title}`,
-      })
-    }
 
-    // Add all tags in a single batch to prevent race conditions
-    if (onAddMultipleTags) {
-      console.log("Gallery Card - Adding tags in batch:", uniqueTags)
-      try {
-        await onAddMultipleTags(image.id, uniqueTags)
-        console.log("Gallery Card - Successfully added all tags")
-      } catch (error) {
-        console.error("Gallery Card - Failed to add tags:", error)
-      }
-    }
-  }
-
-  const handleCancelAddTag = () => {
-    setNewTag("")
-    setIsAddingTag(false)
-  }
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -213,7 +154,7 @@ export function GalleryCard({
 
   return (
     <Card
-      className={`hover:shadow-md transition-all duration-300 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
+              className={`hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
       onClick={() => !isEditing && !showMobileMenu && onPreview(image)}
@@ -260,7 +201,7 @@ export function GalleryCard({
         } : undefined}
       >
         {/* Media Element - Consistent styling for both video and image */}
-        <div className={`w-full transition-transform duration-300 ${isHovered ? 'scale-105' : 'scale-100'} ${
+        <div className={`w-full transition-transform duration-150 ease-out ${isHovered ? 'scale-105' : 'scale-100'} ${
           viewMode === "list" ? "h-auto" : "h-auto sm:h-48"
         }`}>
           {image.type === "video" ? (
@@ -328,16 +269,9 @@ export function GalleryCard({
           )}
         </div>
         
-        {/* Hover Overlay - Consistent for both types */}
-        <div 
-          className={`absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent transition-opacity duration-300 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`} 
-        />
-
         {/* Action Buttons - Left Side */}
         <div 
-          className={`absolute top-2 left-2 flex gap-1 z-20 transition-opacity duration-300 ${
+          className={`absolute top-2 left-2 flex gap-1 z-20 transition-opacity duration-150 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -356,7 +290,7 @@ export function GalleryCard({
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-red-600 backdrop-blur-sm cursor-pointer border border-white/10"
+              className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-white/20 backdrop-blur-sm cursor-pointer border border-white/10"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(image.id)
@@ -391,7 +325,7 @@ export function GalleryCard({
               <Input
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="h-6 text-sm flex-1"
+                className="h-5 text-xs flex-1 py-1"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleSaveRename()
@@ -407,7 +341,7 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleSaveRename()
                 }}
-                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                className="h-5 w-5 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
               >
                 <Check className="h-3 w-3" />
               </button>
@@ -416,7 +350,7 @@ export function GalleryCard({
                   e.stopPropagation()
                   handleCancelRename()
                 }}
-                className="h-6 w-6 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                className="h-5 w-5 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -428,144 +362,93 @@ export function GalleryCard({
         </div>
 
         <div className="relative">
-          <AnimatePresence mode="wait">
-            {isAddingTag ? (
-              /* Overlay input that covers the entire tag area */
-              <motion.div
-                key="input"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ 
-                  duration: 0.15,
-                  ease: "easeOut"
-                }}
-                className="flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm"
-              >
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Space or comma"
-                  className="flex-1 h-4 text-base md:text-xs border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddTag()
-                    } else if (e.key === "Escape") {
-                      handleCancelAddTag()
+          <motion.div 
+            className="flex flex-wrap gap-1 items-start"
+            layout
+            transition={{
+              layout: { 
+                type: "spring",
+                stiffness: 800,
+                damping: 60,
+                mass: 0.3
+              }
+            }}
+          >
+            {/* Existing tags */}
+            {image.tags.map((tag, tagIndex) => {
+              const isActive = selectedTags.includes(tag)
+              return (
+                <Badge 
+                  key={tagIndex} 
+                  variant={isActive ? "default" : "secondary"} 
+                  className={`text-xs font-mono font-medium transition-colors cursor-pointer items-center ${
+                    isActive 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/80" 
+                      : "hover:bg-secondary/80"
+                  }`}
+                  style={{height: '24px', cursor: 'pointer'}}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onToggleTagFilter(tag)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isActive) {
+                      e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
+                    } else {
+                      e.currentTarget.style.backgroundColor = 'hsl(var(--secondary) / 0.8)'
                     }
                   }}
-                  autoFocus
-                  onClick={(e) => e.stopPropagation()}
-                />
+                  onMouseLeave={(e) => {
+                    if (isActive) {
+                      e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
+                    } else {
+                      e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))'
+                    }
+                  }}
+                >
+                  {tag}
+                </Badge>
+              )
+            })}
+
+            {/* Keep pending tags for backward compatibility */}
+            {pendingTags.map((tag, tagIndex) => (
+              <div
+                key={`pending-${tagIndex}`}
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-mono font-medium border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
+                style={{height: '24px'}}
+              >
+                <span className="text-muted-foreground">{tag}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleAddTag()
+                    onConfirmTag(image.id, tag)
                   }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
                 >
                   <Check className="h-3 w-3" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleCancelAddTag()
+                    onRejectTag(image.id, tag)
                   }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
                 >
                   <X className="h-3 w-3" />
                 </button>
-              </motion.div>
-            ) : (
-              /* Normal tag display */
-              <motion.div
-                key="tags"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-                transition={{ 
-                  duration: 0.15,
-                  ease: "easeOut"
-                }}
-                className="flex flex-wrap gap-1"
-              >
-                {image.tags.map((tag, tagIndex) => {
-                  const isActive = selectedTags.includes(tag)
-                  return (
-                    <Badge 
-                      key={tagIndex} 
-                      variant={isActive ? "default" : "secondary"} 
-                      className={`text-xs transition-colors cursor-pointer ${
-                        isActive 
-                          ? "bg-primary text-primary-foreground hover:bg-primary/80" 
-                          : "hover:bg-secondary/80"
-                      }`}
-                      style={{ cursor: 'pointer' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onToggleTagFilter(tag)
-                      }}
-                      onMouseEnter={(e) => {
-                        if (isActive) {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
-                        } else {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--secondary) / 0.8)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (isActive) {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
-                        } else {
-                          e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))'
-                        }
-                      }}
-                    >
-                      {tag}
-                    </Badge>
-                  )
-                })}
+              </div>
+            ))}
 
-                {/* Keep pending tags for backward compatibility */}
-                {pendingTags.map((tag, tagIndex) => (
-                  <div
-                    key={`pending-${tagIndex}`}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
-                  >
-                    <span className="text-muted-foreground">{tag}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onConfirmTag(image.id, tag)
-                      }}
-                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      <Check className="h-3 w-3" />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onRejectTag(image.id, tag)
-                      }}
-                      className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Show "Add tag" dashed badge */}
-                <div
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 hover:!border-muted-foreground/60 hover:!bg-muted/20"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsAddingTag(true)
-                  }}
-                >
-                  <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Add Tag Component */}
+            <GalleryCardAddTag
+              imageId={image.id}
+              imageTitle={image.title}
+              existingTags={image.tags}
+              onAddTag={onAddTag}
+              onAddMultipleTags={onAddMultipleTags}
+            />
+          </motion.div>
         </div>
       </div>
 
@@ -591,6 +474,17 @@ export function GalleryCard({
           </DropdownMenuItem>
         )}
       </DropdownMenu>
+      
+      {/* Border Trail Effect */}
+      {isHovered && (
+        <BorderTrail
+          style={{
+            boxShadow:
+              '0px 0px 60px 30px rgb(255 255 255 / 50%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
+          }}
+          size={150}
+        />
+      )}
     </Card>
   )
 }

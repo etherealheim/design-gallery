@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { uploadRequestSchema } from "@/lib/validation"
 import { handleApiError, createAppError, ERROR_CODES } from "@/lib/errors"
 import { ImageCompressionService } from "@/lib/services/image-compression"
+import { VideoCompressionService } from "@/lib/services/video-compression"
 import type { ApiResponse } from "@/types"
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
@@ -100,10 +101,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       throw createAppError(ERROR_CODES.STORAGE_ERROR, "Storage configuration failed")
     }
 
-    // Compress image if applicable
-    let fileToUpload: File | Buffer = file
+    // Compress file if applicable (image or video)
+    let fileToUpload: File | Buffer | Blob = file
     let finalFileSize = file.size
     let compressionInfo = ""
+    let finalMimeType = file.type
 
     if (ImageCompressionService.shouldCompress(file.type, file.size)) {
       try {
@@ -115,18 +117,42 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         
         fileToUpload = compressed.buffer
         finalFileSize = compressed.size
+        finalMimeType = 'image/webp'
         compressionInfo = ` (compressed from ${Math.round(compressed.originalSize / 1024)}KB to ${Math.round(compressed.size / 1024)}KB, ${Math.round(compressed.compressionRatio * 100) / 100}x ratio)`
         
-        console.log("[v0] Compression complete:", compressionInfo)
+        console.log("[v0] Image compression complete:", compressionInfo)
       } catch (error) {
-        console.warn("[v0] Compression failed, using original file:", error)
+        console.warn("[v0] Image compression failed, using original file:", error)
+        // Continue with original file if compression fails
+      }
+    } else if (VideoCompressionService.shouldCompress(file)) {
+      try {
+        console.log("[v0] Compressing video:", file.name, "Original size:", Math.round(file.size / (1024 * 1024)), "MB")
+        
+        const compressed = await VideoCompressionService.optimizeVideo(file)
+        
+        fileToUpload = compressed.blob
+        finalFileSize = compressed.compressedSize
+        finalMimeType = compressed.blob.type
+        compressionInfo = ` (compressed from ${VideoCompressionService.formatFileSize(compressed.originalSize)} to ${VideoCompressionService.formatFileSize(compressed.compressedSize)}, ${Math.round(compressed.compressionRatio * 100) / 100}x ratio)`
+        
+        console.log("[v0] Video compression complete:", compressionInfo)
+      } catch (error) {
+        console.warn("[v0] Video compression failed, using original file:", error)
         // Continue with original file if compression fails
       }
     }
 
     // Generate unique filename with appropriate extension
     const originalExt = file.name.split(".").pop()
-    const finalExt = fileToUpload instanceof Buffer ? 'webp' : originalExt
+    let finalExt = originalExt
+    
+    if (fileToUpload instanceof Buffer) {
+      finalExt = 'webp'
+    } else if (fileToUpload instanceof Blob && fileToUpload.type.includes('webm')) {
+      finalExt = 'webm'
+    }
+    
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${finalExt}`
     const filePath = `uploads/${fileName}`
 
@@ -138,7 +164,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .upload(filePath, fileToUpload, {
         cacheControl: "3600",
         upsert: false,
-        contentType: fileToUpload instanceof Buffer ? 'image/webp' : file.type,
+        contentType: finalMimeType,
       })
 
     if (uploadError) {
@@ -160,7 +186,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       .insert({
         title: validatedData.title,
         file_path: publicUrl,
-        file_type: fileToUpload instanceof Buffer ? 'image/webp' : file.type,
+        file_type: finalMimeType,
         file_size: finalFileSize,
         tags: validatedData.tags,
       })
