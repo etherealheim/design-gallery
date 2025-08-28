@@ -42,39 +42,47 @@ export function PreviewModal({
   const [isCopyTooltipForcedOpen, setIsCopyTooltipForcedOpen] = useState(false)
   const closeButtonRef = useRef<HTMLButtonElement | null>(null)
 
-  const handleCopyImage = async () => {
-    if (!previewItem || previewItem.type !== "image") return
+  const handleCopyMedia = async () => {
+    if (!previewItem) return
+    
     try {
       const response = await fetch(previewItem.url, { mode: "cors", cache: "no-store" })
       const originalBlob = await response.blob()
-      const preferredType = originalBlob.type && originalBlob.type.startsWith("image/") ? originalBlob.type : "image/png"
+      
+      if (previewItem.type === "image") {
+        const preferredType = originalBlob.type && originalBlob.type.startsWith("image/") ? originalBlob.type : "image/png"
 
-      const writeToClipboard = async (blob: Blob) => {
-        const ClipboardItemCtor = (window as any).ClipboardItem
-        await navigator.clipboard.write([
-          new ClipboardItemCtor({ [blob.type || preferredType]: blob })
-        ])
-      }
+        const writeToClipboard = async (blob: Blob) => {
+          const ClipboardItemCtor = (window as any).ClipboardItem
+          await navigator.clipboard.write([
+            new ClipboardItemCtor({ [blob.type || preferredType]: blob })
+          ])
+        }
 
-      try {
-        await writeToClipboard(originalBlob)
-      } catch {
-        // Fallback: re-encode to PNG via canvas
-        const bitmap = await createImageBitmap(originalBlob)
-        const canvas = document.createElement("canvas")
-        canvas.width = bitmap.width
-        canvas.height = bitmap.height
-        const ctx = canvas.getContext("2d")
-        ctx?.drawImage(bitmap, 0, 0)
-        const pngBlob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b || new Blob()), "image/png"))
-        await writeToClipboard(pngBlob)
+        try {
+          await writeToClipboard(originalBlob)
+        } catch {
+          // Fallback: re-encode to PNG via canvas
+          const bitmap = await createImageBitmap(originalBlob)
+          const canvas = document.createElement("canvas")
+          canvas.width = bitmap.width
+          canvas.height = bitmap.height
+          const ctx = canvas.getContext("2d")
+          ctx?.drawImage(bitmap, 0, 0)
+          const pngBlob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b || new Blob()), "image/png"))
+          await writeToClipboard(pngBlob)
+        }
+      } else if (previewItem.type === "video") {
+        // For videos, copy the URL to clipboard since video blob copying is limited
+        await navigator.clipboard.writeText(previewItem.url)
       }
 
       setIsCopyTooltipForcedOpen(true)
       window.setTimeout(() => setIsCopyTooltipForcedOpen(false), 3000)
     } catch (error) {
-      console.error("Failed to copy image:", error)
-      toast({ title: "Copy failed", description: "Could not copy the image. Try again or download instead." })
+      console.error("Failed to copy media:", error)
+      const mediaType = previewItem.type === "video" ? "video" : "image"
+      toast({ title: "Copy failed", description: `Could not copy the ${mediaType}. Try again or download instead.` })
     }
   }
 
@@ -173,24 +181,25 @@ export function PreviewModal({
               </div>
               {/* Right: Actions */}
               <div className="flex items-center gap-1 pl-2">
-                {previewItem.type !== "video" && (
-                  <Tooltip open={isCopyTooltipHoverOpen || isCopyTooltipForcedOpen} onOpenChange={setIsCopyTooltipHoverOpen}>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="size-8 cursor-pointer"
-                        onClick={handleCopyImage}
-                        aria-label="Copy image"
-                      >
-                        <Copy />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent sideOffset={6}>
-                      {isCopyTooltipForcedOpen ? "Copied!" : "Copy to clipboard"}
-                    </TooltipContent>
-                  </Tooltip>
-                )}
+                <Tooltip open={isCopyTooltipHoverOpen || isCopyTooltipForcedOpen} onOpenChange={setIsCopyTooltipHoverOpen}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="size-8 cursor-pointer"
+                      onClick={handleCopyMedia}
+                      aria-label={previewItem.type === "video" ? "Copy video URL" : "Copy image"}
+                    >
+                      <Copy />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6}>
+                    {isCopyTooltipForcedOpen ? 
+                      (previewItem.type === "video" ? "URL copied!" : "Copied!") : 
+                      (previewItem.type === "video" ? "Copy video URL" : "Copy to clipboard")
+                    }
+                  </TooltipContent>
+                </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button 
@@ -304,21 +313,13 @@ export function PreviewModal({
                   src={previewItem.url}
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                   controls
-                  autoPlay
                   muted
                   loop
                   playsInline
                   preload="metadata"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    console.error('Video loading error:', e.currentTarget.error);
-                    console.log('Video URL:', previewItem.url);
-                  }}
-                  onLoadStart={() => {
-                    console.log('Video loading started:', previewItem.url);
-                  }}
-                  onLoadedData={() => {
-                    console.log('Video loaded successfully:', previewItem.url);
+                    console.warn('Video loading error for:', previewItem.url);
                   }}
                 />
               ) : (
@@ -327,9 +328,8 @@ export function PreviewModal({
                   alt={previewItem.title}
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                   loading="lazy"
-                  onLoad={() => console.log('Image loaded:', previewItem.url)}
                   onError={(e) => {
-                    console.error('Image loading error for:', previewItem.url);
+                    console.warn('Image loading error for:', previewItem.url);
                     e.currentTarget.src = "/placeholder.svg";
                   }}
                 />
