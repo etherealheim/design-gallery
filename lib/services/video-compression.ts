@@ -1,3 +1,5 @@
+import { VideoConversionService } from "./video-conversion"
+
 interface VideoCompressionOptions {
   maxWidth?: number
   maxHeight?: number
@@ -38,17 +40,14 @@ export class VideoCompressionService {
    */
   static shouldCompress(file: File): boolean {
     const minSize = 10 * 1024 * 1024 // 10MB minimum
-    
-    // Skip compression for MOV files from iPhone as they often use HEVC encoding
-    // which has poor browser support and can cause hangs
-    if (file.name.toLowerCase().endsWith('.mov') || 
-        file.type.includes('quicktime') || 
-        file.type === 'video/quicktime') {
-      console.log('[Video Compression] Skipping compression for MOV/QuickTime file:', file.name)
-      return false
-    }
-    
     return file.type.startsWith('video/') && file.size > minSize
+  }
+
+  /**
+   * Check if video needs conversion (MOV files)
+   */
+  static shouldConvert(file: File): boolean {
+    return VideoConversionService.shouldConvert(file)
   }
 
   /**
@@ -274,16 +273,83 @@ export class VideoCompressionService {
   }
 
   /**
-   * Simple video optimization using HTMLVideoElement and Canvas
-   * More reliable but less compression than full ffmpeg approach
+   * Process video: Convert MOV to MP4 if needed, then optionally compress
    */
-  static async optimizeVideo(
+  static async processVideo(
     file: File,
-    targetSize?: number,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number, stage?: string) => void
   ): Promise<VideoCompressionResult> {
-    // For files smaller than target size, return as-is
-    if (targetSize && file.size <= targetSize) {
+    let processedFile = file
+    let conversionInfo = ""
+
+    try {
+      // Step 1: Convert MOV to MP4 if needed
+      if (this.shouldConvert(file)) {
+        console.log('[Video Processing] Converting MOV to MP4:', file.name)
+        onProgress?.(0, "Converting MOV to MP4...")
+        
+        const conversionResult = await VideoConversionService.convertMovToMp4(
+          file,
+          (convertProgress) => {
+            // Conversion takes 0-60% of total progress
+            onProgress?.(Math.round(convertProgress * 0.6), "Converting to MP4...")
+          }
+        )
+        
+        if (conversionResult.blob !== file) {
+          processedFile = new File([conversionResult.blob], file.name.replace(/\.mov$/i, '.mp4'), {
+            type: 'video/mp4',
+            lastModified: Date.now()
+          })
+          conversionInfo = ` (converted from MOV, ${this.formatFileSize(conversionResult.originalSize)} → ${this.formatFileSize(conversionResult.convertedSize)})`
+          console.log('[Video Processing] MOV conversion complete:', conversionInfo)
+        }
+        
+        onProgress?.(60, "Conversion complete")
+      }
+
+      // Step 2: Check if compression is needed
+      if (this.shouldCompress(processedFile)) {
+        console.log('[Video Processing] Compressing video:', processedFile.name)
+        onProgress?.(60, "Compressing video...")
+        
+        const settings = this.getOptimalSettings(processedFile.size)
+        const compressionResult = await this.compressVideo(
+          processedFile, 
+          settings, 
+          (compressProgress) => {
+            // Compression takes 60-100% of total progress  
+            onProgress?.(60 + Math.round(compressProgress * 0.4), "Compressing...")
+          }
+        )
+        
+        console.log('[Video Processing] Video processing complete:', {
+          originalSize: file.size,
+          finalSize: compressionResult.compressedSize,
+          conversionInfo,
+          compressionRatio: compressionResult.compressionRatio
+        })
+        
+        return compressionResult
+      } else {
+        // No compression needed, return converted file
+        console.log('[Video Processing] No compression needed, using converted file')
+        onProgress?.(100, "Complete")
+        
+        return {
+          blob: processedFile,
+          originalSize: file.size,
+          compressedSize: processedFile.size,
+          compressionRatio: file.size / processedFile.size,
+          duration: 0
+        }
+      }
+      
+    } catch (error) {
+      console.error('[Video Processing] Failed:', error)
+      onProgress?.(100, "Using original file")
+      
+      // Fallback to original file
       return {
         blob: file,
         originalSize: file.size,
@@ -292,9 +358,19 @@ export class VideoCompressionService {
         duration: 0
       }
     }
+  }
 
-    const settings = this.getOptimalSettings(file.size)
-    return this.compressVideo(file, settings, onProgress)
+  /**
+   * Simple video optimization using HTMLVideoElement and Canvas
+   * More reliable but less compression than full ffmpeg approach
+   */
+  static async optimizeVideo(
+    file: File,
+    targetSize?: number,
+    onProgress?: (progress: number) => void
+  ): Promise<VideoCompressionResult> {
+    // Use the new processVideo method for better MOV handling
+    return this.processVideo(file, onProgress)
   }
 
   /**

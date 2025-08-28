@@ -61,8 +61,11 @@ export function useFileUpload({
 
       // Show upload progress toast
       const displayName = truncateFilenameForMobile(file.name)
+      const isVideo = file.type.startsWith("video/")
+      const isMov = file.name.toLowerCase().endsWith('.mov')
+      
       const uploadToastId = toast.loading(`Uploading ${displayName}...`, {
-        description: "Uploading to storage",
+        description: isMov ? "Converting MOV to MP4..." : isVideo ? "Processing video..." : "Uploading to storage",
       })
 
       // Upload file
@@ -72,10 +75,24 @@ export function useFileUpload({
         [],
         (progress) => {
           setUploadProgress({ fileName: file.name, progress: progress.progress })
+          
+          let description = "Uploading to storage"
+          let title = `Uploading ${displayName}... ${Math.round(progress.progress)}%`
+          
           if (progress.stage === "uploading") {
-            toast.loading(`Uploading ${displayName}... ${Math.round(progress.progress)}%`, {
+            if (isMov && progress.progress < 60) {
+              description = "Converting MOV to MP4..."
+              title = `Converting ${displayName}... ${Math.round(progress.progress)}%`
+            } else if (isVideo && progress.progress < 90) {
+              description = "Processing video..."
+              title = `Processing ${displayName}... ${Math.round(progress.progress)}%`
+            } else {
+              description = "Uploading to storage"
+            }
+            
+            toast.loading(title, {
               id: uploadToastId,
-              description: "Uploading to storage",
+              description,
             })
           }
         }

@@ -125,31 +125,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         console.warn("[v0] Image compression failed, using original file:", error)
         // Continue with original file if compression fails
       }
-    } else if (VideoCompressionService.shouldCompress(file)) {
+    } else if (file.type.startsWith('video/')) {
       try {
-        console.log("[v0] Compressing video:", file.name, "Original size:", Math.round(file.size / (1024 * 1024)), "MB")
+        console.log("[v0] Processing video:", file.name, "Original size:", Math.round(file.size / (1024 * 1024)), "MB")
         
-        // Add timeout for server-side video processing
-        const compressionPromise = VideoCompressionService.optimizeVideo(file)
+        // Add timeout for server-side video processing (extended for MOV conversion)
+        const processingPromise = VideoCompressionService.processVideo(file)
         const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Server video compression timeout')), 2 * 60 * 1000) // 2 minutes
+          setTimeout(() => reject(new Error('Server video processing timeout')), 5 * 60 * 1000) // 5 minutes for MOV conversion
         )
         
-        const compressed = await Promise.race([compressionPromise, timeoutPromise])
+        const processed = await Promise.race([processingPromise, timeoutPromise])
         
-        fileToUpload = compressed.blob
-        finalFileSize = compressed.compressedSize
-        finalMimeType = compressed.blob.type
-        compressionInfo = ` (compressed from ${VideoCompressionService.formatFileSize(compressed.originalSize)} to ${VideoCompressionService.formatFileSize(compressed.compressedSize)}, ${Math.round(compressed.compressionRatio * 100) / 100}x ratio)`
+        fileToUpload = processed.blob
+        finalFileSize = processed.compressedSize
+        finalMimeType = processed.blob.type
         
-        console.log("[v0] Video compression complete:", compressionInfo)
+        if (processed.compressionRatio !== 1) {
+          compressionInfo = ` (processed from ${VideoCompressionService.formatFileSize(processed.originalSize)} to ${VideoCompressionService.formatFileSize(processed.compressedSize)}, ${Math.round(processed.compressionRatio * 100) / 100}x ratio)`
+        } else {
+          compressionInfo = " (video processed)"
+        }
+        
+        console.log("[v0] Video processing complete:", compressionInfo)
       } catch (error) {
-        console.warn("[v0] Video compression failed, using original file:", error)
-        // Continue with original file if compression fails
+        console.warn("[v0] Video processing failed, using original file:", error)
+        // Continue with original file if processing fails
+        compressionInfo = " (processing failed, using original)"
       }
-    } else if (file.name.toLowerCase().endsWith('.mov') || file.type.includes('quicktime')) {
-      console.log("[v0] Skipping compression for MOV/QuickTime file:", file.name, "Size:", Math.round(file.size / (1024 * 1024)), "MB")
-      compressionInfo = " (MOV file - compression skipped for compatibility)"
     }
 
     // Generate unique filename with appropriate extension
@@ -158,17 +161,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     
     if (fileToUpload instanceof Buffer) {
       finalExt = 'webp'
-    } else if (fileToUpload instanceof Blob && fileToUpload.type.includes('webm')) {
-      finalExt = 'webm'
+    } else if (fileToUpload instanceof Blob) {
+      if (fileToUpload.type.includes('webm')) {
+        finalExt = 'webm'
+      } else if (fileToUpload.type.includes('mp4')) {
+        finalExt = 'mp4'
+      }
     }
     
-    // Ensure MOV files maintain proper extension
-    if (file.name.toLowerCase().endsWith('.mov') && finalExt?.toLowerCase() !== 'mov') {
-      finalExt = 'mov'
-      // Set proper MIME type for MOV files if it's missing or incorrect
-      if (!finalMimeType.includes('quicktime') && !finalMimeType.includes('mov')) {
-        finalMimeType = 'video/quicktime'
-      }
+    // Handle MOV files that were converted to MP4
+    if (file.name.toLowerCase().endsWith('.mov') && finalMimeType.includes('mp4')) {
+      finalExt = 'mp4'
+      console.log("[v0] MOV file converted to MP4, updating extension")
     }
     
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${finalExt}`
