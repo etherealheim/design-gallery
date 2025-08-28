@@ -38,6 +38,16 @@ export class VideoCompressionService {
    */
   static shouldCompress(file: File): boolean {
     const minSize = 10 * 1024 * 1024 // 10MB minimum
+    
+    // Skip compression for MOV files from iPhone as they often use HEVC encoding
+    // which has poor browser support and can cause hangs
+    if (file.name.toLowerCase().endsWith('.mov') || 
+        file.type.includes('quicktime') || 
+        file.type === 'video/quicktime') {
+      console.log('[Video Compression] Skipping compression for MOV/QuickTime file:', file.name)
+      return false
+    }
+    
     return file.type.startsWith('video/') && file.size > minSize
   }
 
@@ -90,6 +100,15 @@ export class VideoCompressionService {
   ): Promise<VideoCompressionResult> {
     const opts = { ...DEFAULT_OPTIONS, ...options }
     const originalSize = file.size
+
+    // Set up timeout to prevent hanging (5 minutes max)
+    const COMPRESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+    let timeoutId: NodeJS.Timeout | null = null;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Video compression timeout - file may be too complex or format unsupported'))
+      }, COMPRESSION_TIMEOUT)
+    });
 
     try {
       // Create video element to get dimensions and duration
@@ -202,29 +221,46 @@ export class VideoCompressionService {
         })
       }
 
-      // Start processing
-      await processFrame()
-      
-      // Stop recording
-      mediaRecorder.stop()
-      
-      // Wait for compression to complete
-      const compressedBlob = await compressionPromise
+      // Start processing with timeout protection
+      const compressionWork = async () => {
+        await processFrame()
+        
+        // Stop recording
+        mediaRecorder.stop()
+        
+        // Wait for compression to complete
+        const compressedBlob = await compressionPromise
 
-      // Clean up
-      URL.revokeObjectURL(video.src)
+        // Clean up
+        URL.revokeObjectURL(video.src)
 
-      const compressionRatio = originalSize / compressedBlob.size
+        const compressionRatio = originalSize / compressedBlob.size
 
-      return {
-        blob: compressedBlob,
-        originalSize,
-        compressedSize: compressedBlob.size,
-        compressionRatio,
-        duration: videoMetadata.duration
+        return {
+          blob: compressedBlob,
+          originalSize,
+          compressedSize: compressedBlob.size,
+          compressionRatio,
+          duration: videoMetadata.duration
+        }
       }
 
+      // Race between compression work and timeout
+      const result = await Promise.race([compressionWork(), timeoutPromise])
+      
+      // Clear timeout if compression completed successfully
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      
+      return result
+
     } catch (error) {
+      // Clear timeout on error
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      
       console.error('Video compression failed:', error)
       // Return original file as blob if compression fails
       return {

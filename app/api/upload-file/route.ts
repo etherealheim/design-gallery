@@ -129,7 +129,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       try {
         console.log("[v0] Compressing video:", file.name, "Original size:", Math.round(file.size / (1024 * 1024)), "MB")
         
-        const compressed = await VideoCompressionService.optimizeVideo(file)
+        // Add timeout for server-side video processing
+        const compressionPromise = VideoCompressionService.optimizeVideo(file)
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Server video compression timeout')), 2 * 60 * 1000) // 2 minutes
+        )
+        
+        const compressed = await Promise.race([compressionPromise, timeoutPromise])
         
         fileToUpload = compressed.blob
         finalFileSize = compressed.compressedSize
@@ -141,6 +147,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         console.warn("[v0] Video compression failed, using original file:", error)
         // Continue with original file if compression fails
       }
+    } else if (file.name.toLowerCase().endsWith('.mov') || file.type.includes('quicktime')) {
+      console.log("[v0] Skipping compression for MOV/QuickTime file:", file.name, "Size:", Math.round(file.size / (1024 * 1024)), "MB")
+      compressionInfo = " (MOV file - compression skipped for compatibility)"
     }
 
     // Generate unique filename with appropriate extension
@@ -151,6 +160,15 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       finalExt = 'webp'
     } else if (fileToUpload instanceof Blob && fileToUpload.type.includes('webm')) {
       finalExt = 'webm'
+    }
+    
+    // Ensure MOV files maintain proper extension
+    if (file.name.toLowerCase().endsWith('.mov') && finalExt?.toLowerCase() !== 'mov') {
+      finalExt = 'mov'
+      // Set proper MIME type for MOV files if it's missing or incorrect
+      if (!finalMimeType.includes('quicktime') && !finalMimeType.includes('mov')) {
+        finalMimeType = 'video/quicktime'
+      }
     }
     
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${finalExt}`

@@ -45,16 +45,22 @@ export class FileValidationService {
         fileSize: file.size,
         errors: result.errors
       })
+    }
+    
+    // Check if it's a .mov file with incorrect MIME type (common on iPhone/Safari)
+    if (file.name.toLowerCase().endsWith('.mov')) {
+      console.log('[Mobile Video] .mov file detected:', {
+        fileName: file.name,
+        reportedType: file.type,
+        fileSize: file.size
+      })
       
-      // Check if it's a .mov file with incorrect MIME type
-      if (file.name.toLowerCase().endsWith('.mov') && !file.type.includes('mov') && !file.type.includes('quicktime')) {
-        console.warn('[Mobile Video] .mov file detected with incorrect MIME type:', file.type)
-        
-        // For .mov files, try to be more permissive with MIME type validation
-        if (file.type === 'video/mp4' || file.type === '' || file.type.startsWith('video/')) {
-          console.log('[Mobile Video] Accepting .mov file despite MIME type mismatch')
-          return { isValid: true, errors: [] }
-        }
+      // MOV files from iPhone often have inconsistent MIME types
+      // Accept them regardless of the reported MIME type
+      if (!result.isValid || 
+          (!file.type.includes('mov') && !file.type.includes('quicktime'))) {
+        console.log('[Mobile Video] Accepting .mov file with corrected validation')
+        return { isValid: true, errors: [] }
       }
     }
     
