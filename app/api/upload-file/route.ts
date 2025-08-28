@@ -80,17 +80,28 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         throw createAppError(ERROR_CODES.STORAGE_ERROR, `Storage error: ${bucketsError.message}`)
       }
 
-      const bucketExists = buckets?.some((bucket) => bucket.name === "design-vault")
+      const bucket = buckets?.find((bucket) => bucket.name === "design-vault")
+      const bucketExists = Boolean(bucket)
       if (!bucketExists) {
         console.log("[v0] Creating design-vault bucket")
         const { error: createBucketError } = await supabase.storage.createBucket("design-vault", {
           public: true,
           allowedMimeTypes: ["image/*", "video/*"],
-          fileSizeLimit: 50 * 1024 * 1024, // 50MB
+          fileSizeLimit: 512 * 1024 * 1024, // 512MB
         })
 
         if (createBucketError && !createBucketError.message.includes("already exists")) {
           throw createAppError(ERROR_CODES.STORAGE_ERROR, `Failed to create storage bucket: ${createBucketError.message}`)
+        }
+      } else {
+        // Ensure generous limits for large iPhone videos
+        const { error: updateBucketError } = await supabase.storage.updateBucket("design-vault", {
+          public: true,
+          allowedMimeTypes: ["image/*", "video/*"],
+          fileSizeLimit: 512 * 1024 * 1024, // 512MB
+        })
+        if (updateBucketError) {
+          console.warn("[v0] Failed to update storage bucket settings:", updateBucketError.message)
         }
       }
     } catch (error) {

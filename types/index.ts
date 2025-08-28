@@ -134,7 +134,7 @@ export const SUPPORTED_VIDEO_TYPES = [
   "video/x-ms-wmv" // Windows Media Video
 ] as const
 
-export const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+export const MAX_FILE_SIZE = 512 * 1024 * 1024 // 512MB to accommodate large iPhone videos
 // No limit on files per upload
 
 // Type guards
