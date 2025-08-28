@@ -3,7 +3,6 @@ import { createServerClient } from "@/lib/supabase/server"
 import { uploadRequestSchema } from "@/lib/validation"
 import { handleApiError, createAppError, ERROR_CODES } from "@/lib/errors"
 import { ImageCompressionService } from "@/lib/services/image-compression"
-import { VideoCompressionService } from "@/lib/services/video-compression"
 import type { ApiResponse } from "@/types"
 
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
@@ -124,34 +123,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       } catch (error) {
         console.warn("[v0] Image compression failed, using original file:", error)
         // Continue with original file if compression fails
-      }
-    } else if (file.type.startsWith('video/')) {
-      try {
-        console.log("[v0] Processing video:", file.name, "Original size:", Math.round(file.size / (1024 * 1024)), "MB")
-        
-        // Add timeout for server-side video processing (extended for MOV conversion)
-        const processingPromise = VideoCompressionService.processVideo(file)
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Server video processing timeout')), 5 * 60 * 1000) // 5 minutes for MOV conversion
-        )
-        
-        const processed = await Promise.race([processingPromise, timeoutPromise])
-        
-        fileToUpload = processed.blob
-        finalFileSize = processed.compressedSize
-        finalMimeType = processed.blob.type
-        
-        if (processed.compressionRatio !== 1) {
-          compressionInfo = ` (processed from ${VideoCompressionService.formatFileSize(processed.originalSize)} to ${VideoCompressionService.formatFileSize(processed.compressedSize)}, ${Math.round(processed.compressionRatio * 100) / 100}x ratio)`
-        } else {
-          compressionInfo = " (video processed)"
-        }
-        
-        console.log("[v0] Video processing complete:", compressionInfo)
-      } catch (error) {
-        console.warn("[v0] Video processing failed, using original file:", error)
-        // Continue with original file if processing fails
-        compressionInfo = " (processing failed, using original)"
       }
     }
 

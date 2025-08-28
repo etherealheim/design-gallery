@@ -5,6 +5,7 @@ import type { UploadedFile, UploadProgress, PendingTags } from "@/types"
 import { FileOperationsService, FileValidationService } from "@/lib/services/file-service"
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
+import { VideoConversionService } from "@/lib/services/video-conversion"
 
 // Utility function to truncate filenames for mobile displays
 function truncateFilenameForMobile(filename: string, maxLength: number = 20): string {
@@ -68,9 +69,40 @@ export function useFileUpload({
         description: isMov ? "Converting MOV to MP4..." : isVideo ? "Processing video..." : "Uploading to storage",
       })
 
+      // Optionally convert MOV to MP4 client-side before uploading
+      let fileToUpload: File = file
+      if (isVideo && file.name.toLowerCase().endsWith('.mov')) {
+        try {
+          toast.loading(`Converting ${displayName}...`, {
+            id: uploadToastId,
+            description: "Converting MOV to MP4...",
+          })
+
+          const conversion = await VideoConversionService.convertMovToMp4(
+            file,
+            () => {
+              // We intentionally avoid showing % to keep UI stable
+              toast.loading(`Converting ${displayName}...`, {
+                id: uploadToastId,
+                description: "Converting MOV to MP4...",
+              })
+            }
+          )
+
+          if (conversion.blob !== file) {
+            fileToUpload = new File([conversion.blob], file.name.replace(/\.mov$/i, '.mp4'), {
+              type: 'video/mp4',
+              lastModified: Date.now()
+            })
+          }
+        } catch (convErr) {
+          console.warn('MOV conversion failed, uploading original:', convErr)
+        }
+      }
+
       // Upload file
       const dbFile = await FileOperationsService.uploadFile(
-        file,
+        fileToUpload,
         title,
         [],
         (progress) => {
