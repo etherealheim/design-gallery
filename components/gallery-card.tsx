@@ -15,6 +15,12 @@ import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
 
+// Mobile detection utility
+const isMobileDevice = () => {
+  if (typeof window === 'undefined') return false
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768
+}
+
 interface GalleryCardProps {
   image: GalleryItem
   viewMode: "grid" | "list"
@@ -53,6 +59,8 @@ export function GalleryCard({
   const [isHovered, setIsHovered] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [videoThumbnailGenerated, setVideoThumbnailGenerated] = useState(false)
+  const [isMobile] = useState(() => isMobileDevice())
 
   
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -213,50 +221,75 @@ export function GalleryCard({
               loop
               playsInline
               preload="metadata"
+              poster={`${image.url}#t=0.5`} // Request thumbnail at 0.5 seconds
               crossOrigin="anonymous"
               style={{ pointerEvents: 'none' }} // Prevent video controls from interfering
-              onLoadedData={(e) => {
-                // Ensure the video shows the first frame as thumbnail
+              onLoadedMetadata={(e) => {
+                // Generate thumbnail for mobile devices
                 const video = e.currentTarget
-                video.currentTime = 0.1 // Set to just after start to avoid black frame
-                console.log('📊 Video thumbnail loaded:', image.url)
-                console.log('📊 Video loaded data:', image.url)
+                if (video.duration && !videoThumbnailGenerated) {
+                  const thumbnailTime = Math.min(0.5, video.duration / 10)
+                  video.currentTime = thumbnailTime
+                  console.log(`📊 Video metadata loaded (Mobile: ${isMobile}), setting thumbnail time:`, thumbnailTime)
+                }
+              }}
+              onSeeked={(e) => {
+                // Mark thumbnail as generated when seeking is complete
+                const video = e.currentTarget
+                if (!videoThumbnailGenerated) {
+                  setVideoThumbnailGenerated(true)
+                  console.log('📊 Video thumbnail generated successfully')
+                  
+                  // On mobile, pause immediately to preserve thumbnail
+                  if (isMobile) {
+                    video.pause()
+                  }
+                }
+              }}
+              onError={(e) => {
+                console.error('🚨 Gallery video loading error:', e.currentTarget.error);
+                console.log('🔗 Video URL:', image.url);
+                console.log('🔗 Mobile device:', isMobile);
               }}
               onMouseEnter={async (e) => {
+                // Skip autoplay on mobile devices
+                if (isMobile) return
+                
                 e.preventDefault()
                 const video = e.currentTarget
                 try {
-                  if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                  if (video.readyState >= 2 && videoThumbnailGenerated) {
                     video.currentTime = 0
                     const playPromise = video.play()
                     if (playPromise) {
                       await playPromise
-                      console.log('✅ Video autoplay started:', image.url)
+                      console.log('✅ Video autoplay started (desktop):', image.url)
                     }
                   } else {
-                    console.log('⏳ Video not ready yet:', image.url)
+                    console.log('⏳ Video not ready or thumbnail not generated yet:', image.url)
                   }
                 } catch (error) {
                   console.log('❌ Video autoplay blocked/failed:', error, image.url)
                 }
               }}
               onMouseLeave={(e) => {
+                // Skip on mobile devices
+                if (isMobile) return
+                
                 e.preventDefault()
                 const video = e.currentTarget
                 try {
                   video.pause()
-                  video.currentTime = 0
-                  console.log('⏸️ Video autoplay paused:', image.url)
+                  // Reset to thumbnail time instead of 0 for better preview
+                  const thumbnailTime = video.duration ? Math.min(0.5, video.duration / 10) : 0
+                  video.currentTime = thumbnailTime
+                  console.log('⏸️ Video autoplay paused (desktop):', image.url)
                 } catch (error) {
                   console.log('Error pausing video:', error)
                 }
               }}
-              onError={(e) => {
-                console.error('🚨 Gallery video loading error:', e.currentTarget.error);
-                console.log('🔗 Video URL:', image.url);
-              }}
               onCanPlay={() => {
-                console.log('🎬 Video can play:', image.url)
+                console.log('🎬 Video can play (Mobile:', isMobile, '):', image.url)
               }}
             />
           ) : (
