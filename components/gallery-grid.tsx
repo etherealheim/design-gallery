@@ -132,7 +132,7 @@ export function GalleryGrid({
                   >
                     <Clock className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Recent</span>
-                    <Badge variant="secondary" className="sm:ml-auto text-xs min-w-[24px] justify-center">
+                    <Badge variant="secondary" className="ml-1 sm:ml-auto text-xs min-w-[20px] justify-center px-1.5">
                       <AnimatedCounter value={recentCount} />
                     </Badge>
                   </Button>
@@ -153,7 +153,7 @@ export function GalleryGrid({
                   >
                     <Shuffle className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Random</span>
-                    <Badge variant="secondary" className="sm:ml-auto text-xs min-w-[24px] justify-center">
+                    <Badge variant="secondary" className="ml-1 sm:ml-auto text-xs min-w-[20px] justify-center px-1.5">
                       <AnimatedCounter value={randomCount} />
                     </Badge>
                   </Button>

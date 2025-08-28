@@ -51,7 +51,7 @@ export function GalleryHeader({
         maskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)', 
         WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)' 
       }}></div>
-      <div className="w-full px-4 py-4">
+      <div className="w-full px-2 sm:px-4 py-4">
         {/* Mobile Layout */}
         <div className="lg:hidden flex flex-col gap-3">
           <div className="flex items-center gap-3">
