@@ -24,7 +24,7 @@
   },
   "scripts": {
     "build": "node scripts/update-version.js && next build",
-    "dev": "next dev",
+    "dev": "node scripts/update-version.js && next dev",
     "lint": "next lint",
     "start": "next start",
     "update-version": "node scripts/update-version.js"

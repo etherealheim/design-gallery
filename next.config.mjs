@@ -54,9 +54,8 @@ function getAppVersion() {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  env: {
-    NEXT_PUBLIC_APP_VERSION: getAppVersion(),
-  },
+  // Removed env injection of NEXT_PUBLIC_APP_VERSION. The app now reads the
+  // version from lib/version.ts which is written by scripts/update-version.js
   eslint: {
     ignoreDuringBuilds: true,
   },
