@@ -97,32 +97,34 @@ export function FilterSidebar({
               </button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-up-1 data-[state=open]:slide-down-1">
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant={filters.fileTypes.includes("image") ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleFileType("image")}
-                  className="justify-center cursor-pointer"
-                >
-                  <ImageIcon className="h-4 w-4 mr-1" />
-                  Images
-                </Button>
-                <Button
-                  variant={filters.fileTypes.includes("video") ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => toggleFileType("video")}
-                  className="justify-center cursor-pointer"
-                >
-                  <FileVideo className="h-4 w-4 mr-1" />
-                  Videos
-                </Button>
+              <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant={filters.fileTypes.includes("image") ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleFileType("image")}
+                    className="justify-center cursor-pointer"
+                  >
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Images
+                  </Button>
+                  <Button
+                    variant={filters.fileTypes.includes("video") ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleFileType("video")}
+                    className="justify-center cursor-pointer"
+                  >
+                    <FileVideo className="h-4 w-4 mr-2" />
+                    Videos
+                  </Button>
+                </div>
                 <Button
                   variant={filters.fileTypes.includes("gif") ? "default" : "outline"}
                   size="sm"
                   onClick={() => toggleFileType("gif")}
-                  className="justify-center cursor-pointer"
+                  className="justify-center cursor-pointer w-full"
                 >
-                  <FileImage className="h-4 w-4 mr-1" />
+                  <FileImage className="h-4 w-4 mr-2" />
                   GIFs
                 </Button>
               </div>
