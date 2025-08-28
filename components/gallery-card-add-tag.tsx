@@ -242,15 +242,6 @@ export function GalleryCardAddTag({
           <motion.span
             key="add-tag-text"
             className="text-muted-foreground/90 hover:text-foreground font-mono font-medium transition-colors duration-200 whitespace-nowrap"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 800,
-              damping: 35,
-              mass: 0.2
-            }}
           >
             Add tag
           </motion.span>
