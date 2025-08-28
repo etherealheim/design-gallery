@@ -111,16 +111,15 @@ export function PreviewModal({
       <DialogContent 
         className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] sm:w-[95vw] sm:h-[95vh] sm:!max-w-[95vw] sm:!max-h-[95vh] lg:w-[90vw] lg:h-[90vh] lg:!max-w-[90vw] lg:!max-h-[90vh] p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" 
         showCloseButton={false}
-        onOpenAutoFocus={(e) => { e.preventDefault(); closeButtonRef.current?.focus() }}
       >
         {previewItem && (
-          <div className="flex flex-col h-full max-h-full">
+          <div className="flex flex-col h-full max-h-full min-h-0">
             <DialogTitle className="sr-only">
               {previewItem.title} - Preview
             </DialogTitle>
             
             {/* Header - Fixed at top */}
-            <div className="flex items-center justify-between min-w-0 pb-2 shrink-0 overflow-visible">
+            <div className="flex items-center justify-between min-w-0 pb-2 shrink-0">
               {/* Left: Title + inline rename */}
               <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
                 {isEditingTitle ? (
@@ -298,7 +297,7 @@ export function PreviewModal({
             </div>
 
             {/* Media - Fills remaining space */}
-            <div className="flex-1 min-h-0 flex items-center justify-center">
+            <div className="flex-1 min-h-0 min-w-0 flex items-center justify-center overflow-hidden">
               {previewItem.type === "video" ? (
                 <video
                   src={previewItem.url}
