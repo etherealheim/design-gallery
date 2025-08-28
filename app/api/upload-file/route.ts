@@ -44,12 +44,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }
     }
 
+    // Normalize iPhone MOV MIME quirks before validation
+    const originalType = (file?.type || "").toLowerCase()
+    let normalizedType = originalType
+    if (file?.name?.toLowerCase().endsWith('.mov')) {
+      if (!originalType || (!originalType.includes('quicktime') && !originalType.includes('mov') && !originalType.startsWith('video/'))) {
+        normalizedType = 'video/quicktime'
+      }
+    }
+
     // Validate the request data
     const validationResult = uploadRequestSchema.safeParse({
       file: {
         name: file.name,
         size: file.size,
-        type: file.type,
+        type: normalizedType,
       },
       title: title || file.name.replace(/\.[^/.]+$/, ""),
       tags,
@@ -115,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     let fileToUpload: File | Buffer | Blob = file
     let finalFileSize = file.size
     let compressionInfo = ""
-    let finalMimeType = file.type
+    let finalMimeType = normalizedType || file.type
 
     if (ImageCompressionService.shouldCompress(file.type, file.size)) {
       try {
