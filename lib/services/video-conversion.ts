@@ -109,7 +109,7 @@ export class VideoConversionService {
       let lastProgress = 20
       this.ffmpeg.on('progress', ({ ratio }) => {
         const progress = Math.min(20 + (ratio * 70), 90) // 20-90% for conversion
-        if (progress > lastProgress) {
+        if (progress > lastProgress + 5) { // Only update every 5% to reduce spam
           onProgress?.(Math.round(progress))
           lastProgress = progress
         }

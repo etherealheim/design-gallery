@@ -299,7 +299,7 @@ export function GalleryCard({
               className="w-full h-full object-contain sm:object-cover cursor-pointer"
               loading="lazy"
               onError={(e) => {
-                console.error('Gallery image loading error for:', image.url);
+                console.warn('Gallery image failed to load, using placeholder:', image.url);
                 e.currentTarget.src = "/placeholder.svg";
               }}
             />

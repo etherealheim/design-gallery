@@ -216,17 +216,17 @@ export class FileOperationsService {
       const sanitized = FileValidationService.sanitizeFileForUpload(file, title)
       const sanitizedTags = sanitizeTags(tags)
 
-      onProgress?.({
-        fileName: file.name,
-        progress: 10,
-        stage: "uploading",
-      })
-
       // Create form data
       const formData = new FormData()
       formData.append("file", file)
       formData.append("title", sanitized.title)
       formData.append("tags", JSON.stringify(sanitizedTags))
+
+      onProgress?.({
+        fileName: file.name,
+        progress: 50,
+        stage: "uploading",
+      })
 
       // Upload to API
       const response = await fetch("/api/upload-file", {

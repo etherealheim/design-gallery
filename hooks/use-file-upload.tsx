@@ -77,17 +77,18 @@ export function useFileUpload({
           setUploadProgress({ fileName: file.name, progress: progress.progress })
           
           let description = "Uploading to storage"
-          let title = `Uploading ${displayName}... ${Math.round(progress.progress)}%`
+          let title = `Uploading ${displayName}...`
           
           if (progress.stage === "uploading") {
             if (isMov && progress.progress < 60) {
               description = "Converting MOV to MP4..."
-              title = `Converting ${displayName}... ${Math.round(progress.progress)}%`
+              title = `Converting ${displayName}...`
             } else if (isVideo && progress.progress < 90) {
               description = "Processing video..."
-              title = `Processing ${displayName}... ${Math.round(progress.progress)}%`
+              title = `Processing ${displayName}...`
             } else {
               description = "Uploading to storage"
+              title = `Uploading ${displayName}...`
             }
             
             toast.loading(title, {
