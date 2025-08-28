@@ -88,19 +88,86 @@ export class VideoConversionService {
 
     console.log('[Video Conversion] Starting MOV to MP4 conversion:', file.name)
     
-    // Check browser support first
+    // If FFmpeg.wasm isn't supported, fall back to recording the video via MediaRecorder
     if (!this.isSupported()) {
-      console.warn('[Video Conversion] Browser does not support FFmpeg.wasm (missing SharedArrayBuffer or WebAssembly)')
-      console.warn('[Video Conversion] Requirements: HTTPS, recent browser version, SharedArrayBuffer support')
-      console.warn('[Video Conversion] Chrome/Edge 92+, Firefox 79+, Safari 15.2+ required')
-      
-      // Return original file as fallback
-      return {
-        blob: file,
-        originalSize: file.size,
-        convertedSize: file.size,
-        duration: 0,
-        format: file.type
+      console.warn('[Video Conversion] FFmpeg not supported. Falling back to MediaRecorder conversion to MP4/webm')
+      try {
+        const videoUrl = URL.createObjectURL(file)
+        const video = document.createElement('video')
+        video.src = videoUrl
+        await video.play().catch(() => {})
+        await new Promise<void>((resolve) => {
+          video.onloadeddata = () => resolve()
+        })
+
+        const canvas = document.createElement('canvas')
+        canvas.width = video.videoWidth
+        canvas.height = video.videoHeight
+        const ctx = canvas.getContext('2d')!
+        const stream = canvas.captureStream(30)
+        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const source = audioCtx.createMediaElementSource(video)
+        const dest = audioCtx.createMediaStreamDestination()
+        source.connect(dest)
+        source.connect(audioCtx.destination)
+        const mixedStream = new MediaStream([...stream.getVideoTracks(), ...dest.stream.getAudioTracks()])
+
+        const mimeCandidates = [
+          'video/webm;codecs=vp9,opus',
+          'video/webm;codecs=vp8,opus',
+          'video/webm',
+          'video/mp4;codecs=h264,aac',
+          'video/mp4'
+        ]
+        let recorderMime: string | undefined
+        for (const mt of mimeCandidates) {
+          if ((window as any).MediaRecorder && (window as any).MediaRecorder.isTypeSupported && (window as any).MediaRecorder.isTypeSupported(mt)) {
+            recorderMime = mt
+            break
+          }
+        }
+
+        const recorder = new MediaRecorder(mixedStream, recorderMime ? { mimeType: recorderMime } : undefined)
+        const chunks: Blob[] = []
+        recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data) }
+        const done = new Promise<Blob>((resolve) => { recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || 'video/webm' })) })
+
+        let rafId: number
+        function pump() {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+          rafId = requestAnimationFrame(pump)
+        }
+        pump()
+        recorder.start(250)
+        onProgress?.(25)
+        await new Promise(resolve => setTimeout(resolve, Math.min(15000, (file.size / (1024*1024)) * 500))) // cap to ~15s
+        recorder.stop()
+        cancelAnimationFrame(rafId)
+        onProgress?.(80)
+        const recBlob = await done
+        URL.revokeObjectURL(videoUrl)
+        onProgress?.(95)
+
+        // Package as mp4 if browser produced mp4, else keep webm
+        const outType = recBlob.type.includes('mp4') ? 'video/mp4' : 'video/webm'
+        const outBlob = new Blob([recBlob], { type: outType })
+        onProgress?.(100)
+        return {
+          blob: outBlob,
+          originalSize: file.size,
+          convertedSize: outBlob.size,
+          duration: 0,
+          format: outType,
+        }
+      } catch (fallbackErr) {
+        console.warn('[Video Conversion] MediaRecorder fallback failed, using original:', fallbackErr)
+        return {
+          blob: file,
+          originalSize: file.size,
+          convertedSize: file.size,
+          duration: 0,
+          format: file.type
+        }
       }
     }
     

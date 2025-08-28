@@ -184,7 +184,10 @@ export class VideoCompressionService {
 
       const compressionPromise = new Promise<Blob>((resolve) => {
         mediaRecorder.onstop = () => {
-          const compressedBlob = new Blob(chunks, { type: 'video/webm' })
+          const recordedType = chunks.length > 0 && (chunks[0] as Blob).type
+          const fallbackType = (mediaRecorder as any).mimeType || 'video/webm'
+          const finalType = recordedType && recordedType.length > 0 ? recordedType : fallbackType
+          const compressedBlob = new Blob(chunks, { type: finalType })
           resolve(compressedBlob)
         }
       })
