@@ -46,12 +46,12 @@ export function GalleryHeader({
   onRemoveTag,
 }: GalleryHeaderProps) {
   return (
-         <header className="fixed top-4 left-6 right-6 sm:left-4 sm:right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
+         <header className="fixed top-4 left-4 right-4 sm:left-4 sm:right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
       <div className="absolute inset-0 backdrop-invert pointer-events-none" style={{ 
         maskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)', 
         WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)' 
       }}></div>
-      <div className="w-full px-2 sm:px-4 py-4">
+      <div className="w-full px-4 sm:px-4 py-4">
         {/* Mobile Layout */}
         <div className="lg:hidden flex flex-col gap-3">
           <div className="flex items-center gap-3">

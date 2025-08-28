@@ -18,10 +18,12 @@ try {
   
   // Update lib/version.ts
   const versionFilePath = path.join(__dirname, '..', 'lib', 'version.ts');
-  const versionFileContent = `export const VERSION = "${version}"; // This will be updated by the build script
+  const versionFileContent = `// This will be updated automatically by the build script
+export const VERSION = "${version}"; // Manual fallback version
 
 export function getVersion(): string {
-  return VERSION;
+  // Try environment variable first, then use build-time version
+  return process.env.NEXT_PUBLIC_APP_VERSION || VERSION;
 }`;
 
   fs.writeFileSync(versionFilePath, versionFileContent);
@@ -29,5 +31,6 @@ export function getVersion(): string {
   
 } catch (error) {
   console.error('❌ Failed to update version:', error.message);
-  process.exit(1);
+  console.log('📝 Using manual version fallback');
+  // Don't exit with error - let build continue with manual version
 }

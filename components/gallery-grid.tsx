@@ -128,7 +128,7 @@ export function GalleryGrid({
                     variant={galleryViewMode === "recent" ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleModeSwitch("recent")}
-                    className="flex items-center gap-1 sm:gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start px-2 pr-1"
+                    className="flex items-center gap-1 sm:gap-2 cursor-pointer sm:min-w-[110px] justify-start px-2"
                   >
                     <Clock className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Recent</span>
@@ -149,7 +149,7 @@ export function GalleryGrid({
                     variant={galleryViewMode === "random" ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleModeSwitch("random")}
-                    className="flex items-center gap-1 sm:gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start px-2 pr-1"
+                    className="flex items-center gap-1 sm:gap-2 cursor-pointer sm:min-w-[110px] justify-start px-2"
                   >
                     <Shuffle className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Random</span>
@@ -171,11 +171,11 @@ export function GalleryGrid({
                   variant={galleryViewMode === "no-tag" ? "default" : "outline"}
                   size="sm"
                   onClick={() => handleModeSwitch("no-tag")}
-                  className="flex items-center gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start"
+                  className="flex items-center gap-1 sm:gap-2 cursor-pointer sm:min-w-[110px] justify-start px-2"
                 >
                   <Tag className="h-4 w-4 shrink-0" />
                   <span className="hidden sm:inline shrink-0">No Tag</span>
-                  <Badge variant="secondary" className="ml-auto text-xs min-w-[24px] justify-center">
+                  <Badge variant="secondary" className="ml-1 sm:ml-auto text-xs min-w-[20px] justify-center px-1.5">
                     <AnimatedCounter value={displayNoTagCount} />
                   </Badge>
                 </Button>
