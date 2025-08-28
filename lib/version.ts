@@ -8,7 +8,7 @@ export function getVersion(): string {
   }
   
   // Auto-updated version based on git commit count
-  return "v76"
+  return "v77"
 }
 
 // Export as default for convenience

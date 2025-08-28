@@ -119,7 +119,7 @@ export function GalleryGrid({
       )}
 
       {!searchQuery && (
-        <div className="flex items-center justify-between mb-6 h-10">
+        <div className="flex items-center justify-between mb-4 h-10">
           <div className="flex items-center gap-2">
             <TooltipProvider>
               <Tooltip>
@@ -128,7 +128,7 @@ export function GalleryGrid({
                     variant={galleryViewMode === "recent" ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleModeSwitch("recent")}
-                    className="flex items-center gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start"
+                    className="flex items-center gap-1 sm:gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start"
                   >
                     <Clock className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Recent</span>
@@ -149,7 +149,7 @@ export function GalleryGrid({
                     variant={galleryViewMode === "random" ? "default" : "outline"}
                     size="sm"
                     onClick={() => handleModeSwitch("random")}
-                    className="flex items-center gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start"
+                    className="flex items-center gap-1 sm:gap-2 cursor-pointer min-w-[90px] sm:min-w-[110px] justify-start"
                   >
                     <Shuffle className="h-4 w-4 shrink-0" />
                     <span className="hidden sm:inline shrink-0">Random</span>
