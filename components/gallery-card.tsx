@@ -215,6 +215,13 @@ export function GalleryCard({
               preload="metadata"
               crossOrigin="anonymous"
               style={{ pointerEvents: 'none' }} // Prevent video controls from interfering
+              onLoadedData={(e) => {
+                // Ensure the video shows the first frame as thumbnail
+                const video = e.currentTarget
+                video.currentTime = 0.1 // Set to just after start to avoid black frame
+                console.log('📊 Video thumbnail loaded:', image.url)
+                console.log('📊 Video loaded data:', image.url)
+              }}
               onMouseEnter={async (e) => {
                 e.preventDefault()
                 const video = e.currentTarget
@@ -250,9 +257,6 @@ export function GalleryCard({
               }}
               onCanPlay={() => {
                 console.log('🎬 Video can play:', image.url)
-              }}
-              onLoadedData={() => {
-                console.log('📊 Video loaded data:', image.url)
               }}
             />
           ) : (
