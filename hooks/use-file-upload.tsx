@@ -6,6 +6,27 @@ import { FileOperationsService, FileValidationService } from "@/lib/services/fil
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
 
+// Utility function to truncate filenames for mobile displays
+function truncateFilenameForMobile(filename: string, maxLength: number = 20): string {
+  if (typeof window === 'undefined') return filename
+  
+  const isMobile = window.innerWidth < 768 // Tailwind md breakpoint
+  if (!isMobile || filename.length <= maxLength) return filename
+  
+  const lastDotIndex = filename.lastIndexOf('.')
+  const name = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename
+  const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : ''
+  
+  const maxNameLength = maxLength - extension.length - 3 // Reserve space for "..." and extension
+  if (maxNameLength <= 3) return filename // If too short, return original
+  
+  const truncatedName = name.length > maxNameLength 
+    ? name.substring(0, Math.ceil(maxNameLength / 2)) + '...' + name.substring(name.length - Math.floor(maxNameLength / 2))
+    : name
+  
+  return truncatedName + extension
+}
+
 interface UseFileUploadProps {
   onUploadComplete: (file: UploadedFile) => void
   onUploadStart: (skeletalId: string) => void
@@ -39,7 +60,8 @@ export function useFileUpload({
       onUploadStart(skeletalId)
 
       // Show upload progress toast
-      const uploadToastId = toast.loading(`Uploading ${file.name}...`, {
+      const displayName = truncateFilenameForMobile(file.name)
+      const uploadToastId = toast.loading(`Uploading ${displayName}...`, {
         description: "Uploading to storage",
       })
 
@@ -51,7 +73,7 @@ export function useFileUpload({
         (progress) => {
           setUploadProgress({ fileName: file.name, progress: progress.progress })
           if (progress.stage === "uploading") {
-            toast.loading(`Uploading ${file.name}... ${Math.round(progress.progress)}%`, {
+            toast.loading(`Uploading ${displayName}... ${Math.round(progress.progress)}%`, {
               id: uploadToastId,
               description: "Uploading to storage",
             })
@@ -80,7 +102,7 @@ export function useFileUpload({
       onUploadEnd(skeletalId)
 
       // Show completion
-      toast.success(`${file.name} uploaded successfully`, {
+      toast.success(`${displayName} uploaded successfully`, {
         id: uploadToastId,
         description: "Ready for tagging",
       })
@@ -99,7 +121,7 @@ export function useFileUpload({
       toast.dismiss(uploadToastId)
 
       // Show error toast
-      toast.error(`Upload failed: ${file.name}`, {
+      toast.error(`Upload failed: ${displayName}`, {
         description: createUserFriendlyMessage(error),
       })
     }

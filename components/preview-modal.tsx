@@ -289,7 +289,7 @@ export function PreviewModal({
                         className="inline-flex items-center gap-1 px-2 py-1 text-sm font-mono font-medium border border-dashed border-muted-foreground/40 rounded-md bg-transparent cursor-pointer transition-all duration-200 h-6 hover:!border-muted-foreground/60 hover:!bg-muted/20"
                         onClick={() => setIsAddingTag(true)}
                       >
-                        <span className="text-muted-foreground/70 hover:text-muted-foreground transition-colors duration-200">Add tag</span>
+                        <span className="text-muted-foreground/70 hover:text-muted-foreground font-mono font-medium transition-colors duration-200">Add tag</span>
                       </div>
                     </motion.div>
                   )}
