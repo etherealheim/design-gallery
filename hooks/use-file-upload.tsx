@@ -52,6 +52,7 @@ export function useFileUpload({
   // Upload a single file
   const uploadSingleFile = useCallback(async (file: File): Promise<void> => {
     const isVideo = file.type.startsWith("video/")
+    const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent)
     const title = file.name.replace(/\.[^/.]+$/, "")
     const skeletalId = `skeletal-${Date.now()}-${Math.random().toString(36).substring(2)}`
 
@@ -71,7 +72,7 @@ export function useFileUpload({
 
       // Optionally convert MOV to MP4 client-side before uploading
       let fileToUpload: File = file
-      if (isVideo && file.name.toLowerCase().endsWith('.mov')) {
+      if (isVideo && file.name.toLowerCase().endsWith('.mov') && !isIOS) {
         try {
           toast.loading(`Converting ${displayName}...`, {
             id: uploadToastId,
@@ -98,6 +99,12 @@ export function useFileUpload({
         } catch (convErr) {
           console.warn('MOV conversion failed, uploading original:', convErr)
         }
+      } else if (isVideo && file.name.toLowerCase().endsWith('.mov') && isIOS) {
+        // iOS Safari lacks stable FFmpeg/MediaRecorder support for this path
+        toast.loading(`Uploading ${displayName}...`, {
+          id: uploadToastId,
+          description: "iPhone detected: uploading MOV without conversion",
+        })
       }
 
       // Upload file
