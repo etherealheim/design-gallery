@@ -357,7 +357,7 @@ export default function DesignVault() {
 
       {/* Main Content - No flex container to prevent any layout shift */}
       <main className="w-full bg-background pt-24">
-          <div className="container mx-auto px-4 py-8">
+          <div className="container mx-auto px-4 py-4 sm:py-8">
             {/* Hidden File Input */}
             <input
               ref={fileInputRef}

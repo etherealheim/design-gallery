@@ -18,21 +18,11 @@ try {
   
   // Update lib/version.ts
   const versionFilePath = path.join(__dirname, '..', 'lib', 'version.ts');
-  const versionFileContent = `// Get version from git commit count
-// This will be replaced at build time with the actual version
-export function getVersion(): string {
-  // In development, you can set this manually or use an environment variable
-  // In production, this should be replaced by your build process
-  if (typeof window !== 'undefined' && (window as any).__APP_VERSION__) {
-    return (window as any).__APP_VERSION__
-  }
-  
-  // Auto-updated version based on git commit count
-  return "${version}"
-}
+  const versionFileContent = `export const VERSION = "${version}"; // This will be updated by the build script
 
-// Export as default for convenience
-export default getVersion`;
+export function getVersion(): string {
+  return VERSION;
+}`;
 
   fs.writeFileSync(versionFilePath, versionFileContent);
   console.log(`✅ Version updated to ${version} in lib/version.ts`);
