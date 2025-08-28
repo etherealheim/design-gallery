@@ -117,13 +117,17 @@ export function useFileUpload({
       // Update state
       onUploadComplete(uploadedFile)
       onNewlyUploaded(dbFile.id)
-      onUploadEnd(skeletalId)
 
       // Show completion
       toast.success(`${displayName} uploaded successfully`, {
         id: uploadToastId,
         description: "Ready for tagging",
       })
+
+      // Keep skeletal loader active for a bit longer to match toast visibility
+      setTimeout(() => {
+        onUploadEnd(skeletalId)
+      }, 2000) // 2 second delay to keep loader visible while success toast shows
 
       // Remove from newly uploaded after delay
       setTimeout(() => {
@@ -182,6 +186,8 @@ export function useFileUpload({
       // Update state
       onUploadComplete(uploadedFile)
       onNewlyUploaded(dbFile.id)
+      
+      // For batch uploads, end skeletal loader immediately since no individual success toast
       onUploadEnd(skeletalId)
 
     } catch (error) {

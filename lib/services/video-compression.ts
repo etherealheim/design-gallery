@@ -288,21 +288,30 @@ export class VideoCompressionService {
         console.log('[Video Processing] Converting MOV to MP4:', file.name)
         onProgress?.(0, "Converting MOV to MP4...")
         
-        const conversionResult = await VideoConversionService.convertMovToMp4(
-          file,
-          (convertProgress) => {
-            // Conversion takes 0-60% of total progress
-            onProgress?.(Math.round(convertProgress * 0.6), "Converting to MP4...")
+        try {
+          const conversionResult = await VideoConversionService.convertMovToMp4(
+            file,
+            (convertProgress) => {
+              // Conversion takes 0-60% of total progress
+              onProgress?.(Math.round(convertProgress * 0.6), "Converting to MP4...")
+            }
+          )
+          
+          if (conversionResult.blob !== file) {
+            processedFile = new File([conversionResult.blob], file.name.replace(/\.mov$/i, '.mp4'), {
+              type: 'video/mp4',
+              lastModified: Date.now()
+            })
+            conversionInfo = ` (converted from MOV, ${this.formatFileSize(conversionResult.originalSize)} → ${this.formatFileSize(conversionResult.convertedSize)})`
+            console.log('[Video Processing] MOV conversion complete:', conversionInfo)
+          } else {
+            console.log('[Video Processing] MOV conversion not possible, using original file')
+            conversionInfo = " (MOV conversion skipped - browser limitations)"
           }
-        )
-        
-        if (conversionResult.blob !== file) {
-          processedFile = new File([conversionResult.blob], file.name.replace(/\.mov$/i, '.mp4'), {
-            type: 'video/mp4',
-            lastModified: Date.now()
-          })
-          conversionInfo = ` (converted from MOV, ${this.formatFileSize(conversionResult.originalSize)} → ${this.formatFileSize(conversionResult.convertedSize)})`
-          console.log('[Video Processing] MOV conversion complete:', conversionInfo)
+        } catch (conversionError) {
+          console.warn('[Video Processing] MOV conversion failed, using original file:', conversionError)
+          conversionInfo = " (MOV conversion failed, using original)"
+          // Continue with original file
         }
         
         onProgress?.(60, "Conversion complete")

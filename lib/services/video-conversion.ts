@@ -88,9 +88,29 @@ export class VideoConversionService {
 
     console.log('[Video Conversion] Starting MOV to MP4 conversion:', file.name)
     
+    // Check browser support first
+    if (!this.isSupported()) {
+      console.warn('[Video Conversion] Browser does not support FFmpeg.wasm (missing SharedArrayBuffer or WebAssembly)')
+      console.warn('[Video Conversion] Requirements: HTTPS, recent browser version, SharedArrayBuffer support')
+      console.warn('[Video Conversion] Chrome/Edge 92+, Firefox 79+, Safari 15.2+ required')
+      
+      // Return original file as fallback
+      return {
+        blob: file,
+        originalSize: file.size,
+        convertedSize: file.size,
+        duration: 0,
+        format: file.type
+      }
+    }
+    
     try {
-      // Initialize FFmpeg
-      await this.initFFmpeg()
+      // Initialize FFmpeg with timeout
+      const initTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('FFmpeg initialization timeout')), 30000) // 30 second timeout
+      )
+      
+      await Promise.race([this.initFFmpeg(), initTimeout])
       
       if (!this.ffmpeg) {
         throw new Error('FFmpeg failed to initialize')
@@ -117,18 +137,25 @@ export class VideoConversionService {
 
       console.log('[Video Conversion] Running FFmpeg conversion...')
       
-      // Convert MOV to MP4 with web-optimized settings
-      await this.ffmpeg.exec([
+      // Convert MOV to MP4 with web-optimized settings and timeout
+      const conversionTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('FFmpeg conversion timeout - file may be too large or complex')), 5 * 60 * 1000) // 5 minute timeout
+      )
+      
+      const conversionPromise = this.ffmpeg.exec([
         '-i', inputFileName,
         '-c:v', 'libx264',        // Use H.264 codec for video
         '-c:a', 'aac',            // Use AAC codec for audio
-        '-preset', 'medium',      // Balance between speed and compression
-        '-crf', '23',             // Good quality (lower = better quality)
+        '-preset', 'fast',        // Faster encoding (was 'medium')
+        '-crf', '28',             // Slightly lower quality but faster (was 23)
         '-movflags', '+faststart', // Optimize for web streaming
         '-pix_fmt', 'yuv420p',    // Ensure compatibility
         '-max_muxing_queue_size', '9999', // Prevent queue overflow
+        '-t', '300',              // Limit to 5 minutes max duration
         outputFileName
       ])
+      
+      await Promise.race([conversionPromise, conversionTimeout])
 
       onProgress?.(90) // Conversion complete
 
@@ -197,9 +224,26 @@ export class VideoConversionService {
    * Check if browser supports FFmpeg.wasm
    */
   static isSupported(): boolean {
-    return typeof window !== 'undefined' && 
-           'SharedArrayBuffer' in window &&
-           'WebAssembly' in window
+    if (typeof window === 'undefined') {
+      console.log('[Video Conversion] Not in browser environment')
+      return false
+    }
+    
+    const hasSharedArrayBuffer = 'SharedArrayBuffer' in window
+    const hasWebAssembly = 'WebAssembly' in window
+    const isSecureContext = window.isSecureContext
+    const hasCoopCoep = document.querySelector('meta[http-equiv="Cross-Origin-Embedder-Policy"]') !== null ||
+                        document.querySelector('meta[http-equiv="Cross-Origin-Opener-Policy"]') !== null
+    
+    console.log('[Video Conversion] Browser support check:', {
+      hasSharedArrayBuffer,
+      hasWebAssembly, 
+      isSecureContext,
+      hasCoopCoep,
+      userAgent: navigator.userAgent
+    })
+    
+    return hasSharedArrayBuffer && hasWebAssembly && isSecureContext
   }
 
   /**
