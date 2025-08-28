@@ -110,7 +110,7 @@ export function GalleryCardAddTag({
           className="inline-flex items-center gap-1 px-2 py-1 text-xs border border-dashed rounded-md opacity-0 pointer-events-none" 
           style={{height: '24px', width: `${collapsedWidth}px`}}
         >
-          <span className="text-muted-foreground md:text-muted-foreground/70 font-mono font-medium whitespace-nowrap">Add tag</span>
+          <span className="text-muted-foreground/90 font-mono font-medium whitespace-nowrap">Add tag</span>
         </div>
       )}
       
@@ -123,7 +123,7 @@ export function GalleryCardAddTag({
           rounded-md cursor-pointer overflow-hidden
           ${isAddingTag 
             ? 'absolute top-0 left-0 right-0 z-50 flex border-muted-foreground/50 bg-card/95 backdrop-blur-sm shadow-md px-1' 
-            : 'inline-flex border-muted-foreground/60 hover:border-muted-foreground/80 hover:bg-muted/30 px-2 md:border-muted-foreground/40 md:hover:border-muted-foreground/60 md:hover:bg-muted/20'
+            : 'inline-flex border-muted-foreground/80 hover:border-muted-foreground hover:bg-muted/30 px-2'
           }
         `}
         style={{
@@ -241,7 +241,7 @@ export function GalleryCardAddTag({
         ) : (
           <motion.span
             key="add-tag-text"
-            className="text-muted-foreground hover:text-foreground md:text-muted-foreground/70 md:hover:text-muted-foreground font-mono font-medium transition-colors duration-200 whitespace-nowrap"
+            className="text-muted-foreground/90 hover:text-foreground font-mono font-medium transition-colors duration-200 whitespace-nowrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
