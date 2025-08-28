@@ -127,7 +127,11 @@ export const SUPPORTED_VIDEO_TYPES = [
   "video/ogg",
   "video/avi",
   "video/mov",
-  "video/quicktime" // Additional support for QuickTime H.264
+  "video/quicktime", // QuickTime H.264
+  "video/x-msvideo", // Alternative AVI MIME type
+  "video/3gpp", // Mobile 3GP format
+  "video/3gpp2", // Mobile 3GP2 format
+  "video/x-ms-wmv" // Windows Media Video
 ] as const
 
 export const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB

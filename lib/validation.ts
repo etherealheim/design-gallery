@@ -67,6 +67,33 @@ export const searchQuerySchema = z.object({
 
 // Validation functions
 export function validateFile(file: File): { isValid: boolean; errors: string[] } {
+  // First check for mobile .mov file edge case
+  if (file.name.toLowerCase().endsWith('.mov')) {
+    console.log('[MOV Validation] Checking .mov file:', file.name, 'MIME type:', file.type)
+    
+    // Mobile browsers sometimes report .mov files with different MIME types
+    // Accept common variations for .mov files
+    const acceptableMoVTypes = [
+      'video/mov', 
+      'video/quicktime', 
+      'video/mp4', // iOS sometimes reports .mov as mp4
+      'video/x-quicktime',
+      '' // Some browsers don't set MIME type for .mov files
+    ]
+    
+    if (acceptableMoVTypes.includes(file.type) || file.type.startsWith('video/')) {
+      // For .mov files, skip the strict MIME type validation and just check size
+      if (file.size > MAX_FILE_SIZE) {
+        return {
+          isValid: false,
+          errors: [`File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`]
+        }
+      }
+      console.log('[MOV Validation] .mov file accepted with MIME type:', file.type)
+      return { isValid: true, errors: [] }
+    }
+  }
+
   const result = fileSchema.safeParse(file)
   
   if (result.success) {

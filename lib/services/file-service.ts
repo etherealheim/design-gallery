@@ -35,7 +35,30 @@ export function transformGalleryItemToUploadedFile(item: GalleryItem, file?: Fil
 // File validation service
 export class FileValidationService {
   static validateSingleFile(file: File): { isValid: boolean; errors: string[] } {
-    return validateFile(file)
+    const result = validateFile(file)
+    
+    // Add enhanced debugging for mobile video files
+    if (!result.isValid && file.type.startsWith('video/')) {
+      console.log('[Mobile Video Debug]', {
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        errors: result.errors
+      })
+      
+      // Check if it's a .mov file with incorrect MIME type
+      if (file.name.toLowerCase().endsWith('.mov') && !file.type.includes('mov') && !file.type.includes('quicktime')) {
+        console.warn('[Mobile Video] .mov file detected with incorrect MIME type:', file.type)
+        
+        // For .mov files, try to be more permissive with MIME type validation
+        if (file.type === 'video/mp4' || file.type === '' || file.type.startsWith('video/')) {
+          console.log('[Mobile Video] Accepting .mov file despite MIME type mismatch')
+          return { isValid: true, errors: [] }
+        }
+      }
+    }
+    
+    return result
   }
 
   static validateMultipleFiles(files: File[]): { isValid: boolean; errors: string[]; validFiles: File[] } {

@@ -125,12 +125,37 @@ export class VideoCompressionService {
       canvas.width = targetWidth
       canvas.height = targetHeight
 
-      // Set up MediaRecorder for compression
+      // Set up MediaRecorder for compression with fallback codecs for mobile compatibility
       const stream = canvas.captureStream(opts.targetFrameRate || 30)
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9', // More efficient than H.264 for browser compression
-        videoBitsPerSecond: opts.maxBitrate
-      })
+      
+      // Try different codecs in order of preference, with fallbacks for mobile
+      let mediaRecorderOptions = null
+      const codecOptions = [
+        { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: opts.maxBitrate },
+        { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: opts.maxBitrate },
+        { mimeType: 'video/webm', videoBitsPerSecond: opts.maxBitrate },
+        { mimeType: 'video/mp4;codecs=h264', videoBitsPerSecond: opts.maxBitrate },
+        { mimeType: 'video/mp4', videoBitsPerSecond: opts.maxBitrate },
+        { videoBitsPerSecond: opts.maxBitrate } // Fallback with no specific codec
+      ]
+      
+      for (const option of codecOptions) {
+        try {
+          if (MediaRecorder.isTypeSupported(option.mimeType || '')) {
+            mediaRecorderOptions = option
+            break
+          }
+        } catch (e) {
+          continue
+        }
+      }
+      
+      if (!mediaRecorderOptions) {
+        // Final fallback - use default MediaRecorder without specific codec
+        mediaRecorderOptions = { videoBitsPerSecond: opts.maxBitrate }
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, mediaRecorderOptions)
 
       const chunks: Blob[] = []
       mediaRecorder.ondataavailable = (event) => {
