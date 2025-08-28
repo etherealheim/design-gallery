@@ -46,7 +46,7 @@ export function GalleryHeader({
   onRemoveTag,
 }: GalleryHeaderProps) {
   return (
-         <header className="fixed top-4 left-4 right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
+         <header className="fixed top-4 left-6 right-6 sm:left-4 sm:right-4 z-50 border border-border bg-background/70 backdrop-blur-sm overflow-hidden rounded-2xl">
       <div className="absolute inset-0 backdrop-invert pointer-events-none" style={{ 
         maskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)', 
         WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, transparent 80px, black 80px)' 
@@ -65,7 +65,7 @@ export function GalleryHeader({
                     placeholder={selectedTags.length > 0 ? "" : "Search designs..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-16 w-full text-base md:text-sm"
+                    className="pl-10 pr-16 w-full text-sm"
                   />
                   
                   {/* Version display - positioned to avoid clear button */}
