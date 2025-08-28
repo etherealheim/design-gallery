@@ -116,7 +116,7 @@ export function GalleryCardAddTag({
       
       <motion.div
         ref={containerRef}
-        layout
+        layout={isAddingTag}
         layoutId="add-tag-container"
         className={`
           items-center gap-1 py-1 text-xs border border-dashed 
@@ -127,8 +127,7 @@ export function GalleryCardAddTag({
           }
         `}
         style={{
-          height: '24px',
-          width: !isAddingTag && collapsedWidth ? `${collapsedWidth}px` : undefined
+          height: '24px'
         }}
         onClick={(e) => {
           e.stopPropagation()
@@ -136,12 +135,6 @@ export function GalleryCardAddTag({
         }}
 
         transition={{
-          layout: { 
-            type: "spring",
-            stiffness: 800,
-            damping: 60,
-            mass: 0.3
-          },
           backgroundColor: { 
             type: "spring",
             stiffness: 600,
