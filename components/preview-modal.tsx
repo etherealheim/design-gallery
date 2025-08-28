@@ -3,11 +3,14 @@
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
-import { X, Edit3, Check } from "lucide-react"
+import { X, Edit3, Check, Copy } from "lucide-react"
 import type { GalleryItem } from "@/types"
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { parseTagsInput } from "@/lib/validation"
 import { motion, AnimatePresence } from "framer-motion"
+import { useToast } from "@/hooks/use-toast"
 
 interface PreviewModalProps {
   previewItem: GalleryItem | null
@@ -34,6 +37,46 @@ export function PreviewModal({
 }: PreviewModalProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState("")
+  const { toast } = useToast()
+  const [isCopyTooltipHoverOpen, setIsCopyTooltipHoverOpen] = useState(false)
+  const [isCopyTooltipForcedOpen, setIsCopyTooltipForcedOpen] = useState(false)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
+
+  const handleCopyImage = async () => {
+    if (!previewItem || previewItem.type !== "image") return
+    try {
+      const response = await fetch(previewItem.url, { mode: "cors", cache: "no-store" })
+      const originalBlob = await response.blob()
+      const preferredType = originalBlob.type && originalBlob.type.startsWith("image/") ? originalBlob.type : "image/png"
+
+      const writeToClipboard = async (blob: Blob) => {
+        const ClipboardItemCtor = (window as any).ClipboardItem
+        await navigator.clipboard.write([
+          new ClipboardItemCtor({ [blob.type || preferredType]: blob })
+        ])
+      }
+
+      try {
+        await writeToClipboard(originalBlob)
+      } catch {
+        // Fallback: re-encode to PNG via canvas
+        const bitmap = await createImageBitmap(originalBlob)
+        const canvas = document.createElement("canvas")
+        canvas.width = bitmap.width
+        canvas.height = bitmap.height
+        const ctx = canvas.getContext("2d")
+        ctx?.drawImage(bitmap, 0, 0)
+        const pngBlob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b || new Blob()), "image/png"))
+        await writeToClipboard(pngBlob)
+      }
+
+      setIsCopyTooltipForcedOpen(true)
+      window.setTimeout(() => setIsCopyTooltipForcedOpen(false), 3000)
+    } catch (error) {
+      console.error("Failed to copy image:", error)
+      toast({ title: "Copy failed", description: "Could not copy the image. Try again or download instead." })
+    }
+  }
 
   const handleStartRename = () => {
     if (previewItem) {
@@ -56,6 +99,8 @@ export function PreviewModal({
     }
   }
 
+  // Optional: future use of parseTagsInput if adding inline multi-tag input here
+
   const handleCancelTitle = () => {
     setEditTitle(previewItem?.title || "")
     setIsEditingTitle(false)
@@ -63,22 +108,27 @@ export function PreviewModal({
 
   return (
     <Dialog open={!!previewItem} onOpenChange={() => setPreviewItem(null)}>
-      <DialogContent className="max-w-[100vw] max-h-[100vh] w-[100vw] h-[100vh] sm:max-w-[95vw] sm:max-h-[95vh] sm:w-auto sm:h-auto p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" showCloseButton={false}>
+      <DialogContent 
+        className="w-[100vw] h-[100vh] max-w-[100vw] max-h-[100vh] sm:w-[95vw] sm:h-[95vh] sm:!max-w-[95vw] sm:!max-h-[95vh] lg:w-[90vw] lg:h-[90vh] lg:!max-w-[90vw] lg:!max-h-[90vh] p-4 sm:p-6 border-0 rounded-none sm:border sm:rounded-lg" 
+        showCloseButton={false}
+        onOpenAutoFocus={(e) => { e.preventDefault(); closeButtonRef.current?.focus() }}
+      >
         {previewItem && (
-          <div className="flex flex-col h-full max-h-full overflow-hidden">
+          <div className="flex flex-col h-full max-h-full">
             <DialogTitle className="sr-only">
               {previewItem.title} - Preview
             </DialogTitle>
             
             {/* Header - Fixed at top */}
-            <div className="flex items-center justify-between min-w-0 pb-2 shrink-0">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center justify-between min-w-0 pb-2 shrink-0 overflow-visible">
+              {/* Left: Title + inline rename */}
+              <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
                 {isEditingTitle ? (
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 w-full min-w-0">
                     <Input
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className="text-lg sm:text-xl font-semibold h-8 min-w-0"
+                      className="text-lg sm:text-xl font-semibold h-8 min-w-0 w-full"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           handleSaveTitle()
@@ -103,65 +153,64 @@ export function PreviewModal({
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-lg sm:text-xl font-semibold flex-1 min-w-0 truncate">{previewItem.title}</h2>
-                    <button
-                      className="h-8 w-8 p-0 shrink-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                      onClick={handleStartRename}
-                    >
-                      <Edit3 className="h-3 w-3" />
-                    </button>
+                    <h2 className="text-lg sm:text-xl font-semibold truncate min-w-0">{previewItem.title}</h2>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="size-8 cursor-pointer"
+                          onClick={handleStartRename}
+                          aria-label="Rename"
+                        >
+                          <Edit3 />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent sideOffset={6}>Rename</TooltipContent>
+                    </Tooltip>
                   </>
                 )}
               </div>
-              <button 
-                onClick={() => setPreviewItem(null)} 
-                className="h-8 w-8 shrink-0 ml-2 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {/* Right: Actions */}
+              <div className="flex items-center gap-1 pl-2">
+                {previewItem.type !== "video" && (
+                  <Tooltip open={isCopyTooltipHoverOpen || isCopyTooltipForcedOpen} onOpenChange={setIsCopyTooltipHoverOpen}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="size-8 cursor-pointer"
+                        onClick={handleCopyImage}
+                        aria-label="Copy image"
+                      >
+                        <Copy />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6}>
+                      {isCopyTooltipForcedOpen ? "Copied!" : "Copy to clipboard"}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      ref={closeButtonRef}
+                      onClick={() => setPreviewItem(null)} 
+                      variant="ghost"
+                      size="sm"
+                      className="size-8 ml-1 cursor-pointer"
+                      aria-label="Close"
+                    >
+                      <X />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6}>Close</TooltipContent>
+                </Tooltip>
+              </div>
             </div>
 
-            {/* Media - Takes available space but reserves space for tags */}
-            <div className="flex-1 min-h-0 flex items-center justify-center mb-1 max-h-[calc(100%-4rem)]">
-              {previewItem.type === "video" ? (
-                <video
-                  src={previewItem.url}
-                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                  controls
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  crossOrigin="anonymous"
-                  onError={(e) => {
-                    console.error('Video loading error:', e.currentTarget.error);
-                    console.log('Video URL:', previewItem.url);
-                  }}
-                  onLoadStart={() => {
-                    console.log('Video loading started:', previewItem.url);
-                  }}
-                  onLoadedData={() => {
-                    console.log('Video loaded successfully:', previewItem.url);
-                  }}
-                />
-              ) : (
-                <img
-                  src={previewItem.url || "/placeholder.svg"}
-                  alt={previewItem.title}
-                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                  loading="lazy"
-                  onLoad={() => console.log('Image loaded:', previewItem.url)}
-                  onError={(e) => {
-                    console.error('Image loading error for:', previewItem.url);
-                    e.currentTarget.src = "/placeholder.svg";
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Tags - Fixed at bottom with overlay input design */}
-            <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start pt-2">
+            {/* Tags - Now positioned directly below the title */}
+            <div className="shrink-0 min-w-0 flex flex-col items-center sm:items-start pt-1 pb-2 sm:pb-3">
               <div className="relative w-full max-w-full">
                 <AnimatePresence mode="wait">
                   {isAddingTag ? (
@@ -247,6 +296,47 @@ export function PreviewModal({
                 </AnimatePresence>
               </div>
             </div>
+
+            {/* Media - Fills remaining space */}
+            <div className="flex-1 min-h-0 flex items-center justify-center">
+              {previewItem.type === "video" ? (
+                <video
+                  src={previewItem.url}
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    console.error('Video loading error:', e.currentTarget.error);
+                    console.log('Video URL:', previewItem.url);
+                  }}
+                  onLoadStart={() => {
+                    console.log('Video loading started:', previewItem.url);
+                  }}
+                  onLoadedData={() => {
+                    console.log('Video loaded successfully:', previewItem.url);
+                  }}
+                />
+              ) : (
+                <img
+                  src={previewItem.url || "/placeholder.svg"}
+                  alt={previewItem.title}
+                  className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                  loading="lazy"
+                  onLoad={() => console.log('Image loaded:', previewItem.url)}
+                  onError={(e) => {
+                    console.error('Image loading error for:', previewItem.url);
+                    e.currentTarget.src = "/placeholder.svg";
+                  }}
+                />
+              )}
+            </div>
+
+            
           </div>
         )}
       </DialogContent>
