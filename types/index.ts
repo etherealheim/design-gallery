@@ -4,7 +4,7 @@ export interface GalleryItem {
   url: string
   title: string
   tags: string[]
-  type: "image" | "video"
+  type: "image" | "video" | "gif"
   dateAdded: Date
   fileSize?: number
   mimeType?: string
@@ -27,7 +27,7 @@ export interface DatabaseFile {
 
 // Filter and UI state types
 export interface FilterState {
-  fileTypes: ("image" | "video")[]
+  fileTypes: ("image" | "video" | "gif")[]
   selectedTags: string[]
   sortBy: "title" | "date" | "tags" | "size"
   sortOrder: "asc" | "desc"

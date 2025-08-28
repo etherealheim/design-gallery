@@ -49,7 +49,7 @@ export function PreviewModal({
       const response = await fetch(previewItem.url, { mode: "cors", cache: "no-store" })
       const originalBlob = await response.blob()
       
-      if (previewItem.type === "image") {
+      if (previewItem.type === "image" || previewItem.type === "gif") {
         const preferredType = originalBlob.type && originalBlob.type.startsWith("image/") ? originalBlob.type : "image/png"
 
         const writeToClipboard = async (blob: Blob) => {
@@ -81,7 +81,7 @@ export function PreviewModal({
       window.setTimeout(() => setIsCopyTooltipForcedOpen(false), 3000)
     } catch (error) {
       console.error("Failed to copy media:", error)
-      const mediaType = previewItem.type === "video" ? "video" : "image"
+      const mediaType = previewItem.type === "video" ? "video" : previewItem.type === "gif" ? "GIF" : "image"
       toast({ title: "Copy failed", description: `Could not copy the ${mediaType}. Try again or download instead.` })
     }
   }
@@ -329,7 +329,7 @@ export function PreviewModal({
                   className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
                   loading="lazy"
                   onError={(e) => {
-                    console.warn('Image loading error for:', previewItem.url);
+                    console.warn(`${previewItem.type === 'gif' ? 'GIF' : 'Image'} loading error for:`, previewItem.url);
                     e.currentTarget.src = "/placeholder.svg";
                   }}
                 />

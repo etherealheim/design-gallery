@@ -44,14 +44,14 @@ export const galleryItemSchema = z.object({
   url: z.string().url("Invalid URL"),
   title: z.string().min(1, "Title is required"),
   tags: z.array(z.string()),
-  type: z.enum(["image", "video"]),
+  type: z.enum(["image", "video", "gif"]),
   dateAdded: z.date(),
   fileSize: z.number().optional(),
   mimeType: z.string().optional(),
 })
 
 export const filterStateSchema = z.object({
-  fileTypes: z.array(z.enum(["image", "video"])),
+  fileTypes: z.array(z.enum(["image", "video", "gif"])),
   selectedTags: z.array(z.string()),
   sortBy: z.enum(["title", "date", "tags", "size"]),
   sortOrder: z.enum(["asc", "desc"]),

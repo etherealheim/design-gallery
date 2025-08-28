@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { BorderTrail } from "@/components/ui/border-trail"
-import { Play, ImageIcon, Trash2, Edit3, X, Check } from "lucide-react"
+import { Play, ImageIcon, Trash2, Edit3, X, Check, FileImage } from "lucide-react"
 import Image from "next/image"
 import { GalleryCardAddTag } from "@/components/gallery-card-add-tag"
 
@@ -348,6 +348,8 @@ export function GalleryCard({
           >
             {image.type === "video" ? (
               <Play className="h-3 w-3" />
+            ) : image.type === "gif" ? (
+              <FileImage className="h-3 w-3" />
             ) : (
               <ImageIcon className="h-3 w-3" />
             )}

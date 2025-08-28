@@ -12,12 +12,22 @@ import { ZipService, type ZipProgress } from "./zip-service"
 
 // Transform database file to gallery item
 export function transformDatabaseFileToGalleryItem(dbFile: DatabaseFile): GalleryItem {
+  let type: "image" | "video" | "gif" = "image"
+  
+  if (dbFile.file_type.startsWith("video/")) {
+    type = "video"
+  } else if (dbFile.file_type === "image/gif") {
+    type = "gif"
+  } else {
+    type = "image"
+  }
+  
   return {
     id: dbFile.id,
     url: dbFile.file_path,
     title: dbFile.title,
     tags: dbFile.tags || [],
-    type: dbFile.file_type.startsWith("video/") ? "video" : "image",
+    type,
     dateAdded: new Date(dbFile.created_at),
     fileSize: dbFile.file_size,
     mimeType: dbFile.file_type,

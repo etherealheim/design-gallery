@@ -52,6 +52,7 @@ export function useFileUpload({
   // Upload a single file
   const uploadSingleFile = useCallback(async (file: File): Promise<void> => {
     const isVideo = file.type.startsWith("video/")
+    const isGif = file.type === "image/gif"
     const title = file.name.replace(/\.[^/.]+$/, "")
     const skeletalId = `skeletal-${Date.now()}-${Math.random().toString(36).substring(2)}`
 
@@ -109,13 +110,20 @@ export function useFileUpload({
       // No AI tag generation - users will add tags manually
 
       // Create uploaded file object
+      let fileType: "image" | "video" | "gif" = "image"
+      if (isVideo) {
+        fileType = "video"
+      } else if (isGif) {
+        fileType = "gif"
+      }
+      
       uploadedFile = {
         id: dbFile.id,
         file,
         url: dbFile.file_path,
         title: dbFile.title,
         tags: [], // Tags will be added when confirmed
-        type: isVideo ? "video" : "image",
+        type: fileType,
         dateAdded: new Date(dbFile.created_at),
         fileSize: dbFile.file_size,
         mimeType: dbFile.file_type,
@@ -159,6 +167,7 @@ export function useFileUpload({
   // Upload a single file without showing individual toasts (for batch uploads)
   const uploadSingleFileWithoutToast = useCallback(async (file: File): Promise<void> => {
     const isVideo = file.type.startsWith("video/")
+    const isGif = file.type === "image/gif"
     const title = file.name.replace(/\.[^/.]+$/, "")
     const skeletalId = `skeletal-${Date.now()}-${Math.random().toString(36).substring(2)}`
 
@@ -178,13 +187,20 @@ export function useFileUpload({
       )
 
       // Create uploaded file object
+      let fileType: "image" | "video" | "gif" = "image"
+      if (isVideo) {
+        fileType = "video"
+      } else if (isGif) {
+        fileType = "gif"
+      }
+      
       uploadedFile = {
         id: dbFile.id,
         file,
         url: dbFile.file_path,
         title: dbFile.title,
         tags: [], // Tags will be added manually
-        type: isVideo ? "video" : "image",
+        type: fileType,
         dateAdded: new Date(dbFile.created_at),
         fileSize: dbFile.file_size,
         mimeType: dbFile.file_type,
