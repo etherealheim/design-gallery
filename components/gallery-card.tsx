@@ -91,9 +91,9 @@ export function GalleryCard({
 
   return (
     <Card
-      className={`hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
+      className={`hover:shadow-md transition-all duration-150 bg-card cursor-pointer overflow-hidden p-0 my-0 relative ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
-      }`}
+      } ${isHovered ? "border-transparent" : "border-border"}`}
       onClick={() => {
         if (isMobile) {
           handleMobileTap()

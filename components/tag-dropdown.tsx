@@ -149,7 +149,7 @@ export function TagDropdown({
       <DropdownMenu
         isOpen={isOpen}
         onClose={handleClose}
-        className="w-64 max-h-80 overflow-hidden"
+        className="w-64 max-h-80 overflow-hidden bottom-full left-0 mb-2"
         ref={dropdownRef}
       >
         <div className="p-2 border-b border-border">
