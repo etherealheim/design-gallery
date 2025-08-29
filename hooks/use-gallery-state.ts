@@ -6,7 +6,6 @@ import { DataService } from "@/lib/services/data-service"
 import { FileFilterService, FileOperationsService } from "@/lib/services/file-service"
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
-import { UndoIcon } from "@/components/icons"
 
 interface UseGalleryStateProps {
   initialViewMode?: ViewState["mode"]
@@ -249,14 +248,12 @@ export function useGalleryState({
       description: "File removed successfully",
       duration: 5000, // 5 seconds
       action: {
-        label: (
-          <div className="flex items-center justify-center">
-            <UndoIcon className="h-4 w-4 mr-1" />
-            Undo
-          </div>
-        ),
+        label: "Undo",
         onClick: undoDelete,
       },
+      classNames: {
+        actionButton: "toast-undo-button"
+      }
     })
 
     // Start API call after a short delay (to allow for undo)
