@@ -34,6 +34,7 @@ interface GalleryGridProps {
   handleRename: (item: GalleryItem) => void
   handleAddTag: (id: string, tag: string) => void
   handleAddMultipleTags: (id: string, tags: string[]) => void
+  handleRemoveTag: (id: string, tag: string) => void
   selectedTags: string[]
   onToggleTagFilter: (tag: string) => void
   allTags: string[]
@@ -64,6 +65,7 @@ export function GalleryGrid({
   handleRename,
   handleAddTag,
   handleAddMultipleTags,
+  handleRemoveTag,
   selectedTags,
   onToggleTagFilter,
   allTags,
@@ -253,6 +255,7 @@ export function GalleryGrid({
                   onRename={handleRename}
                   onAddTag={handleAddTag}
                   onAddMultipleTags={handleAddMultipleTags}
+                  onRemoveTag={handleRemoveTag}
                   selectedTags={selectedTags}
                   onToggleTagFilter={onToggleTagFilter}
                   allTags={allTags}

@@ -3,8 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { BorderTrail } from "@/components/ui/border-trail"
-import { Play, ImageIcon, Edit3, X, FileImage } from "lucide-react"
+
+import { Edit3, X } from "lucide-react"
+import { PlayIcon, ImageIcon, FileImageIcon } from "@/components/icons"
 import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
@@ -29,6 +30,7 @@ interface GalleryCardProps {
   onRename: (item: GalleryItem) => void
   onAddTag?: (id: string, tag: string) => void
   onAddMultipleTags?: (id: string, tags: string[]) => void
+  onRemoveTag?: (id: string, tag: string) => void
   selectedTags: string[]
   onToggleTagFilter: (tag: string) => void
   allTags: string[]
@@ -47,16 +49,19 @@ export function GalleryCard({
   onRename,
   onAddTag,
   onAddMultipleTags,
+  onRemoveTag,
   selectedTags,
   onToggleTagFilter,
   allTags,
 }: GalleryCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMobileControls, setShowMobileControls] = useState(false)
+  const [showTagsDropdown, setShowTagsDropdown] = useState(false)
   const [videoThumbnailGenerated, setVideoThumbnailGenerated] = useState(false)
   const [isMobile] = useState(() => isMobileDevice())
   const [tapCount, setTapCount] = useState(0)
   const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Handle mobile tap behavior
   const handleMobileTap = useCallback(() => {
@@ -86,14 +91,17 @@ export function GalleryCard({
       if (tapTimeoutRef.current) {
         clearTimeout(tapTimeoutRef.current)
       }
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+      }
     }
   }, [])
 
   return (
     <Card
-      className={`hover:shadow-md transition-all duration-150 bg-card cursor-pointer overflow-hidden p-0 my-0 relative ${
+      className={`gallery-card hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative rounded-2xl ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
-      } ${isHovered ? "border-transparent" : "border-border"}`}
+      }`}
       onClick={() => {
         if (isMobile) {
           handleMobileTap()
@@ -103,11 +111,15 @@ export function GalleryCard({
       }}
       onMouseEnter={() => {
         setIsHovered(true)
-        console.log('Card hover enter:', image.title)
+        
+        // Show tags dropdown immediately on hover
+        if (!isMobile) {
+          setShowTagsDropdown(true)
+        }
       }}
       onMouseLeave={() => {
         setIsHovered(false)
-        console.log('Card hover leave:', image.title)
+        setShowTagsDropdown(false)
       }}
     >
       <div 
@@ -141,7 +153,7 @@ export function GalleryCard({
         } : undefined}
       >
         {/* Media Element - Full cover */}
-        <div className={`w-full h-48 sm:h-64 transition-transform duration-150 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}>
+        <div className={`w-full h-[192px] sm:h-[256px] transition-transform duration-150 ease-out overflow-hidden rounded-2xl ${isHovered ? 'scale-105' : 'scale-100'}`}>
           {image.type === "video" ? (
             <video
               key={image.url} // Force re-render when URL changes
@@ -245,78 +257,67 @@ export function GalleryCard({
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm cursor-pointer border border-white/10"
+            className="h-8 w-8 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm cursor-pointer border border-white/10 rounded-lg"
             onClick={(e) => {
               e.stopPropagation()
               onEdit(image)
             }}
           >
-            <Edit3 className="h-3 w-3" />
+            <Edit3 className="h-4 w-4" />
           </Button>
           {!image.id.match(/^\d+$/) && (
             <Button
               size="sm"
               variant="ghost"
-              className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-white/20 backdrop-blur-sm cursor-pointer border border-white/10"
+              className="h-8 w-8 p-0 bg-black/80 text-white hover:bg-white/20 backdrop-blur-sm cursor-pointer border border-white/10 rounded-lg"
               onClick={(e) => {
                 e.stopPropagation()
                 onDelete(image.id)
               }}
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>
 
-        {/* Media Type Indicator - Top Right (Desktop hover or Mobile controls visible) */}
-        <div 
-          className={`absolute top-2 right-2 z-10 transition-opacity duration-150 ${
-            (isHovered && !isMobile) || (isMobile && showMobileControls) ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm border border-white/10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {image.type === "video" ? (
-              <Play className="h-3 w-3" />
-            ) : image.type === "gif" ? (
-              <FileImage className="h-3 w-3" />
-            ) : (
-              <ImageIcon className="h-3 w-3" />
-            )}
-          </Button>
+        {/* Media Type Indicator - Top Right (Always visible) */}
+        <div className="absolute top-2 right-2 z-10">
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center">
+            <div style={{ mixBlendMode: 'difference' }}>
+              {image.type === "video" ? (
+                <PlayIcon className="h-4 w-4 file-type-icon text-white" />
+              ) : image.type === "gif" ? (
+                <FileImageIcon className="h-4 w-4 file-type-icon text-white" />
+              ) : (
+                <ImageIcon className="h-4 w-4 file-type-icon text-white" />
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Tag Button - Bottom Left (Always visible on mobile, hover on desktop) */}
         <div 
-          className={`absolute bottom-2 left-2 z-20 transition-opacity duration-150 ${
+          className={`absolute bottom-2 left-2 z-[101] transition-opacity duration-150 ${
             isMobile ? 'opacity-100' : (isHovered ? 'opacity-100' : 'opacity-0')
           }`}
         >
           <TagDropdown
             imageId={image.id}
             imageTitle={image.title}
+            imageType={image.type}
             existingTags={image.tags}
             allTags={allTags}
+            recentTags={allTags.slice(0, 5)} // TODO: Replace with actual recent tags logic
             onAddTag={onAddTag}
             onAddMultipleTags={onAddMultipleTags}
+            onRemoveTag={onRemoveTag}
+            autoOpenAfterDelay={showTagsDropdown}
+            onAutoClose={() => setShowTagsDropdown(false)}
           />
         </div>
       </div>
       
-      {/* Border Trail Effect */}
-      {isHovered && (
-        <BorderTrail
-          style={{
-            boxShadow:
-              '0px 0px 60px 30px rgb(255 255 255 / 50%), 0 0 100px 60px rgb(0 0 0 / 50%), 0 0 140px 90px rgb(0 0 0 / 50%)',
-          }}
-          size={150}
-        />
-      )}
+
     </Card>
   )
 }

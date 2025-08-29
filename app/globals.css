@@ -270,6 +270,12 @@
   [data-sonner-toast] [data-content] {
     align-items: flex-start !important;
   }
+
+  /* Force invert filter on file type icons */
+  .file-type-icon {
+    filter: invert(1) !important;
+    color: white !important;
+  }
 }
 
 @keyframes fadeIn {

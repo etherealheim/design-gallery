@@ -192,6 +192,28 @@ export default function DesignVault() {
   }
   const handleCardClick = (item: GalleryItem) => openPreview(item)
 
+  // Handle tag removal from gallery cards
+  const handleRemoveTagFromCard = async (fileId: string, tagToRemove: string) => {
+    try {
+      // Find the current file
+      const currentFile = processedItems.displayItems.find(item => item.id === fileId)
+      if (!currentFile) return
+
+      // Remove the tag from the file's tags array
+      const updatedTags = currentFile.tags.filter(tag => tag !== tagToRemove)
+      
+      // Update the file in the database
+      await updateFile(fileId, { tags: updatedTags })
+      
+      toast.success("Tag removed", {
+        description: `${tagToRemove} removed from ${currentFile.type}`,
+      })
+    } catch (error) {
+      console.error("Failed to remove tag:", error)
+      toast.error("Failed to remove tag")
+    }
+  }
+
   // Handle preview save
   const handlePreviewSave = async (id: string, newTitle: string, newTags: string[]) => {
     await updateFile(id, { title: newTitle, tags: newTags })
@@ -392,6 +414,7 @@ export default function DesignVault() {
               handleRename={handleRename}
               handleAddTag={addTagToFile}
               handleAddMultipleTags={addMultipleTagsToFile}
+              handleRemoveTag={handleRemoveTagFromCard}
               selectedTags={filters.selectedTags}
               onToggleTagFilter={(tag) => {
                 setFilters(prev => ({
