@@ -6,6 +6,7 @@ import { DataService } from "@/lib/services/data-service"
 import { FileFilterService, FileOperationsService } from "@/lib/services/file-service"
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
+import { UndoIcon } from "@/components/icons"
 
 interface UseGalleryStateProps {
   initialViewMode?: ViewState["mode"]
@@ -218,32 +219,75 @@ export function useGalleryState({
     // Update total count immediately
     setTotalCount(prev => Math.max(0, prev - 1))
     
-    // Show success toast immediately
-    const toastId = toast.success(`${fileToDelete.title} deleted`, {
-      description: "File removed successfully",
-    })
+    let apiCallMade = false
+    let toastDismissed = false
 
-    try {
-      // Call API in background
-      await FileOperationsService.deleteFile(fileId)
-    } catch (error) {
-      console.error("Failed to delete file:", error)
+    // Undo function to restore the file
+    const undoDelete = () => {
+      if (toastDismissed) return
       
-      // Restore the file if API call failed
+      // Restore the file in UI
       setUploadedFiles(prev => {
-        // Insert the file back in its original position
         const newFiles = [...prev, fileToDelete]
         return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
       })
       // Restore total count
       setTotalCount(prev => prev + 1)
       
-      // Dismiss the success toast and show error
+      // Dismiss the delete toast
       toast.dismiss(toastId)
-      toast.error(`Failed to delete ${fileToDelete.title}`, {
-        description: createUserFriendlyMessage(error),
+      toastDismissed = true
+      
+      // Show undo confirmation
+      toast.success("File restored", {
+        description: `${fileToDelete.title} has been restored`,
       })
     }
+
+    // Show success toast with undo button
+    const toastId = toast(`${fileToDelete.title} deleted`, {
+      description: "File removed successfully",
+      duration: 5000, // 5 seconds
+      action: {
+        label: (
+          <div className="flex items-center justify-center">
+            <UndoIcon className="h-4 w-4 mr-1" />
+            Undo
+          </div>
+        ),
+        onClick: undoDelete,
+      },
+    })
+
+    // Start API call after a short delay (to allow for undo)
+    setTimeout(async () => {
+      if (toastDismissed) return // User clicked undo, don't delete
+      
+      try {
+        apiCallMade = true
+        await FileOperationsService.deleteFile(fileId)
+      } catch (error) {
+        console.error("Failed to delete file:", error)
+        
+        // Only restore if toast hasn't been dismissed (user didn't undo)
+        if (!toastDismissed) {
+          // Restore the file if API call failed
+          setUploadedFiles(prev => {
+            const newFiles = [...prev, fileToDelete]
+            return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
+          })
+          // Restore total count
+          setTotalCount(prev => prev + 1)
+          
+          // Dismiss the success toast and show error
+          toast.dismiss(toastId)
+          toast.error(`Failed to delete ${fileToDelete.title}`, {
+            description: createUserFriendlyMessage(error),
+          })
+        }
+      }
+    }, 100) // Small delay to ensure toast is shown first
+
   }, [uploadedFiles])
 
   const batchDelete = useCallback(async () => {
