@@ -24,7 +24,8 @@
   },
   "scripts": {
     "build": "node scripts/update-version.js && next build",
-    "dev": "node scripts/update-version.js && next dev",
+    "dev": "cross-env NODE_NO_WARNINGS=1 node scripts/update-version.js && cross-env NODE_NO_WARNINGS=1 next dev",
+    "dev:quiet": "cross-env NODE_NO_WARNINGS=1 NODE_OPTIONS='--no-deprecation' node scripts/update-version.js && cross-env NODE_NO_WARNINGS=1 NODE_OPTIONS='--no-deprecation' next dev",
     "lint": "next lint",
     "start": "next start",
     "update-version": "node scripts/update-version.js"
@@ -104,6 +105,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^7.0.3",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
     "tw-animate-css": "1.3.3",
