@@ -42,7 +42,7 @@ export function TagDropdown({
   const [isManuallyOpened, setIsManuallyOpened] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 0 })
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 0, buttonX: 0, buttonY: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -119,9 +119,11 @@ export function TagDropdown({
 
       setDropdownPosition({
         top: dropdownTop,
-        left: cardRect.left,
-        width: cardRect.width,
-        maxHeight: Math.max(200, maxHeight) // Minimum height of 200px
+        left: cardRect.left + 8, // Add left padding
+        width: cardRect.width - 16, // Account for left and right padding
+        maxHeight: Math.max(200, maxHeight), // Minimum height of 200px
+        buttonX: buttonRect.left + buttonRect.width / 2, // Center of button X
+        buttonY: buttonRect.top + buttonRect.height / 2, // Center of button Y
       })
     }
     setIsOpen(true)
@@ -301,21 +303,22 @@ export function TagDropdown({
               left: dropdownPosition.left,
               width: dropdownPosition.width || 256,
               maxHeight: dropdownPosition.maxHeight || 400,
+              transformOrigin: `${dropdownPosition.buttonX - dropdownPosition.left}px ${dropdownPosition.buttonY - dropdownPosition.top}px`,
             }}
             initial={{ 
               opacity: 0, 
-              y: -20, 
-              scale: 0.9 
+              scale: 0.3,
+              y: -10
             }}
             animate={{ 
               opacity: 1, 
-              y: 0, 
-              scale: 1 
+              scale: 1,
+              y: 0
             }}
             exit={{ 
               opacity: 0, 
-              y: -10, 
-              scale: 0.95 
+              scale: 0.8,
+              y: -5
             }}
             transition={{
               type: "spring",
@@ -326,102 +329,72 @@ export function TagDropdown({
             onClick={(e) => e.stopPropagation()}
           >
           <div className="p-4 pb-2">
-            {/* Existing tags as badges */}
-            {existingTags.length > 0 && (
-              <>
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 25,
-                    delay: 0.1
-                  }}
-                  className="px-1 pb-3 text-xs font-normal text-muted-foreground"
-                >
-                  Applied Tags
-                </motion.div>
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 25,
-                    delay: 0.15
-                  }}
-                  className="flex flex-wrap gap-1 mb-2"
-                >
-                  {existingTags.map((tag, index) => (
-                    <motion.div
-                      key={tag}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20,
-                        delay: 0.2 + index * 0.03
-                      }}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="text-sm flex items-center gap-1 pr-1 h-7"
-                      >
-                        {tag}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRemoveExistingTag(tag)
-                          }}
-                          className="ml-1 rounded-sm p-1 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    </motion.div>
-                  ))}
-                </motion.div>
-                <motion.div 
-                  initial={{ opacity: 0, scaleX: 0 }}
-                  animate={{ opacity: 1, scaleX: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25,
-                    delay: 0.3 + existingTags.length * 0.03
-                  }}
-                  className="border-b border-border mb-2"
-                  style={{ transformOrigin: 'left' }}
-                />
-              </>
-            )}
-            <div className="relative">
+            <div className="relative flex gap-2">
               <Input
                 ref={inputRef}
                 value={searchQuery}
                 onChange={handleInputChange}
                 placeholder="Search tags or create new..."
-                className="h-8 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input pr-8"
+                className="h-8 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-input flex-1"
                 onClick={(e) => e.stopPropagation()}
               />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSearchQuery("")
-                    setSelectedIndex(-1)
-                    inputRef.current?.focus()
-                  }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-muted cursor-pointer shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClose()
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
+            
+            {/* Existing tags as badges - moved below search */}
+            {existingTags.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 25,
+                  delay: 0.15
+                }}
+                className="flex flex-wrap gap-1 mt-3"
+              >
+                {existingTags.map((tag, index) => (
+                  <motion.div
+                    key={tag}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                      delay: 0.2 + index * 0.03
+                    }}
+                  >
+                    <Badge
+                      variant="secondary"
+                      className="text-sm flex items-center gap-1 pr-1 h-7"
+                    >
+                      {tag}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveExistingTag(tag)
+                        }}
+                        className="ml-1 rounded-sm p-1 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
           </div>
 
           <div 
