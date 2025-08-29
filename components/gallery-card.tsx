@@ -56,7 +56,6 @@ export function GalleryCard({
 }: GalleryCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [showMobileControls, setShowMobileControls] = useState(false)
-  const [showTagsDropdown, setShowTagsDropdown] = useState(false)
   const [videoThumbnailGenerated, setVideoThumbnailGenerated] = useState(false)
   const [isMobile] = useState(() => isMobileDevice())
   const [tapCount, setTapCount] = useState(0)
@@ -111,15 +110,9 @@ export function GalleryCard({
       }}
       onMouseEnter={() => {
         setIsHovered(true)
-        
-        // Show tags dropdown immediately on hover
-        if (!isMobile) {
-          setShowTagsDropdown(true)
-        }
       }}
       onMouseLeave={() => {
         setIsHovered(false)
-        setShowTagsDropdown(false)
       }}
     >
       <div 
@@ -296,8 +289,6 @@ export function GalleryCard({
             onAddTag={onAddTag}
             onAddMultipleTags={onAddMultipleTags}
             onRemoveTag={onRemoveTag}
-            autoOpenAfterDelay={showTagsDropdown}
-            onAutoClose={() => setShowTagsDropdown(false)}
           />
         </div>
 
