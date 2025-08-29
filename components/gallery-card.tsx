@@ -57,41 +57,14 @@ export function GalleryCard({
   allTags,
 }: GalleryCardProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const [showMobileControls, setShowMobileControls] = useState(false)
   const [videoThumbnailGenerated, setVideoThumbnailGenerated] = useState(false)
   const [isMobile] = useState(() => isMobileDevice())
-  const [tapCount, setTapCount] = useState(0)
-  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Handle mobile tap behavior
-  const handleMobileTap = useCallback(() => {
-    if (!isMobile) return
-
-    setTapCount(prev => prev + 1)
-
-    if (tapTimeoutRef.current) {
-      clearTimeout(tapTimeoutRef.current)
-    }
-
-    tapTimeoutRef.current = setTimeout(() => {
-      if (tapCount === 0) {
-        // First tap - show controls
-        setShowMobileControls(true)
-      } else if (tapCount === 1) {
-        // Second tap - open modal
-        onPreview(image)
-      }
-      setTapCount(0)
-    }, 300)
-  }, [isMobile, tapCount, onPreview, image])
+  const actionButtonsVisible = isMobile || isHovered
 
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      if (tapTimeoutRef.current) {
-        clearTimeout(tapTimeoutRef.current)
-      }
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current)
       }
@@ -103,13 +76,8 @@ export function GalleryCard({
       className={`gallery-card hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative rounded-2xl ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
-      onClick={() => {
-        if (isMobile) {
-          handleMobileTap()
-        } else {
-          onPreview(image)
-        }
-      }}
+      style={{ WebkitTapHighlightColor: 'transparent' }}
+      onClick={() => onPreview(image)}
       onMouseEnter={() => {
         setIsHovered(true)
       }}
@@ -148,7 +116,7 @@ export function GalleryCard({
         } : undefined}
       >
         {/* Media Element - Full cover */}
-        <div className={`w-full h-[192px] sm:h-[256px] transition-transform duration-150 ease-out overflow-hidden rounded-2xl ${isHovered ? 'scale-105' : 'scale-100'}`}>
+        <div className={`w-full h-[256px] transition-transform duration-150 ease-out overflow-hidden rounded-2xl ${isHovered ? 'scale-105' : 'scale-100'}`}>
           {image.type === "video" ? (
             <video
               key={image.url} // Force re-render when URL changes
@@ -246,7 +214,7 @@ export function GalleryCard({
         {/* Action Buttons - Top Left (Desktop hover or Mobile controls visible) */}
         <div 
           className={`absolute top-[16px] left-[16px] flex gap-1 z-20 transition-opacity duration-150 ${
-            (isHovered && !isMobile) || (isMobile && showMobileControls) ? 'opacity-100' : 'opacity-0'
+            actionButtonsVisible ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <Button

@@ -221,8 +221,13 @@ export function TagDropdown({
     }
 
     if (isOpen) {
-      document.addEventListener("click", handleClickOutside)
-      return () => document.removeEventListener("click", handleClickOutside)
+      const timeoutId = window.setTimeout(() => {
+        document.addEventListener("click", handleClickOutside)
+      }, 100) // small delay to avoid initial tap being treated as outside click
+      return () => {
+        window.clearTimeout(timeoutId)
+        document.removeEventListener("click", handleClickOutside)
+      }
     }
   }, [isOpen, handleClose])
 
