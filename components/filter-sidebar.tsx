@@ -105,7 +105,7 @@ export function FilterSidebar({
                     onClick={() => toggleFileType("image")}
                     className="justify-center cursor-pointer"
                   >
-                    <ImageIcon className="h-4 w-4 mr-2" />
+                    <ImageIcon className="h-4 w-4 mr-2 text-white" />
                     Images
                   </Button>
                   <Button
@@ -114,7 +114,7 @@ export function FilterSidebar({
                     onClick={() => toggleFileType("video")}
                     className="justify-center cursor-pointer"
                   >
-                    <FileVideo className="h-4 w-4 mr-2" />
+                    <FileVideo className="h-4 w-4 mr-2 text-white" />
                     Videos
                   </Button>
                 </div>
@@ -124,7 +124,7 @@ export function FilterSidebar({
                   onClick={() => toggleFileType("gif")}
                   className="justify-center cursor-pointer w-full"
                 >
-                  <FileImage className="h-4 w-4 mr-2" />
+                  <FileImage className="h-4 w-4 mr-2 text-white" />
                   GIFs
                 </Button>
               </div>
