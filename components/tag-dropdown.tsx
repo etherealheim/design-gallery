@@ -42,7 +42,7 @@ export function TagDropdown({
   const [isManuallyOpened, setIsManuallyOpened] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 0 })
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -108,14 +108,20 @@ export function TagDropdown({
     // Prefer button position; fallback to container -> closest gallery card
     const anchorEl = buttonRef.current || containerRef.current
     if (anchorEl) {
-      const rect = anchorEl.getBoundingClientRect()
+      const buttonRect = anchorEl.getBoundingClientRect()
       const cardElement = anchorEl.closest('.gallery-card')
-      const cardRect = cardElement ? cardElement.getBoundingClientRect() : rect
+      const cardRect = cardElement ? cardElement.getBoundingClientRect() : buttonRect
+
+      // Position dropdown 4px below the tag button
+      const dropdownTop = buttonRect.bottom + 4
+      // Calculate height so bottom aligns with card bottom
+      const maxHeight = cardRect.bottom - dropdownTop - 8 // 8px padding from card bottom
 
       setDropdownPosition({
-        top: cardRect.bottom + 8, // Keep 8px gap
-        left: cardRect.left,
-        width: cardRect.width
+        top: dropdownTop,
+        left: buttonRect.left,
+        width: cardRect.width - (buttonRect.left - cardRect.left) - 8, // Align with button, account for card padding
+        maxHeight: Math.max(200, maxHeight) // Minimum height of 200px
       })
     }
     setIsOpen(true)
@@ -279,21 +285,22 @@ export function TagDropdown({
               <div
                 ref={bridgeRef}
                 className="fixed z-[9998]"
-                style={{
-                  top: dropdownPosition.top - 8, // Cover the 8px gap
-                  left: dropdownPosition.left,
-                  width: dropdownPosition.width || 256,
-                  height: 8, // Height of the gap
-                  backgroundColor: 'transparent', // Invisible
-                }}
+                            style={{
+              top: dropdownPosition.top - 4, // Cover the 4px gap
+              left: dropdownPosition.left,
+              width: dropdownPosition.width || 256,
+              height: 4, // Height of the gap
+              backgroundColor: 'transparent', // Invisible
+            }}
               />
               <motion.div
             ref={dropdownRef}
-            className="fixed z-[9999] overflow-hidden rounded-2xl border bg-popover text-popover-foreground shadow-lg"
+            className="fixed z-[9999] overflow-hidden rounded-2xl border bg-popover text-popover-foreground shadow-lg flex flex-col"
             style={{
               top: dropdownPosition.top,
               left: dropdownPosition.left,
               width: dropdownPosition.width || 256,
+              maxHeight: dropdownPosition.maxHeight || 400,
             }}
             initial={{ 
               opacity: 0, 
@@ -418,8 +425,7 @@ export function TagDropdown({
           </div>
 
           <div 
-            className="overflow-y-auto px-2 py-1"
-            style={{ maxHeight: 160 }}
+            className="overflow-y-auto px-2 py-1 flex-1"
           >
             {/* All tags section */}
             {filteredAllTags.map((tag, index) => (
