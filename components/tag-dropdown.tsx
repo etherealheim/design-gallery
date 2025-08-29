@@ -477,9 +477,8 @@ export function TagDropdown({
                 Start typing to search or create tags...
               </div>
             )}
-          </div>
-        </motion.div>
-            </>
+              </div>
+            </motion.div>
           )}
         </AnimatePresence>,
         document.body
