@@ -266,12 +266,7 @@ export function useGalleryState({
       description: "File removed successfully",
       duration: 5000, // 5 seconds
       action: {
-        label: React.createElement(
-          'div',
-          { className: 'flex items-center gap-1' },
-          React.createElement(Undo2, { className: 'h-4 w-4' }),
-          'Undo'
-        ),
+        label: React.createElement(Undo2, { className: 'h-4 w-4' }),
         onClick: undoDelete,
       },
     })
