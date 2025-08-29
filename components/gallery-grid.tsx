@@ -36,6 +36,7 @@ interface GalleryGridProps {
   handleAddMultipleTags: (id: string, tags: string[]) => void
   selectedTags: string[]
   onToggleTagFilter: (tag: string) => void
+  allTags: string[]
   // Infinite scroll props
   hasMore: boolean
   isLoadingMore: boolean
@@ -65,6 +66,7 @@ export function GalleryGrid({
   handleAddMultipleTags,
   selectedTags,
   onToggleTagFilter,
+  allTags,
   hasMore,
   isLoadingMore,
   loadMoreFiles,
@@ -253,6 +255,7 @@ export function GalleryGrid({
                   onAddMultipleTags={handleAddMultipleTags}
                   selectedTags={selectedTags}
                   onToggleTagFilter={onToggleTagFilter}
+                  allTags={allTags}
                 />
               </motion.div>
             ))}

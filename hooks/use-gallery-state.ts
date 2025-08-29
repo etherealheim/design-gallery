@@ -657,6 +657,7 @@ export function useGalleryState({
     // Tag management
     addTagToFile,
     addMultipleTagsToFile,
+    allTags,
     
     // Pagination state
     hasMore,

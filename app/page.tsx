@@ -48,6 +48,7 @@ export default function DesignVault() {
     handleFileUpload,
     addTagToFile,
     addMultipleTagsToFile,
+    allTags,
     hasMore,
     isLoadingMore,
     loadMoreFiles,
@@ -400,6 +401,7 @@ export default function DesignVault() {
                     : [...prev.selectedTags, tag]
                 }))
               }}
+              allTags={allTags}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}
               loadMoreFiles={loadMoreFiles}
@@ -421,6 +423,9 @@ export default function DesignVault() {
         handleAddTag={handleAddTag}
         handleRemoveTag={handleRemoveTag}
         onSave={handlePreviewSave}
+        allTags={allTags}
+        onAddTagDirect={addTagToFile}
+        onAddMultipleTags={addMultipleTagsToFile}
       />
 
       {/* Drag and Drop Overlay */}

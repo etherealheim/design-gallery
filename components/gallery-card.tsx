@@ -3,17 +3,12 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { BorderTrail } from "@/components/ui/border-trail"
-import { Play, ImageIcon, Trash2, Edit3, X, Check, FileImage } from "lucide-react"
-import Image from "next/image"
-import { GalleryCardAddTag } from "@/components/gallery-card-add-tag"
+import { Play, ImageIcon, Edit3, X, FileImage } from "lucide-react"
+import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
-import { toast } from "sonner"
 
 // Mobile detection utility
 const isMobileDevice = () => {
@@ -36,6 +31,7 @@ interface GalleryCardProps {
   onAddMultipleTags?: (id: string, tags: string[]) => void
   selectedTags: string[]
   onToggleTagFilter: (tag: string) => void
+  allTags: string[]
 }
 
 export function GalleryCard({
@@ -53,119 +49,58 @@ export function GalleryCard({
   onAddMultipleTags,
   selectedTags,
   onToggleTagFilter,
+  allTags,
 }: GalleryCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editTitle, setEditTitle] = useState(image.title)
   const [isHovered, setIsHovered] = useState(false)
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
+  const [showMobileControls, setShowMobileControls] = useState(false)
   const [videoThumbnailGenerated, setVideoThumbnailGenerated] = useState(false)
   const [isMobile] = useState(() => isMobileDevice())
+  const [tapCount, setTapCount] = useState(0)
+  const tapTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  // Handle mobile tap behavior
+  const handleMobileTap = useCallback(() => {
+    if (!isMobile) return
 
-  const handleSaveRename = async () => {
-    if (editTitle.trim() && editTitle !== image.title) {
-      const newTitle = editTitle.trim()
-      
-      // Optimistically update the title immediately
-      const updatedImage = { ...image, title: newTitle }
-      
-      // Update parent component state immediately
-      setIsEditing(false)
-      
-      try {
-        // Call the rename function which should handle the API update
-        await onRename(updatedImage)
-      } catch (error) {
-        // If rename fails, revert the title
-        setEditTitle(image.title)
-        console.error("Failed to rename:", error)
+    setTapCount(prev => prev + 1)
+
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current)
+    }
+
+    tapTimeoutRef.current = setTimeout(() => {
+      if (tapCount === 0) {
+        // First tap - show controls
+        setShowMobileControls(true)
+      } else if (tapCount === 1) {
+        // Second tap - open modal
+        onPreview(image)
       }
-    } else {
-      setIsEditing(false)
-    }
-  }
+      setTapCount(0)
+    }, 300)
+  }, [isMobile, tapCount, onPreview, image])
 
-  const handleCancelRename = () => {
-    setEditTitle(image.title)
-    setIsEditing(false)
-  }
-
-  // Long press handlers for mobile
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (isEditing) return
-    
-    const touch = e.touches[0]
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY }
-    
-    longPressTimerRef.current = setTimeout(() => {
-      // Calculate menu position relative to the touch point
-      const rect = e.currentTarget.getBoundingClientRect()
-      const x = touch.clientX - rect.left
-      const y = touch.clientY - rect.top
-      
-      setMenuPosition({ x, y })
-      setShowMobileMenu(true)
-      
-      // Add haptic feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(50)
-      }
-    }, 500) // 500ms long press
-  }, [isEditing])
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-    touchStartRef.current = null
-  }, [])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current || !longPressTimerRef.current) return
-    
-    const touch = e.touches[0]
-    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x)
-    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y)
-    
-    // Cancel long press if finger moves too much (more than 10px)
-    if (deltaX > 10 || deltaY > 10) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }, [])
-
-  const handleMobileRename = () => {
-    setShowMobileMenu(false)
-    setIsEditing(true)
-  }
-
-  const handleMobileDelete = () => {
-    setShowMobileMenu(false)
-    onDelete(image.id)
-  }
-
-
-
-  // Cleanup timer on unmount
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
-      if (longPressTimerRef.current) {
-        clearTimeout(longPressTimerRef.current)
+      if (tapTimeoutRef.current) {
+        clearTimeout(tapTimeoutRef.current)
       }
     }
   }, [])
 
   return (
     <Card
-              className={`hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
+      className={`hover:shadow-md transition-all duration-150 bg-card border-border cursor-pointer overflow-hidden p-0 my-0 relative ${
         viewMode === "list" ? "flex flex-row h-auto" : ""
       }`}
-      onClick={() => !isEditing && !showMobileMenu && onPreview(image)}
+      onClick={() => {
+        if (isMobile) {
+          handleMobileTap()
+        } else {
+          onPreview(image)
+        }
+      }}
       onMouseEnter={() => {
         setIsHovered(true)
         console.log('Card hover enter:', image.title)
@@ -174,9 +109,6 @@ export function GalleryCard({
         setIsHovered(false)
         console.log('Card hover leave:', image.title)
       }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
     >
       <div 
         className="relative overflow-hidden"
@@ -208,15 +140,13 @@ export function GalleryCard({
           }
         } : undefined}
       >
-        {/* Media Element - Consistent styling for both video and image */}
-        <div className={`w-full transition-transform duration-150 ease-out ${isHovered ? 'scale-105' : 'scale-100'} ${
-          viewMode === "list" ? "h-auto" : "h-auto sm:h-48"
-        }`}>
+        {/* Media Element - Full cover */}
+        <div className={`w-full h-48 sm:h-64 transition-transform duration-150 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}>
           {image.type === "video" ? (
             <video
               key={image.url} // Force re-render when URL changes
               src={image.url}
-              className="w-full h-full object-contain sm:object-cover cursor-pointer"
+              className="w-full h-full object-cover cursor-pointer"
               muted
               loop
               playsInline
@@ -296,7 +226,7 @@ export function GalleryCard({
             <img
               src={image.url || "/placeholder.svg"}
               alt={image.title}
-              className="w-full h-full object-contain sm:object-cover cursor-pointer"
+              className="w-full h-full object-cover cursor-pointer"
               loading="lazy"
               onError={(e) => {
                 console.warn('Gallery image failed to load, using placeholder:', image.url);
@@ -306,10 +236,10 @@ export function GalleryCard({
           )}
         </div>
         
-        {/* Action Buttons - Left Side */}
+        {/* Action Buttons - Top Left (Desktop hover or Mobile controls visible) */}
         <div 
           className={`absolute top-2 left-2 flex gap-1 z-20 transition-opacity duration-150 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
+            (isHovered && !isMobile) || (isMobile && showMobileControls) ? 'opacity-100' : 'opacity-0'
           }`}
         >
           <Button
@@ -318,7 +248,7 @@ export function GalleryCard({
             className="h-6 w-6 p-0 bg-black/80 text-white hover:bg-black backdrop-blur-sm cursor-pointer border border-white/10"
             onClick={(e) => {
               e.stopPropagation()
-              setIsEditing(true)
+              onEdit(image)
             }}
           >
             <Edit3 className="h-3 w-3" />
@@ -338,8 +268,12 @@ export function GalleryCard({
           )}
         </div>
 
-        {/* Media Type Indicator - Right Side - Always Visible */}
-        <div className="absolute top-2 right-2 z-10">
+        {/* Media Type Indicator - Top Right (Desktop hover or Mobile controls visible) */}
+        <div 
+          className={`absolute top-2 right-2 z-10 transition-opacity duration-150 ${
+            (isHovered && !isMobile) || (isMobile && showMobileControls) ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
           <Button 
             variant="ghost" 
             size="sm" 
@@ -355,164 +289,23 @@ export function GalleryCard({
             )}
           </Button>
         </div>
-      </div>
 
-      <div className="p-3 pt-1">
-        <div className="flex items-start gap-2 mb-2">
-          {isEditing ? (
-            <div className="flex items-center gap-1 flex-1">
-              <Input
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="h-5 text-xs flex-1 py-1"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSaveRename()
-                  } else if (e.key === "Escape") {
-                    handleCancelRename()
-                  }
-                }}
-                autoFocus
-                onClick={(e) => e.stopPropagation()}
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleSaveRename()
-                }}
-                className="h-5 w-5 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
-              >
-                <Check className="h-3 w-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleCancelRename()
-                }}
-                className="h-5 w-5 p-0 rounded-md inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ) : (
-            <h3 className="font-medium text-sm truncate flex-1">{image.title}</h3>
-          )}
-
-        </div>
-
-        <div className="relative">
-          <motion.div 
-            className="flex flex-wrap gap-1 items-start"
-            layout
-            transition={{
-              layout: { 
-                type: "spring",
-                stiffness: 800,
-                damping: 60,
-                mass: 0.3
-              }
-            }}
-          >
-            {/* Existing tags */}
-            {image.tags.map((tag, tagIndex) => {
-              const isActive = selectedTags.includes(tag)
-              return (
-                <Badge 
-                  key={tagIndex} 
-                  variant={isActive ? "default" : "secondary"} 
-                  className={`text-xs font-mono font-medium transition-colors cursor-pointer items-center ${
-                    isActive 
-                      ? "bg-primary text-primary-foreground hover:bg-primary/80" 
-                      : "hover:bg-secondary/80"
-                  }`}
-                  style={{height: '24px', cursor: 'pointer'}}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onToggleTagFilter(tag)
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isActive) {
-                      e.currentTarget.style.backgroundColor = 'hsl(var(--primary) / 0.8)'
-                    } else {
-                      e.currentTarget.style.backgroundColor = 'hsl(var(--secondary) / 0.8)'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (isActive) {
-                      e.currentTarget.style.backgroundColor = 'hsl(var(--primary))'
-                    } else {
-                      e.currentTarget.style.backgroundColor = 'hsl(var(--secondary))'
-                    }
-                  }}
-                >
-                  {tag}
-                </Badge>
-              )
-            })}
-
-            {/* Keep pending tags for backward compatibility */}
-            {pendingTags.map((tag, tagIndex) => (
-              <div
-                key={`pending-${tagIndex}`}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-mono font-medium border border-dashed border-muted-foreground/50 rounded-md bg-transparent"
-                style={{height: '24px'}}
-              >
-                <span className="text-muted-foreground">{tag}</span>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onConfirmTag(image.id, tag)
-                  }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
-                >
-                  <Check className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onRejectTag(image.id, tag)
-                  }}
-                  className="h-4 w-4 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-white/10 transition-colors cursor-pointer text-white"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-
-            {/* Add Tag Component */}
-            <GalleryCardAddTag
-              imageId={image.id}
-              imageTitle={image.title}
-              existingTags={image.tags}
-              onAddTag={onAddTag}
-              onAddMultipleTags={onAddMultipleTags}
-            />
-          </motion.div>
+        {/* Tag Button - Bottom Left (Always visible on mobile, hover on desktop) */}
+        <div 
+          className={`absolute bottom-2 left-2 z-20 transition-opacity duration-150 ${
+            isMobile ? 'opacity-100' : (isHovered ? 'opacity-100' : 'opacity-0')
+          }`}
+        >
+          <TagDropdown
+            imageId={image.id}
+            imageTitle={image.title}
+            existingTags={image.tags}
+            allTags={allTags}
+            onAddTag={onAddTag}
+            onAddMultipleTags={onAddMultipleTags}
+          />
         </div>
       </div>
-
-      {/* Mobile Long Press Menu */}
-      <DropdownMenu
-        isOpen={showMobileMenu}
-        onClose={() => setShowMobileMenu(false)}
-        className="top-0 left-0"
-        style={{
-          top: `${menuPosition.y}px`,
-          left: `${menuPosition.x}px`,
-          transform: 'translate(-50%, -50%)'
-        }}
-      >
-        <DropdownMenuItem onSelect={handleMobileRename}>
-          <Edit3 className="h-4 w-4 mr-2" />
-          Rename
-        </DropdownMenuItem>
-        {!image.id.match(/^\d+$/) && (
-          <DropdownMenuItem onSelect={handleMobileDelete} destructive>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </DropdownMenuItem>
-        )}
-      </DropdownMenu>
       
       {/* Border Trail Effect */}
       {isHovered && (

@@ -11,6 +11,7 @@ import { useState, useRef } from "react"
 import { parseTagsInput } from "@/lib/validation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
+import { TagInputModal } from "@/components/tag-input-modal"
 
 interface PreviewModalProps {
   previewItem: GalleryItem | null
@@ -22,6 +23,9 @@ interface PreviewModalProps {
   handleAddTag: () => void
   handleRemoveTag: (tag: string) => void
   onSave?: (id: string, newTitle: string, newTags: string[]) => Promise<void>
+  allTags: string[]
+  onAddTagDirect?: (id: string, tag: string) => void
+  onAddMultipleTags?: (id: string, tags: string[]) => void
 }
 
 export function PreviewModal({
@@ -34,6 +38,9 @@ export function PreviewModal({
   handleAddTag,
   handleRemoveTag,
   onSave,
+  allTags,
+  onAddTagDirect,
+  onAddMultipleTags,
 }: PreviewModalProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editTitle, setEditTitle] = useState("")
@@ -223,53 +230,19 @@ export function PreviewModal({
               <div className="relative w-full max-w-full">
                 <AnimatePresence mode="wait">
                   {isAddingTag ? (
-                    /* Overlay input that covers the entire tag area */
-                    <motion.div
-                      key="input"
-                      initial={{ scale: 0.95, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.95, opacity: 0 }}
-                      transition={{ 
-                        duration: 0.15,
-                        ease: "easeOut"
+                    <TagInputModal
+                      imageId={previewItem.id}
+                      imageTitle={previewItem.title}
+                      existingTags={previewItem.tags}
+                      allTags={allTags}
+                      onAddTag={onAddTagDirect}
+                      onAddMultipleTags={onAddMultipleTags}
+                      isOpen={isAddingTag}
+                      onClose={() => {
+                        setIsAddingTag(false)
+                        setNewTag("")
                       }}
-                      className="flex items-center gap-1 px-2 py-1 text-sm border border-dashed border-muted-foreground/50 rounded-md bg-background/95 backdrop-blur-sm"
-                    >
-                      <Input
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Space or comma"
-                        className="flex-1 h-4 text-base md:text-sm font-mono font-medium border-0 p-0 pl-1 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleAddTag()
-                          if (e.key === "Escape") {
-                            setIsAddingTag(false)
-                            setNewTag("")
-                          }
-                        }}
-                        autoFocus
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleAddTag()
-                        }}
-                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                      >
-                        <Check className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setIsAddingTag(false)
-                          setNewTag("")
-                        }}
-                        className="h-6 w-6 p-0 rounded-sm inline-flex items-center justify-center bg-transparent hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </motion.div>
+                    />
                   ) : (
                     /* Normal tag display */
                     <motion.div
