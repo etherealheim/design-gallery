@@ -243,7 +243,7 @@ export function GalleryCard({
         
         {/* Action Buttons - Top Left (Desktop hover or Mobile controls visible) */}
         <div 
-          className={`absolute top-2 left-2 flex gap-1 z-20 transition-opacity duration-150 ${
+          className={`absolute top-[16px] left-[16px] flex gap-1 z-20 transition-opacity duration-150 ${
             (isHovered && !isMobile) || (isMobile && showMobileControls) ? 'opacity-100' : 'opacity-0'
           }`}
         >
@@ -273,37 +273,31 @@ export function GalleryCard({
           )}
         </div>
 
-        {/* Tag Button - Top Right (Always visible on mobile, hover on desktop) */}
-        <div 
-          className={`absolute top-2 right-2 z-[101] transition-opacity duration-150 ${
-            isMobile ? 'opacity-100' : (isHovered ? 'opacity-100' : 'opacity-0')
-          }`}
-        >
-          <TagDropdown
-            imageId={image.id}
-            imageTitle={image.title}
-            imageType={image.type}
-            existingTags={image.tags}
-            allTags={allTags}
-            recentTags={allTags.slice(0, 5)} // TODO: Replace with actual recent tags logic
-            onAddTag={onAddTag}
-            onAddMultipleTags={onAddMultipleTags}
-            onRemoveTag={onRemoveTag}
-          />
-        </div>
+        {/* Tag Overlay - Full Card Coverage */}
+        <TagDropdown
+          imageId={image.id}
+          imageTitle={image.title}
+          imageType={image.type}
+          existingTags={image.tags}
+          allTags={allTags}
+          recentTags={allTags.slice(0, 5)} // TODO: Replace with actual recent tags logic
+          onAddTag={onAddTag}
+          onAddMultipleTags={onAddMultipleTags}
+          onRemoveTag={onRemoveTag}
+          isHovered={isHovered}
+          isMobile={isMobile}
+        />
 
         {/* Media Type Indicator - Bottom Left (Always visible) */}
-        <div className="absolute bottom-2 left-2 z-10">
-          <div className="h-8 w-8 rounded-lg flex items-center justify-center">
-            <div style={{ mixBlendMode: 'difference' }}>
-              {image.type === "video" ? (
-                <PlayIcon className="h-4 w-4 file-type-icon text-white" />
-              ) : image.type === "gif" ? (
-                <FileImageIcon className="h-4 w-4 file-type-icon text-white" />
-              ) : (
-                <ImageIcon className="h-4 w-4 file-type-icon text-white" />
-              )}
-            </div>
+        <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
+          <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/40 text-white backdrop-blur-sm border border-white/10">
+            {image.type === "video" ? (
+              <PlayIcon className="h-3.5 w-3.5" />
+            ) : image.type === "gif" ? (
+              <FileImageIcon className="h-3.5 w-3.5" />
+            ) : (
+              <ImageIcon className="h-3.5 w-3.5" />
+            )}
           </div>
         </div>
       </div>
