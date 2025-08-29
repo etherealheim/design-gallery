@@ -119,8 +119,8 @@ export function TagDropdown({
 
       setDropdownPosition({
         top: dropdownTop,
-        left: buttonRect.left,
-        width: cardRect.width - (buttonRect.left - cardRect.left) - 8, // Align with button, account for card padding
+        left: cardRect.left,
+        width: cardRect.width,
         maxHeight: Math.max(200, maxHeight) // Minimum height of 200px
       })
     }
