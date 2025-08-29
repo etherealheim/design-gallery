@@ -10,6 +10,8 @@ import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
+import { LiquidWeb } from 'liquid-web/react';
+
 
 // Mobile detection utility
 const isMobileDevice = () => {
@@ -290,7 +292,13 @@ export function GalleryCard({
 
         {/* Media Type Indicator - Bottom Left (Always visible) */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-          <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/40 text-white backdrop-blur-sm border border-white/10">
+        
+        <LiquidWeb
+        scale={22}
+        blur={2}
+        aberration={50}
+        >
+        <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/20 text-white">
             {image.type === "video" ? (
               <PlayIcon className="h-3.5 w-3.5" />
             ) : image.type === "gif" ? (
@@ -299,6 +307,7 @@ export function GalleryCard({
               <ImageIcon className="h-3.5 w-3.5" />
             )}
           </div>
+          </LiquidWeb>
         </div>
       </div>
       
