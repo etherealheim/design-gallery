@@ -280,24 +280,9 @@ export function GalleryCard({
           )}
         </div>
 
-        {/* Media Type Indicator - Top Right (Always visible) */}
-        <div className="absolute top-2 right-2 z-10">
-          <div className="h-8 w-8 rounded-lg flex items-center justify-center">
-            <div style={{ mixBlendMode: 'difference' }}>
-              {image.type === "video" ? (
-                <PlayIcon className="h-4 w-4 file-type-icon text-white" />
-              ) : image.type === "gif" ? (
-                <FileImageIcon className="h-4 w-4 file-type-icon text-white" />
-              ) : (
-                <ImageIcon className="h-4 w-4 file-type-icon text-white" />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tag Button - Bottom Left (Always visible on mobile, hover on desktop) */}
+        {/* Tag Button - Top Right (Always visible on mobile, hover on desktop) */}
         <div 
-          className={`absolute bottom-2 left-2 z-[101] transition-opacity duration-150 ${
+          className={`absolute top-2 right-2 z-[101] transition-opacity duration-150 ${
             isMobile ? 'opacity-100' : (isHovered ? 'opacity-100' : 'opacity-0')
           }`}
         >
@@ -314,6 +299,21 @@ export function GalleryCard({
             autoOpenAfterDelay={showTagsDropdown}
             onAutoClose={() => setShowTagsDropdown(false)}
           />
+        </div>
+
+        {/* Media Type Indicator - Bottom Left (Always visible) */}
+        <div className="absolute bottom-2 left-2 z-10">
+          <div className="h-8 w-8 rounded-lg flex items-center justify-center">
+            <div style={{ mixBlendMode: 'difference' }}>
+              {image.type === "video" ? (
+                <PlayIcon className="h-4 w-4 file-type-icon text-white" />
+              ) : image.type === "gif" ? (
+                <FileImageIcon className="h-4 w-4 file-type-icon text-white" />
+              ) : (
+                <ImageIcon className="h-4 w-4 file-type-icon text-white" />
+              )}
+            </div>
+          </div>
         </div>
       </div>
       
