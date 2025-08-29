@@ -6,6 +6,8 @@ import { DataService } from "@/lib/services/data-service"
 import { FileFilterService, FileOperationsService } from "@/lib/services/file-service"
 import { createUserFriendlyMessage } from "@/lib/errors"
 import { toast } from "sonner"
+import React from "react"
+import { Undo2 } from "lucide-react"
 
 interface UseGalleryStateProps {
   initialViewMode?: ViewState["mode"]
@@ -209,6 +211,11 @@ export function useGalleryState({
       return
     }
 
+    console.log("Deleting file:", fileToDelete) // Debug log
+
+    // Store original file data for restoration
+    const originalFile = { ...fileToDelete }
+    
     // Optimistically remove from UI immediately
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId))
     setViewState(prev => ({
@@ -218,16 +225,28 @@ export function useGalleryState({
     // Update total count immediately
     setTotalCount(prev => Math.max(0, prev - 1))
     
-    let apiCallMade = false
-    let toastDismissed = false
+    let undoClicked = false
+    let deleteTimeout: NodeJS.Timeout
 
     // Undo function to restore the file
     const undoDelete = () => {
-      if (toastDismissed) return
+      if (undoClicked) return
+      undoClicked = true
       
-      // Restore the file in UI
+      console.log("Undoing delete for file:", originalFile) // Debug log
+      
+      // Clear the deletion timeout
+      if (deleteTimeout) {
+        clearTimeout(deleteTimeout)
+      }
+      
+      // Restore the file in UI with original data
       setUploadedFiles(prev => {
-        const newFiles = [...prev, fileToDelete]
+        // Check if file is already restored
+        if (prev.find(f => f.id === fileId)) {
+          return prev
+        }
+        const newFiles = [...prev, originalFile]
         return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
       })
       // Restore total count
@@ -235,11 +254,10 @@ export function useGalleryState({
       
       // Dismiss the delete toast
       toast.dismiss(toastId)
-      toastDismissed = true
       
       // Show undo confirmation
       toast.success("File restored", {
-        description: `${fileToDelete.title} has been restored`,
+        description: `${originalFile.title} has been restored`,
       })
     }
 
@@ -248,29 +266,32 @@ export function useGalleryState({
       description: "File removed successfully",
       duration: 5000, // 5 seconds
       action: {
-        label: "Undo",
+        label: React.createElement(
+          'div',
+          { className: 'flex items-center gap-1' },
+          React.createElement(Undo2, { className: 'h-4 w-4' }),
+          'Undo'
+        ),
         onClick: undoDelete,
       },
-      classNames: {
-        actionButton: "toast-undo-button"
-      }
     })
 
-    // Start API call after a short delay (to allow for undo)
-    setTimeout(async () => {
-      if (toastDismissed) return // User clicked undo, don't delete
+    // Schedule API deletion after 5 seconds
+    deleteTimeout = setTimeout(async () => {
+      if (undoClicked) return // User clicked undo, don't delete
       
       try {
-        apiCallMade = true
+        console.log("Proceeding with API deletion for:", fileId) // Debug log
         await FileOperationsService.deleteFile(fileId)
+        console.log("API deletion successful for:", fileId) // Debug log
       } catch (error) {
         console.error("Failed to delete file:", error)
         
-        // Only restore if toast hasn't been dismissed (user didn't undo)
-        if (!toastDismissed) {
+        // Only restore if user didn't undo
+        if (!undoClicked) {
           // Restore the file if API call failed
           setUploadedFiles(prev => {
-            const newFiles = [...prev, fileToDelete]
+            const newFiles = [...prev, originalFile]
             return newFiles.sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
           })
           // Restore total count
@@ -278,12 +299,12 @@ export function useGalleryState({
           
           // Dismiss the success toast and show error
           toast.dismiss(toastId)
-          toast.error(`Failed to delete ${fileToDelete.title}`, {
+          toast.error(`Failed to delete ${originalFile.title}`, {
             description: createUserFriendlyMessage(error),
           })
         }
       }
-    }, 100) // Small delay to ensure toast is shown first
+    }, 5000) // Wait 5 seconds before API deletion
 
   }, [uploadedFiles])
 

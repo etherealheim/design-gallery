@@ -277,13 +277,7 @@
     color: white !important;
   }
 
-  /* Undo button styling for toast */
-  .toast-undo-button::before {
-    content: "↶";
-    margin-right: 4px;
-    font-size: 14px;
-    font-weight: bold;
-  }
+
 }
 
 @keyframes fadeIn {
