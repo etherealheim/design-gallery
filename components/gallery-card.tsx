@@ -10,7 +10,8 @@ import { PlayIcon, ImageIcon, FileImageIcon } from "@/components/icons"
 import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
-import { useState, useRef, useCallback, useEffect } from "react"
+import { useState, useRef, useCallback, useEffect, useMemo } from "react"
+import { LiquidWeb } from 'liquid-web/react'
 
 
 // Mobile detection utility
@@ -61,6 +62,17 @@ function GalleryCardComponent({
   const [isMobile] = useState(() => isMobileDevice())
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const actionButtonsVisible = isMobile || isHovered
+
+  // Memoize the icon component to prevent unnecessary re-renders
+  const iconComponent = useMemo(() => {
+    if (image.type === "video") {
+      return <PlayIcon className="h-3.5 w-3.5" />
+    } else if (image.type === "gif") {
+      return <FileImageIcon className="h-3.5 w-3.5" />
+    } else {
+      return <ImageIcon className="h-3.5 w-3.5" />
+    }
+  }, [image.type])
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -232,15 +244,15 @@ function GalleryCardComponent({
 
         {/* Media Type Indicator - Bottom Left (Always visible) */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-          <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/40 backdrop-blur-sm text-white border border-white/10">
-            {image.type === "video" ? (
-              <PlayIcon className="h-3.5 w-3.5" />
-            ) : image.type === "gif" ? (
-              <FileImageIcon className="h-3.5 w-3.5" />
-            ) : (
-              <ImageIcon className="h-3.5 w-3.5" />
-            )}
-          </div>
+          <LiquidWeb
+            scale={12}
+            blur={0.5}
+            aberration={15}
+          >
+            <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/30 text-white">
+              {iconComponent}
+            </div>
+          </LiquidWeb>
         </div>
       </div>
       
