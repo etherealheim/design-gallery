@@ -13,6 +13,7 @@ import { useGalleryState } from "@/hooks/use-gallery-state"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { usePreviewModal } from "@/hooks/use-preview-modal"
 import { BatchOperationsService } from "@/lib/services/file-service"
+import { DataService } from "@/lib/services/data-service"
 import type { ZipProgress } from "@/lib/services/zip-service"
 import { toast } from "sonner"
 import type { GalleryItem, PendingTags } from "@/types"
@@ -326,6 +327,28 @@ export default function DesignVault() {
     }
   }
 
+  // Handle table export
+  const handleExportTable = async () => {
+    const toastId = toast.loading("Exporting table data...", {
+      description: "Preparing database backup",
+    })
+    
+    try {
+      await DataService.exportTableData()
+      
+      toast.success("Export complete", {
+        id: toastId,
+        description: "Database backup downloaded successfully",
+      })
+    } catch (error) {
+      console.error("Export failed:", error)
+      toast.error("Export failed", {
+        id: toastId,
+        description: "Unable to export table data. Please try again.",
+      })
+    }
+  }
+
   // Show loading skeleton only for initial page load, not for search
   if (isLoading && !isLoadingSearch) {
     return <LoadingSkeleton />
@@ -348,6 +371,7 @@ export default function DesignVault() {
         onUploadClick={triggerFileInput}
         onDownloadAllClick={handleDownloadAll}
         onDownloadSelectedClick={handleDownloadSelected}
+        onExportTableClick={handleExportTable}
         selectedTags={filters.selectedTags}
         onRemoveTag={(tag) => {
           setFilters(prev => {

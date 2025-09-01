@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DownloadDropdown } from "@/components/download-dropdown"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { getVersion } from "@/lib/version"
 
@@ -24,6 +25,7 @@ interface GalleryHeaderProps {
   onUploadClick?: () => void
   onDownloadAllClick?: () => void
   onDownloadSelectedClick?: () => void
+  onExportTableClick?: () => void
   selectedTags: string[]
   onRemoveTag: (tag: string) => void
 }
@@ -42,6 +44,7 @@ export function GalleryHeader({
   onUploadClick,
   onDownloadAllClick,
   onDownloadSelectedClick,
+  onExportTableClick,
   selectedTags,
   onRemoveTag,
 }: GalleryHeaderProps) {
@@ -295,25 +298,12 @@ export function GalleryHeader({
               </TooltipProvider>
             </div>
 
-            {/* Download All Button */}
-            {onDownloadAllClick && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9 bg-transparent cursor-pointer ml-4"
-                      onClick={onDownloadAllClick}
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Download All Files</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            {/* Download Dropdown */}
+            {(onDownloadAllClick || onExportTableClick) && (
+              <DownloadDropdown
+                onDownloadZip={onDownloadAllClick}
+                onExportTable={onExportTableClick}
+              />
             )}
 
             {/* Toggle Filters Button */}

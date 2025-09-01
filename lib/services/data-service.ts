@@ -356,6 +356,58 @@ export class DataService {
   }
 
   /**
+   * Export all database records as JSON for backup purposes
+   */
+  static async exportTableData(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from("uploaded_files")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        logError(error, "DataService.exportTableData")
+        throw createAppError(ERROR_CODES.DATABASE_ERROR, `Failed to export table data: ${error.message}`)
+      }
+
+      // Create export data with metadata
+      const exportData = {
+        metadata: {
+          exportDate: new Date().toISOString(),
+          version: "1.0",
+          totalRecords: data?.length || 0,
+          tableName: "uploaded_files"
+        },
+        data: data || []
+      }
+
+      // Convert to JSON string
+      const jsonString = JSON.stringify(exportData, null, 2)
+      
+      // Create blob and download
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      
+      // Create download link
+      const link = document.createElement('a')
+      link.href = url
+      const date = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+      link.download = `design-gallery-backup-${date}.json`
+      
+      // Trigger download
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      logError(error, "DataService.exportTableData")
+      throw error
+    }
+  }
+
+  /**
    * Apply tag filters to items (client-side filtering)
    */
   private static applyTagFilters(items: GalleryItem[], selectedTags: string[]): GalleryItem[] {
