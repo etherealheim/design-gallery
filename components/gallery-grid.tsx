@@ -98,7 +98,7 @@ export function GalleryGrid({
       // Brief delay to prevent jarring layout changes
       setTimeout(() => {
         setIsSwitchingMode(false)
-      }, 150)
+      }, 100)
     }
   }
 
@@ -213,11 +213,7 @@ export function GalleryGrid({
       )}
 
       {!isSwitchingMode && sortedAndFilteredImages.displayImages.length > 0 && (
-        <motion.div
-          key={galleryViewMode} // Force re-mount on mode change to prevent layout issues
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
+        <div
           className={`grid gap-6 ${
             viewMode === "grid" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
           }`}
@@ -236,12 +232,7 @@ export function GalleryGrid({
             ))}
 
             {sortedAndFilteredImages.displayImages.map((image, index) => (
-              <motion.div
-                key={`${galleryViewMode}-${image.id}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.15 }}
-              >
+              <div key={`${galleryViewMode}-${image.id}`}>
                 <GalleryCard
                   image={image}
                   viewMode={viewMode}
@@ -260,10 +251,10 @@ export function GalleryGrid({
                   onToggleTagFilter={onToggleTagFilter}
                   allTags={allTags}
                 />
-              </motion.div>
+              </div>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </div>
       )}
 
       {/* Infinite scroll trigger and loading indicator */}

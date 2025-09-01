@@ -1,6 +1,7 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
+import { memo } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -10,7 +11,6 @@ import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect } from "react"
-import { LiquidWeb } from 'liquid-web/react';
 
 
 // Mobile detection utility
@@ -38,7 +38,7 @@ interface GalleryCardProps {
   allTags: string[]
 }
 
-export function GalleryCard({
+function GalleryCardComponent({
   image,
   viewMode,
   isNewlyUploaded,
@@ -90,33 +90,22 @@ export function GalleryCard({
         onMouseEnter={image.type === "video" ? (e) => {
           const video = e.currentTarget.querySelector('video')
           if (video) {
-            try {
-              video.currentTime = 0
-              video.play().then(() => {
-                console.log('✅ Video hover play triggered via card:', image.url)
-              }).catch((error) => {
-                console.log('❌ Video hover play failed via card:', error)
-              })
-            } catch (error) {
-              console.log('❌ Video hover error via card:', error)
-            }
+            video.currentTime = 0
+            video.play().catch(() => {
+              // Silently handle autoplay failures
+            })
           }
         } : undefined}
         onMouseLeave={image.type === "video" ? (e) => {
           const video = e.currentTarget.querySelector('video')
           if (video) {
-            try {
-              video.pause()
-              video.currentTime = 0
-              console.log('⏸️ Video hover pause triggered via card:', image.url)
-            } catch (error) {
-              console.log('❌ Video pause error via card:', error)
-            }
+            video.pause()
+            video.currentTime = 0
           }
         } : undefined}
       >
         {/* Media Element - Full cover */}
-        <div className={`w-full h-[256px] transition-transform duration-150 ease-out overflow-hidden rounded-2xl ${isHovered ? 'scale-105' : 'scale-100'}`}>
+        <div className={`w-full h-[256px] transition-transform duration-200 ease-out overflow-hidden rounded-2xl ${isHovered ? 'scale-[1.02]' : 'scale-100'}`}>
           {image.type === "video" ? (
             <video
               key={image.url} // Force re-render when URL changes
@@ -135,7 +124,6 @@ export function GalleryCard({
                 if (video.duration && !videoThumbnailGenerated) {
                   const thumbnailTime = Math.min(0.5, video.duration / 10)
                   video.currentTime = thumbnailTime
-                  console.log(`📊 Video metadata loaded (Mobile: ${isMobile}), setting thumbnail time:`, thumbnailTime)
                 }
               }}
               onSeeked={(e) => {
@@ -143,7 +131,6 @@ export function GalleryCard({
                 const video = e.currentTarget
                 if (!videoThumbnailGenerated) {
                   setVideoThumbnailGenerated(true)
-                  console.log('📊 Video thumbnail generated successfully')
                   
                   // On mobile, pause immediately to preserve thumbnail
                   if (isMobile) {
@@ -152,29 +139,19 @@ export function GalleryCard({
                 }
               }}
               onError={(e) => {
-                console.error('🚨 Gallery video loading error:', e.currentTarget.error);
-                console.log('🔗 Video URL:', image.url);
-                console.log('🔗 Mobile device:', isMobile);
+                console.error('Video loading error:', e.currentTarget.error);
               }}
-              onMouseEnter={async (e) => {
+              onMouseEnter={(e) => {
                 // Skip autoplay on mobile devices
                 if (isMobile) return
                 
                 e.preventDefault()
                 const video = e.currentTarget
-                try {
-                  if (video.readyState >= 2 && videoThumbnailGenerated) {
-                    video.currentTime = 0
-                    const playPromise = video.play()
-                    if (playPromise) {
-                      await playPromise
-                      console.log('✅ Video autoplay started (desktop):', image.url)
-                    }
-                  } else {
-                    console.log('⏳ Video not ready or thumbnail not generated yet:', image.url)
-                  }
-                } catch (error) {
-                  console.log('❌ Video autoplay blocked/failed:', error, image.url)
+                if (video.readyState >= 2 && videoThumbnailGenerated) {
+                  video.currentTime = 0
+                  video.play().catch(() => {
+                    // Silently handle autoplay failures
+                  })
                 }
               }}
               onMouseLeave={(e) => {
@@ -183,18 +160,13 @@ export function GalleryCard({
                 
                 e.preventDefault()
                 const video = e.currentTarget
-                try {
-                  video.pause()
-                  // Reset to thumbnail time instead of 0 for better preview
-                  const thumbnailTime = video.duration ? Math.min(0.5, video.duration / 10) : 0
-                  video.currentTime = thumbnailTime
-                  console.log('⏸️ Video autoplay paused (desktop):', image.url)
-                } catch (error) {
-                  console.log('Error pausing video:', error)
-                }
+                video.pause()
+                // Reset to thumbnail time for better preview
+                const thumbnailTime = video.duration ? Math.min(0.5, video.duration / 10) : 0
+                video.currentTime = thumbnailTime
               }}
               onCanPlay={() => {
-                console.log('🎬 Video can play (Mobile:', isMobile, '):', image.url)
+                // Video is ready to play
               }}
             />
           ) : (
@@ -260,13 +232,7 @@ export function GalleryCard({
 
         {/* Media Type Indicator - Bottom Left (Always visible) */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-        
-        <LiquidWeb
-        scale={22}
-        blur={2}
-        aberration={50}
-        >
-        <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/20 text-white">
+          <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/40 backdrop-blur-sm text-white border border-white/10">
             {image.type === "video" ? (
               <PlayIcon className="h-3.5 w-3.5" />
             ) : image.type === "gif" ? (
@@ -275,7 +241,6 @@ export function GalleryCard({
               <ImageIcon className="h-3.5 w-3.5" />
             )}
           </div>
-          </LiquidWeb>
         </div>
       </div>
       
@@ -283,3 +248,20 @@ export function GalleryCard({
     </Card>
   )
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const GalleryCard = memo(GalleryCardComponent, (prevProps, nextProps) => {
+  // Custom comparison for better performance
+  return (
+    prevProps.image.id === nextProps.image.id &&
+    prevProps.image.title === nextProps.image.title &&
+    prevProps.image.url === nextProps.image.url &&
+    prevProps.image.tags.length === nextProps.image.tags.length &&
+    prevProps.image.tags.every((tag, i) => tag === nextProps.image.tags[i]) &&
+    prevProps.viewMode === nextProps.viewMode &&
+    prevProps.isNewlyUploaded === nextProps.isNewlyUploaded &&
+    prevProps.pendingTags.length === nextProps.pendingTags.length &&
+    prevProps.selectedTags.length === nextProps.selectedTags.length &&
+    prevProps.allTags.length === nextProps.allTags.length
+  )
+})

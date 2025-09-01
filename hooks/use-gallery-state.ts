@@ -405,19 +405,16 @@ export function useGalleryState({
   // Computed values
   const combinedItems = useMemo(() => [...uploadedFiles], [uploadedFiles])
 
-  const processedItems = useMemo(() => {
-    let items = [...combinedItems]
-    
-    // Always apply client-side filtering to get accurate filtered results
-    const filteredItems = FileFilterService.filterItems(items, searchQuery, filters)
-    const availableTags = allTags // Use all tags from database instead of just visible items
-    
-    // Apply sorting
-    const sortedItems = FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
-    
-    // Handle view mode specific logic
-    let displayItems = sortedItems
-    
+  // Split complex memoization into smaller, more focused memos for better performance
+  const filteredItems = useMemo(() => {
+    return FileFilterService.filterItems(combinedItems, searchQuery, filters)
+  }, [combinedItems, searchQuery, filters])
+
+  const sortedItems = useMemo(() => {
+    return FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
+  }, [filteredItems, filters.sortBy, filters.sortOrder])
+
+  const displayItems = useMemo(() => {
     if (viewState.galleryMode === "random") {
       // Apply seeded shuffle for consistent random view
       const shuffled = [...sortedItems]
@@ -430,22 +427,22 @@ export function useGalleryState({
         const randomIndex = Math.floor(seededRandom(randomSeed + i) * (i + 1))
         ;[shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]]
       }
-      displayItems = shuffled
+      return shuffled
     } else if (viewState.galleryMode === "no-tag") {
       // Filter items without tags from the already filtered items
-      displayItems = sortedItems.filter(item => item.tags.length === 0)
+      return sortedItems.filter(item => item.tags.length === 0)
     } else {
       // Prioritize newly uploaded files
-      displayItems = FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
+      return FileFilterService.prioritizeNewlyUploaded(sortedItems, newlyUploadedFiles)
     }
-    
-    return {
-      displayItems,
-      filteredItems,
-      availableTags,
-      totalItems: searchQuery ? filteredItems.length : totalCount, // Use filtered count for search, total count for pagination
-    }
-  }, [combinedItems, searchQuery, filters, viewState.galleryMode, randomSeed, newlyUploadedFiles, totalCount, allTags])
+  }, [sortedItems, viewState.galleryMode, randomSeed, newlyUploadedFiles])
+
+  const processedItems = useMemo(() => ({
+    displayItems,
+    filteredItems,
+    availableTags: allTags, // Use all tags from database instead of just visible items
+    totalItems: searchQuery ? filteredItems.length : totalCount, // Use filtered count for search, total count for pagination
+  }), [displayItems, filteredItems, allTags, searchQuery, totalCount])
 
   // View state actions
   const updateViewState = useCallback((updates: Partial<ViewState>) => {

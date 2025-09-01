@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { useCallback, useMemo } from "react"
 import { FilterSidebar } from "@/components/filter-sidebar"
 import { GalleryHeader } from "@/components/gallery-header"
 import { GalleryGrid } from "@/components/gallery-grid"
@@ -102,7 +103,23 @@ export default function DesignVault() {
     setNewTag,
   } = usePreviewModal()
 
-    // Handle tag operations with the preview modal
+  // Memoize expensive objects to prevent unnecessary re-renders
+  const sortedAndFilteredImages = useMemo(() => ({
+    displayImages: processedItems.displayItems,
+    filteredImages: processedItems.filteredItems,
+    availableTags: processedItems.availableTags,
+  }), [processedItems.displayItems, processedItems.filteredItems, processedItems.availableTags])
+
+  const onToggleTagFilter = useCallback((tag: string) => {
+    setFilters(prev => ({
+      ...prev,
+      selectedTags: prev.selectedTags.includes(tag)
+        ? prev.selectedTags.filter(t => t !== tag)
+        : [...prev.selectedTags, tag]
+    }))
+  }, [setFilters])
+
+  // Handle tag operations with the preview modal
   const handleAddTag = async () => {
     console.log("🔥 PREVIEW MODAL - handleAddTag called")
     console.log("🔥 PREVIEW MODAL - previewItem:", previewItem)
@@ -397,11 +414,7 @@ export default function DesignVault() {
               galleryViewMode={viewState.galleryMode}
               handleViewModeChange={handleViewModeChange}
               hasActiveFilters={hasActiveFilters}
-              sortedAndFilteredImages={{
-                displayImages: processedItems.displayItems,
-                filteredImages: processedItems.filteredItems,
-                availableTags: processedItems.availableTags,
-              }}
+              sortedAndFilteredImages={sortedAndFilteredImages}
               viewMode={viewState.mode}
               newlyUploadedFiles={newlyUploadedFiles}
               pendingTags={pendingTags}
@@ -416,14 +429,7 @@ export default function DesignVault() {
               handleAddMultipleTags={addMultipleTagsToFile}
               handleRemoveTag={handleRemoveTagFromCard}
               selectedTags={filters.selectedTags}
-              onToggleTagFilter={(tag) => {
-                setFilters(prev => ({
-                  ...prev,
-                  selectedTags: prev.selectedTags.includes(tag)
-                    ? prev.selectedTags.filter(t => t !== tag)
-                    : [...prev.selectedTags, tag]
-                }))
-              }}
+              onToggleTagFilter={onToggleTagFilter}
               allTags={allTags}
               hasMore={hasMore}
               isLoadingMore={isLoadingMore}

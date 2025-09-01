@@ -214,19 +214,25 @@ export function TagDropdown({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node
+      const morphingElement = document.querySelector('[data-tag-morphing]')
+      
+      // Check if the click is inside the morphing element or any tag item
       if (isOpen && 
-          !document.querySelector('[data-tag-morphing]')?.contains(target)) {
+          morphingElement &&
+          !morphingElement.contains(target) &&
+          !target.closest('[data-tag-item]') &&
+          !target.closest('[data-tag-morphing]')) {
         handleClose()
       }
     }
 
     if (isOpen) {
       const timeoutId = window.setTimeout(() => {
-        document.addEventListener("click", handleClickOutside)
-      }, 100) // small delay to avoid initial tap being treated as outside click
+        document.addEventListener("click", handleClickOutside, true) // Use capture phase
+      }, 150) // Increased delay to ensure DOM is stable
       return () => {
         window.clearTimeout(timeoutId)
-        document.removeEventListener("click", handleClickOutside)
+        document.removeEventListener("click", handleClickOutside, true)
       }
     }
   }, [isOpen, handleClose])
@@ -447,7 +453,10 @@ export function TagDropdown({
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 + index * 0.05 }}
-                        onClick={() => handleSelectTag(tag)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSelectTag(tag)
+                        }}
                         className={`flex items-center px-2 py-2 text-sm cursor-pointer rounded-lg transition-colors ${
                           index === selectedIndex ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
                         }`}
@@ -475,7 +484,10 @@ export function TagDropdown({
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.2 + filteredAllTags.length * 0.05 }}
-                          onClick={handleCreateNewTag}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCreateNewTag()
+                          }}
                           className={`flex items-start gap-2 px-2 py-2 text-sm cursor-pointer rounded-lg transition-colors ${
                             selectedIndex === filteredAllTags.length ? 'bg-accent text-accent-foreground' : 'hover:bg-accent hover:text-accent-foreground'
                           }`}
