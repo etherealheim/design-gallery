@@ -67,13 +67,88 @@ export function useFileUpload({
       const isMov = file.name.toLowerCase().endsWith('.mov')
       
       const uploadToastId = toast.loading(`Uploading ${displayName}...`, {
-        description: isMov ? "Uploading MOV directly" : isVideo ? "Processing video..." : "Uploading to storage",
+        description: isMov ? "Converting MOV to MP4..." : isVideo ? "Processing video..." : "Uploading to storage",
       })
 
-      // For MOV files, upload directly without conversion to avoid compatibility issues
+      // Process video files (MOV conversion and compression)
       let fileToUpload: File = file
-      if (isVideo && file.name.toLowerCase().endsWith('.mov')) {
-        console.log('[Upload] MOV file detected, uploading directly without conversion:', file.name)
+      const needsProcessing = isVideo && (
+        file.name.toLowerCase().endsWith('.mov') ||
+        file.type === 'video/quicktime' ||
+        file.type === 'video/x-quicktime'
+      )
+
+      if (needsProcessing) {
+        console.log('[Upload] Video file detected, processing before upload:', file.name)
+
+        try {
+          // Check if FFmpeg is supported before attempting conversion
+          if (!VideoConversionService.isSupported()) {
+            console.log('[Upload] FFmpeg not supported, skipping video conversion')
+            toast.loading(`Uploading ${displayName}...`, {
+              id: uploadToastId,
+              description: "Uploading MOV file directly",
+            })
+          } else {
+            // Show processing status
+            toast.loading(`Processing ${displayName}...`, {
+              id: uploadToastId,
+              description: "Converting MOV to MP4...",
+            })
+
+            // Process the video (convert MOV to MP4 and optionally compress)
+            const videoResult = await VideoConversionService.convertMovToMp4(
+              file,
+              (progress) => {
+                toast.loading(`Processing ${displayName}...`, {
+                  id: uploadToastId,
+                  description: `Converting to MP4: ${progress}%`,
+                })
+              }
+            )
+
+            if (videoResult.blob !== file) {
+              // Create new file from processed blob
+              fileToUpload = new File([videoResult.blob], file.name.replace(/\.mov$/i, '.mp4'), {
+                type: videoResult.format,
+                lastModified: Date.now()
+              })
+              console.log('[Upload] Video processing complete:', {
+                originalSize: videoResult.originalSize,
+                convertedSize: videoResult.convertedSize,
+                format: videoResult.format
+              })
+
+              // Show success message for conversion
+              toast.loading(`Uploading ${displayName}...`, {
+                id: uploadToastId,
+                description: "Conversion complete, uploading...",
+              })
+            } else {
+              toast.loading(`Uploading ${displayName}...`, {
+                id: uploadToastId,
+                description: "No conversion needed, uploading...",
+              })
+            }
+          }
+        } catch (error) {
+          console.warn('[Upload] Video processing failed, using original file:', error)
+
+          // Check if it's a known FFmpeg loading error
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          if (errorMessage.includes('FFmpeg') || errorMessage.includes('wasm') || errorMessage.includes('SharedArrayBuffer')) {
+            console.log('[Upload] FFmpeg compatibility issue, falling back to direct upload')
+            toast.loading(`Uploading ${displayName}...`, {
+              id: uploadToastId,
+              description: "Browser compatibility issue, uploading original file",
+            })
+          } else {
+            toast.loading(`Uploading ${displayName}...`, {
+              id: uploadToastId,
+              description: "Processing failed, uploading original file",
+            })
+          }
+        }
       }
 
       // Upload file
@@ -86,18 +161,10 @@ export function useFileUpload({
           
           let description = "Uploading to storage"
           let title = `Uploading ${displayName}...`
-          
+
           if (progress.stage === "uploading") {
-            if (isMov) {
-              description = "Uploading MOV directly"
-              title = `Uploading ${displayName}...`
-            } else if (isVideo && progress.progress < 90) {
-              description = "Processing video..."
-              title = `Processing ${displayName}...`
-            } else {
-              description = "Uploading to storage"
-              title = `Uploading ${displayName}...`
-            }
+            description = "Uploading to storage"
+            title = `Uploading ${displayName}...`
             
             toast.loading(title, {
               id: uploadToastId,
@@ -176,9 +243,51 @@ export function useFileUpload({
     try {
       onUploadStart(skeletalId)
 
+      // Process video files (MOV conversion and compression) for batch uploads too
+      let fileToUpload: File = file
+      const needsProcessing = isVideo && (
+        file.name.toLowerCase().endsWith('.mov') ||
+        file.type === 'video/quicktime' ||
+        file.type === 'video/x-quicktime'
+      )
+
+      if (needsProcessing) {
+        console.log('[Batch Upload] Video file detected, processing before upload:', file.name)
+
+        try {
+          // Check if FFmpeg is supported before attempting conversion
+          if (!VideoConversionService.isSupported()) {
+            console.log('[Batch Upload] FFmpeg not supported, skipping video conversion')
+          } else {
+            const videoResult = await VideoConversionService.convertMovToMp4(
+              file,
+              (progress) => {
+                // Update progress for batch upload
+                setUploadProgress({ fileName: file.name, progress: Math.max(progress * 0.5, 10) }) // 10-50% for conversion
+              }
+            )
+
+            if (videoResult.blob !== file) {
+              fileToUpload = new File([videoResult.blob], file.name.replace(/\.mov$/i, '.mp4'), {
+                type: videoResult.format,
+                lastModified: Date.now()
+              })
+              console.log('[Batch Upload] Video processing complete:', {
+                originalSize: videoResult.originalSize,
+                convertedSize: videoResult.convertedSize,
+                format: videoResult.format
+              })
+            }
+          }
+        } catch (error) {
+          console.warn('[Batch Upload] Video processing failed, using original file:', error)
+          // Continue with original file - error is already logged
+        }
+      }
+
       // Upload file (no individual toast)
       const dbFile = await FileOperationsService.uploadFile(
-        file,
+        fileToUpload,
         title,
         [],
         (progress) => {

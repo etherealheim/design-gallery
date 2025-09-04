@@ -120,7 +120,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       throw createAppError(ERROR_CODES.STORAGE_ERROR, "Storage configuration failed")
     }
 
-    // Compress file if applicable (image or video)
+    // Compress file if applicable (image only - video processing happens client-side)
     let fileToUpload: File | Buffer | Blob = file
     let finalFileSize = file.size
     let compressionInfo = ""
@@ -129,16 +129,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (ImageCompressionService.shouldCompress(file.type, file.size)) {
       try {
         console.log("[v0] Compressing image:", file.name, "Original size:", Math.round(file.size / 1024), "KB")
-        
+
         const buffer = Buffer.from(await file.arrayBuffer())
         const compressionSettings = ImageCompressionService.getOptimalSettings(file.type, file.size)
         const compressed = await ImageCompressionService.compressImage(buffer, compressionSettings)
-        
+
         fileToUpload = compressed.buffer
         finalFileSize = compressed.size
         finalMimeType = 'image/webp'
         compressionInfo = ` (compressed from ${Math.round(compressed.originalSize / 1024)}KB to ${Math.round(compressed.size / 1024)}KB, ${Math.round(compressed.compressionRatio * 100) / 100}x ratio)`
-        
+
         console.log("[v0] Image compression complete:", compressionInfo)
       } catch (error) {
         console.warn("[v0] Image compression failed, using original file:", error)

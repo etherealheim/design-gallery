@@ -427,7 +427,7 @@ export default function DesignVault() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,video/*,video/mp4,video/mov,video/quicktime,.mov,.mp4,.avi,.webm,.ogg"
+              accept="image/*,video/*,.mov,.mp4,.avi,.webm,.ogg,.m4v,.3gp,.3g2"
               onChange={handleFileInputChange}
               className="hidden"
             />
