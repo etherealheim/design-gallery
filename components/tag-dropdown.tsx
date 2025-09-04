@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Tag, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
+import { useTagDropdown } from "@/hooks/use-tag-dropdown-context"
 
 interface TagDropdownProps {
   imageId: string
@@ -38,9 +39,12 @@ export function TagDropdown({
   isHovered = false,
   isMobile = false
 }: TagDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false)
+  const { currentDropdown, openDropdown, closeDropdown } = useTagDropdown()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedIndex, setSelectedIndex] = useState(-1)
+
+  // Check if this dropdown is currently open
+  const isOpen = currentDropdown.isOpen && currentDropdown.imageId === imageId
   const [dropdownPosition, setDropdownPosition] = useState({ 
     buttonTop: 0,
     buttonLeft: 0,
@@ -59,6 +63,132 @@ export function TagDropdown({
     .filter(tag => !existingTags.includes(tag))
     .filter(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
     .slice(0, 10)
+
+  // Calculate positioning
+  const calculatePosition = useCallback(() => {
+    const containerEl = containerRef.current
+    const cardElement = containerEl?.closest('.gallery-card')
+
+    if (containerEl && cardElement) {
+      const containerRect = containerEl.getBoundingClientRect()
+      const cardRect = cardElement.getBoundingClientRect()
+
+      setDropdownPosition({
+        buttonTop: containerRect.top - cardRect.top,
+        buttonLeft: containerRect.left - cardRect.left,
+        cardTop: 8, // relative to card
+        cardLeft: 8,
+        cardWidth: cardRect.width - 16,
+        cardHeight: cardRect.height - 16
+      })
+    }
+  }, [])
+
+  const handleOpen = useCallback(() => {
+    calculatePosition()
+    openDropdown(imageId)
+    setSearchQuery("")
+    setSelectedIndex(-1)
+    // Make input active without focus (no keyboard popup)
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.click()
+      }
+    }, 150)
+  }, [calculatePosition, openDropdown, imageId])
+
+  const handleClose = useCallback(() => {
+    closeDropdown()
+    setSearchQuery("")
+    setSelectedIndex(-1)
+  }, [closeDropdown])
+
+  const handleToggle = useCallback(() => {
+    if (isOpen) {
+      handleClose()
+    } else {
+      handleOpen()
+    }
+  }, [isOpen, handleOpen, handleClose])
+
+  const handleSelectTag = useCallback(async (tag: string) => {
+    if (!onAddTag) return
+    try {
+      await onAddTag(imageId, tag)
+      toast.success("Tag added", {
+        description: `${tag} added to ${imageType}`,
+      })
+      // keep dropdown open for multiple selections
+      setSearchQuery("")
+      setSelectedIndex(-1)
+      // focus back to input
+      setTimeout(() => inputRef.current?.focus(), 0)
+    } catch (error) {
+      console.error("Failed to add tag:", error)
+      toast.error("Failed to add tag")
+    }
+  }, [onAddTag, imageId, imageType])
+
+  const handleCreateNewTag = useCallback(async () => {
+    const rawInput = searchQuery.trim()
+    if (!rawInput || !onAddMultipleTags) return
+
+    // Parse multiple tags from input
+    let tags: string[] = []
+    if (rawInput.includes(',')) {
+      tags = rawInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    } else {
+      tags = rawInput.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
+    }
+
+    const uniqueTags = [...new Set(tags)].filter(tag => !existingTags.includes(tag))
+
+    if (uniqueTags.length === 0) {
+      handleClose()
+      return
+    }
+
+    try {
+      await onAddMultipleTags(imageId, uniqueTags)
+      if (uniqueTags.length === 1) {
+        toast.success("Tag created and added", {
+          description: `${uniqueTags[0]} created and added to ${imageType}`,
+        })
+      } else {
+        toast.success(`${uniqueTags.length} tags created and added`, {
+          description: `${uniqueTags.join(', ')} added to ${imageType}`,
+        })
+      }
+      // stay open for further tagging
+      setSearchQuery("")
+      setSelectedIndex(-1)
+      setTimeout(() => inputRef.current?.focus(), 0)
+    } catch (error) {
+      console.error("Failed to create tags:", error)
+      toast.error("Failed to create tags")
+    }
+  }, [searchQuery, onAddMultipleTags, imageId, imageType, existingTags, handleClose])
+
+  const handleRemoveExistingTag = useCallback(async (tag: string) => {
+    if (!onRemoveTag) return
+    try {
+      await onRemoveTag(imageId, tag)
+      toast.success("Tag removed", {
+        description: `${tag} removed from ${imageType}`,
+      })
+    } catch (error) {
+      console.error("Failed to remove tag:", error)
+      toast.error("Failed to remove tag")
+    }
+  }, [onRemoveTag, imageId, imageType])
+
+  // Clear local state when this dropdown is not active
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("")
+      setSelectedIndex(-1)
+    }
+  }, [isOpen])
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -135,32 +265,12 @@ export function TagDropdown({
       document.addEventListener("keydown", handleKeyDown)
       return () => document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isOpen, selectedIndex, filteredAllTags, searchQuery, allTags])
+  }, [isOpen, selectedIndex, filteredAllTags, searchQuery, allTags, handleClose, handleSelectTag, handleCreateNewTag])
 
   // Reset selected index when filtered tags change
   useEffect(() => {
     setSelectedIndex(-1)
   }, [searchQuery])
-
-  // Calculate positioning
-  const calculatePosition = useCallback(() => {
-    const containerEl = containerRef.current
-    const cardElement = containerEl?.closest('.gallery-card')
-    
-    if (containerEl && cardElement) {
-      const containerRect = containerEl.getBoundingClientRect()
-      const cardRect = cardElement.getBoundingClientRect()
-      
-      setDropdownPosition({
-        buttonTop: containerRect.top - cardRect.top,
-        buttonLeft: containerRect.left - cardRect.left,
-        cardTop: 8, // relative to card
-        cardLeft: 8,
-        cardWidth: cardRect.width - 16,
-        cardHeight: cardRect.height - 16
-      })
-    }
-  }, [])
 
   // Calculate position on mount and when needed
   useEffect(() => {
@@ -168,6 +278,7 @@ export function TagDropdown({
       calculatePosition()
     }
   }, [calculatePosition, isHovered, isMobile])
+
   // Recalculate position on scroll and resize to keep alignment
   useEffect(() => {
     const handleScrollResize = () => {
@@ -182,33 +293,6 @@ export function TagDropdown({
       window.removeEventListener('resize', handleScrollResize)
     }
   }, [calculatePosition])
-
-  const handleOpen = useCallback(() => {
-    calculatePosition()
-    setIsOpen(true)
-    setSearchQuery("")
-    setSelectedIndex(-1)
-    // Make input active without focus (no keyboard popup)
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.click()
-      }
-    }, 150)
-  }, [calculatePosition])
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false)
-    setSearchQuery("")
-    setSelectedIndex(-1)
-  }, [])
-
-  const handleToggle = useCallback(() => {
-    if (isOpen) {
-      handleClose()
-    } else {
-      handleOpen()
-    }
-  }, [isOpen, handleOpen, handleClose])
 
   // Handle clicking outside
   useEffect(() => {
@@ -237,76 +321,6 @@ export function TagDropdown({
     }
   }, [isOpen, handleClose])
 
-  const handleSelectTag = async (tag: string) => {
-    if (!onAddTag) return
-    try {
-      await onAddTag(imageId, tag)
-      toast.success("Tag added", {
-        description: `${tag} added to ${imageType}`,
-      })
-      // keep dropdown open for multiple selections
-      setSearchQuery("")
-      setSelectedIndex(-1)
-      // focus back to input
-      setTimeout(() => inputRef.current?.focus(), 0)
-    } catch (error) {
-      console.error("Failed to add tag:", error)
-      toast.error("Failed to add tag")
-    }
-  }
-
-  const handleCreateNewTag = async () => {
-    const rawInput = searchQuery.trim()
-    if (!rawInput || !onAddMultipleTags) return
-
-    // Parse multiple tags from input
-    let tags: string[] = []
-    if (rawInput.includes(',')) {
-      tags = rawInput.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
-    } else {
-      tags = rawInput.split(/\s+/).map(tag => tag.trim()).filter(tag => tag.length > 0)
-    }
-    
-    const uniqueTags = [...new Set(tags)].filter(tag => !existingTags.includes(tag))
-    
-    if (uniqueTags.length === 0) {
-      handleClose()
-      return
-    }
-
-    try {
-      await onAddMultipleTags(imageId, uniqueTags)
-      if (uniqueTags.length === 1) {
-        toast.success("Tag created and added", {
-          description: `${uniqueTags[0]} created and added to ${imageType}`,
-        })
-      } else {
-        toast.success(`${uniqueTags.length} tags created and added`, {
-          description: `${uniqueTags.join(', ')} added to ${imageType}`,
-        })
-      }
-      // stay open for further tagging
-      setSearchQuery("")
-      setSelectedIndex(-1)
-      setTimeout(() => inputRef.current?.focus(), 0)
-    } catch (error) {
-      console.error("Failed to create tags:", error)
-      toast.error("Failed to create tags")
-    }
-  }
-
-  const handleRemoveExistingTag = async (tag: string) => {
-    if (!onRemoveTag) return
-    try {
-      await onRemoveTag(imageId, tag)
-      toast.success("Tag removed", {
-        description: `${tag} removed from ${imageType}`,
-      })
-    } catch (error) {
-      console.error("Failed to remove tag:", error)
-      toast.error("Failed to remove tag")
-    }
-  }
 
   const showButton = isHovered || isMobile
 

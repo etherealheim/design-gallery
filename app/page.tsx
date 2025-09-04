@@ -12,6 +12,7 @@ import { LoadingSkeleton } from "@/components/loading-skeleton"
 import { useGalleryState } from "@/hooks/use-gallery-state"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { usePreviewModal } from "@/hooks/use-preview-modal"
+import { TagDropdownProvider } from "@/hooks/use-tag-dropdown-context"
 import { BatchOperationsService } from "@/lib/services/file-service"
 import { DataService } from "@/lib/services/data-service"
 import type { ZipProgress } from "@/lib/services/zip-service"
@@ -355,134 +356,136 @@ export default function DesignVault() {
   }
 
   return (
-    <div className={cn("min-h-screen bg-background text-foreground transition-colors duration-300")}>
-      {/* Header */}
-      <GalleryHeader
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        viewMode={viewState.mode}
-        setViewMode={(mode) => updateViewState({ mode })}
-        isFilterOpen={viewState.isFilterOpen}
-        setIsFilterOpen={(isOpen) => updateViewState({ isFilterOpen: isOpen })}
-        selectedFiles={viewState.selectedFiles}
-        selectAllFiles={selectAllFiles}
-        deselectAllFiles={deselectAllFiles}
-        handleBatchDelete={batchDelete}
-        onUploadClick={triggerFileInput}
-        onDownloadAllClick={handleDownloadAll}
-        onDownloadSelectedClick={handleDownloadSelected}
-        onExportTableClick={handleExportTable}
-        selectedTags={filters.selectedTags}
-        onRemoveTag={(tag) => {
-          setFilters(prev => {
-            let newFilters = {
-              ...prev,
-              selectedTags: prev.selectedTags.filter(t => t !== tag)
-            }
-            
-            // If removing a file type tag, also remove from fileTypes
-            if (tag.startsWith('type:')) {
-              const fileType = tag.replace('type:', '') as "image" | "video"
-              newFilters.fileTypes = prev.fileTypes.filter(t => t !== fileType)
-            }
-            
-            return newFilters
-          })
-        }}
-      />
+    <TagDropdownProvider>
+      <div className={cn("min-h-screen bg-background text-foreground transition-colors duration-300")}>
+        {/* Header */}
+        <GalleryHeader
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          viewMode={viewState.mode}
+          setViewMode={(mode) => updateViewState({ mode })}
+          isFilterOpen={viewState.isFilterOpen}
+          setIsFilterOpen={(isOpen) => updateViewState({ isFilterOpen: isOpen })}
+          selectedFiles={viewState.selectedFiles}
+          selectAllFiles={selectAllFiles}
+          deselectAllFiles={deselectAllFiles}
+          handleBatchDelete={batchDelete}
+          onUploadClick={triggerFileInput}
+          onDownloadAllClick={handleDownloadAll}
+          onDownloadSelectedClick={handleDownloadSelected}
+          onExportTableClick={handleExportTable}
+          selectedTags={filters.selectedTags}
+          onRemoveTag={(tag) => {
+            setFilters(prev => {
+              let newFilters = {
+                ...prev,
+                selectedTags: prev.selectedTags.filter(t => t !== tag)
+              }
 
-      {/* Filter Sidebar Backdrop */}
-      {viewState.isFilterOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity duration-300"
-          onClick={() => updateViewState({ isFilterOpen: false })}
+              // If removing a file type tag, also remove from fileTypes
+              if (tag.startsWith('type:')) {
+                const fileType = tag.replace('type:', '') as "image" | "video"
+                newFilters.fileTypes = prev.fileTypes.filter(t => t !== fileType)
+              }
+
+              return newFilters
+            })
+          }}
         />
-      )}
 
-      {/* Filter Sidebar - Slide Out (completely independent of layout) */}
-      <div
-        className={cn(
-          "fixed left-4 top-24 bottom-4 w-80 z-40 transition-transform duration-300 rounded-2xl",
-          viewState.isFilterOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="p-4 h-full overflow-y-auto scrollable-container">
-          <FilterSidebar
-            isOpen={viewState.isFilterOpen}
-            onClose={() => updateViewState({ isFilterOpen: false })}
-            filters={filters}
-            onFiltersChange={setFilters}
-            availableTags={processedItems.availableTags}
-            totalItems={processedItems.displayItems.length}
-            filteredItems={processedItems.filteredItems.length}
+        {/* Filter Sidebar Backdrop */}
+        {viewState.isFilterOpen && (
+          <div
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 transition-opacity duration-300"
+            onClick={() => updateViewState({ isFilterOpen: false })}
           />
-        </div>
-      </div>
+        )}
 
-      {/* Main Content - No flex container to prevent any layout shift */}
-      <main className="w-full bg-background pt-24">
-          <div className="container mx-auto px-4 py-4 sm:py-8">
-            {/* Hidden File Input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,video/*,.mov,.mp4,.avi,.webm,.ogg,.m4v,.3gp,.3g2"
-              onChange={handleFileInputChange}
-              className="hidden"
-            />
-
-            {/* Gallery Grid */}
-            <GalleryGrid
-              searchQuery={searchQuery}
-              galleryViewMode={viewState.galleryMode}
-              handleViewModeChange={handleViewModeChange}
-              hasActiveFilters={hasActiveFilters}
-              sortedAndFilteredImages={sortedAndFilteredImages}
-              viewMode={viewState.mode}
-              newlyUploadedFiles={newlyUploadedFiles}
-              pendingTags={pendingTags}
-              uploadingFiles={uploadingFiles}
-              setPreviewItem={openPreview}
-              handleEditTags={handleEditTags}
-              handleDeleteFile={deleteFile}
-              confirmTag={confirmTag}
-              rejectTag={rejectTag}
-              handleRename={handleRename}
-              handleAddTag={addTagToFile}
-              handleAddMultipleTags={addMultipleTagsToFile}
-              handleRemoveTag={handleRemoveTagFromCard}
-              selectedTags={filters.selectedTags}
-              onToggleTagFilter={onToggleTagFilter}
-              allTags={allTags}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              loadMoreFiles={loadMoreFiles}
-              totalCount={totalCount}
-              isLoadingSearch={isLoadingSearch}
-              noTagCount={noTagCount}
+        {/* Filter Sidebar - Slide Out (completely independent of layout) */}
+        <div
+          className={cn(
+            "fixed left-4 top-24 bottom-4 w-80 z-40 transition-transform duration-300 rounded-2xl",
+            viewState.isFilterOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          <div className="p-4 h-full overflow-y-auto scrollable-container">
+            <FilterSidebar
+              isOpen={viewState.isFilterOpen}
+              onClose={() => updateViewState({ isFilterOpen: false })}
+              filters={filters}
+              onFiltersChange={setFilters}
+              availableTags={processedItems.availableTags}
+              totalItems={processedItems.displayItems.length}
+              filteredItems={processedItems.filteredItems.length}
             />
           </div>
-        </main>
+        </div>
 
-      {/* Preview Modal */}
-      <PreviewModal
-        previewItem={previewItem}
-        setPreviewItem={(item: GalleryItem | null) => item ? openPreview(item) : closePreview()}
-        isAddingTag={isAddingTag}
-        setIsAddingTag={(adding: boolean) => adding ? startAddingTag() : cancelAddingTag()}
-        newTag={newTag}
-        setNewTag={handleTagInputChange}
-        handleAddTag={handleAddTag}
-        handleRemoveTag={handleRemoveTag}
-        onSave={handlePreviewSave}
-        allTags={allTags}
-        onAddTagDirect={addTagToFile}
-        onAddMultipleTags={addMultipleTagsToFile}
-      />
+        {/* Main Content - No flex container to prevent any layout shift */}
+        <main className="w-full bg-background pt-24">
+            <div className="container mx-auto px-4 py-4 sm:py-8">
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*,.mov,.mp4,.avi,.webm,.ogg,.m4v,.3gp,.3g2"
+                onChange={handleFileInputChange}
+                className="hidden"
+              />
 
-      {/* Drag and Drop Overlay */}
-      {isDragOverWindow && <DragDropOverlay />}
-    </div>
+              {/* Gallery Grid */}
+              <GalleryGrid
+                searchQuery={searchQuery}
+                galleryViewMode={viewState.galleryMode}
+                handleViewModeChange={handleViewModeChange}
+                hasActiveFilters={hasActiveFilters}
+                sortedAndFilteredImages={sortedAndFilteredImages}
+                viewMode={viewState.mode}
+                newlyUploadedFiles={newlyUploadedFiles}
+                pendingTags={pendingTags}
+                uploadingFiles={uploadingFiles}
+                setPreviewItem={openPreview}
+                handleEditTags={handleEditTags}
+                handleDeleteFile={deleteFile}
+                confirmTag={confirmTag}
+                rejectTag={rejectTag}
+                handleRename={handleRename}
+                handleAddTag={addTagToFile}
+                handleAddMultipleTags={addMultipleTagsToFile}
+                handleRemoveTag={handleRemoveTagFromCard}
+                selectedTags={filters.selectedTags}
+                onToggleTagFilter={onToggleTagFilter}
+                allTags={allTags}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                loadMoreFiles={loadMoreFiles}
+                totalCount={totalCount}
+                isLoadingSearch={isLoadingSearch}
+                noTagCount={noTagCount}
+              />
+            </div>
+          </main>
+
+        {/* Preview Modal */}
+        <PreviewModal
+          previewItem={previewItem}
+          setPreviewItem={(item: GalleryItem | null) => item ? openPreview(item) : closePreview()}
+          isAddingTag={isAddingTag}
+          setIsAddingTag={(adding: boolean) => adding ? startAddingTag() : cancelAddingTag()}
+          newTag={newTag}
+          setNewTag={handleTagInputChange}
+          handleAddTag={handleAddTag}
+          handleRemoveTag={handleRemoveTag}
+          onSave={handlePreviewSave}
+          allTags={allTags}
+          onAddTagDirect={addTagToFile}
+          onAddMultipleTags={addMultipleTagsToFile}
+        />
+
+        {/* Drag and Drop Overlay */}
+        {isDragOverWindow && <DragDropOverlay />}
+      </div>
+    </TagDropdownProvider>
   )
 }
