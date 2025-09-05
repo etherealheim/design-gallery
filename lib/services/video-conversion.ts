@@ -314,6 +314,96 @@ export class VideoConversionService {
   }
 
   /**
+   * Convert video to GIF using FFmpeg
+   */
+  static async convertVideoToGif(
+    videoBlob: Blob,
+    onProgress?: (progress: number) => void
+  ): Promise<Blob> {
+    console.log('[Video Conversion] Starting video to GIF conversion')
+
+    try {
+      // Initialize FFmpeg with timeout
+      const initTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('FFmpeg initialization timeout')), 30000)
+      )
+
+      await Promise.race([this.initFFmpeg(), initTimeout])
+
+      if (!this.ffmpeg) {
+        throw new Error('FFmpeg failed to initialize')
+      }
+
+      onProgress?.(10) // Initialization complete
+
+      // Write input file to FFmpeg filesystem
+      const inputFileName = 'input_video'
+      const outputFileName = 'output.gif'
+
+      await this.ffmpeg.writeFile(inputFileName, await fetchFile(videoBlob))
+      onProgress?.(20) // File loaded
+
+      // Set up progress tracking
+      let lastProgress = 20
+      this.ffmpeg.on('progress', ({ ratio }) => {
+        const progress = Math.min(20 + (ratio * 70), 90) // 20-90% for conversion
+        if (progress > lastProgress + 5) {
+          onProgress?.(Math.round(progress))
+          lastProgress = progress
+        }
+      })
+
+      console.log('[Video Conversion] Running FFmpeg GIF conversion...')
+
+      // Convert video to GIF with optimized settings for Figma export
+      const conversionTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('GIF conversion timeout')), 3 * 60 * 1000) // 3 minute timeout
+      )
+
+      const conversionPromise = this.ffmpeg.exec([
+        '-i', inputFileName,
+        '-vf', 'fps=15,scale=640:-1:flags=lanczos', // 15fps, scale to 640px width, maintain aspect ratio
+        '-c:v', 'gif',              // GIF codec
+        '-loop', '0',               // Infinite loop
+        '-t', '30',                 // Limit to 30 seconds max
+        outputFileName
+      ])
+
+      await Promise.race([conversionPromise, conversionTimeout])
+
+      onProgress?.(90) // Conversion complete
+
+      // Read the converted file
+      const data = await this.ffmpeg.readFile(outputFileName)
+      const gifBlob = new Blob([data], { type: 'image/gif' })
+
+      onProgress?.(95) // File read complete
+
+      // Clean up FFmpeg filesystem
+      try {
+        await this.ffmpeg.deleteFile(inputFileName)
+        await this.ffmpeg.deleteFile(outputFileName)
+      } catch (cleanupError) {
+        console.warn('[Video Conversion] Cleanup warning:', cleanupError)
+      }
+
+      onProgress?.(100) // Complete
+
+      console.log('[Video Conversion] GIF conversion successful:', {
+        originalSize: videoBlob.size,
+        gifSize: gifBlob.size,
+        compression: (videoBlob.size / gifBlob.size).toFixed(2) + 'x'
+      })
+
+      return gifBlob
+
+    } catch (error) {
+      console.error('[Video Conversion] GIF conversion failed:', error)
+      throw error
+    }
+  }
+
+  /**
    * Format file size for display
    */
   static formatFileSize(bytes: number): string {

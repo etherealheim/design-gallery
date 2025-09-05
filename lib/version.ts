@@ -1,5 +1,5 @@
 // This will be updated automatically by the build script
-export const VERSION = "v91"; // Auto-updated from GitHub deployments
+export const VERSION = "v92"; // Auto-updated from GitHub deployments
 
 export function getVersion(): string {
   // Try environment variable first, then use build-time version

@@ -41,10 +41,32 @@ export class DataService {
 
       // Apply filters
       if (filters?.fileTypes && filters.fileTypes.length > 0) {
-        const fileTypeFilters = filters.fileTypes.map(type => 
+        const fileTypeFilters = filters.fileTypes.map(type =>
           type === "video" ? "video%" : "image%"
         )
         query = query.or(fileTypeFilters.map(filter => `file_type.like.${filter}`).join(","))
+      }
+
+      // Apply tag filters
+      if (filters?.selectedTags && filters.selectedTags.length > 0) {
+        // Handle special type tags (type:image, type:video, type:gif)
+        const typeTags = filters.selectedTags.filter(tag => tag.startsWith('type:'))
+        const regularTags = filters.selectedTags.filter(tag => !tag.startsWith('type:'))
+
+        // Apply type filters
+        if (typeTags.length > 0) {
+          const fileTypes = typeTags.map(tag => tag.replace('type:', ''))
+          const fileTypeFilters = fileTypes.map(type =>
+            type === "video" ? "video%" : type === "gif" ? "image/gif" : "image%"
+          )
+          query = query.or(fileTypeFilters.map(filter => `file_type.like.${filter}`).join(","))
+        }
+
+        // Apply regular tag filters (tags array contains)
+        if (regularTags.length > 0) {
+          // Use overlap operator to check if tags array contains any of the selected tags
+          query = query.overlaps('tags', regularTags)
+        }
       }
 
       // Apply sorting

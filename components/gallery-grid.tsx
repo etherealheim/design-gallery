@@ -79,7 +79,7 @@ export function GalleryGrid({
   // Use intersection observer for infinite scroll
   const { targetRef } = useIntersectionObserver({
     onIntersect: loadMoreFiles,
-    enabled: hasMore && !isLoadingMore && !searchQuery && galleryViewMode === "recent" && !hasActiveFilters,
+    enabled: hasMore && !isLoadingMore && galleryViewMode === "recent",
     threshold: 0.1,
     rootMargin: "100px",
   })
@@ -90,16 +90,14 @@ export function GalleryGrid({
 
   // Handle mode switching with loading state
   const handleModeSwitch = (mode: "recent" | "random" | "no-tag") => {
-    if (mode !== currentMode) {
-      setIsSwitchingMode(true)
-      handleViewModeChange(mode)
-      setCurrentMode(mode)
-      
-      // Brief delay to prevent jarring layout changes
-      setTimeout(() => {
-        setIsSwitchingMode(false)
-      }, 100)
-    }
+    setIsSwitchingMode(true)
+    handleViewModeChange(mode)
+    setCurrentMode(mode)
+
+    // Brief delay to prevent jarring layout changes
+    setTimeout(() => {
+      setIsSwitchingMode(false)
+    }, 100)
   }
 
   // Calculate counts for each filter mode - use totalCount for recent, actual counts for others
@@ -258,7 +256,7 @@ export function GalleryGrid({
       )}
 
       {/* Infinite scroll trigger and loading indicator */}
-      {!searchQuery && galleryViewMode === "recent" && !hasActiveFilters && sortedAndFilteredImages.displayImages.length > 0 && (
+      {!searchQuery && galleryViewMode === "recent" && sortedAndFilteredImages.displayImages.length > 0 && (
         <div className="mt-8 flex justify-center">
           {hasMore && (
             <div ref={targetRef} className="flex items-center justify-center py-4">

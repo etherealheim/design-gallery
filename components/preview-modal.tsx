@@ -28,6 +28,50 @@ interface PreviewModalProps {
   onAddMultipleTags?: (id: string, tags: string[]) => void
 }
 
+// Utility function to check clipboard permissions and provide guidance
+function getClipboardErrorGuidance(error: Error): { title: string; description: string } {
+  const isHttps = window.location.protocol === 'https:'
+  const isSecureContext = window.isSecureContext
+  const userAgent = navigator.userAgent.toLowerCase()
+
+  // Check for HTTPS requirement
+  if (!isHttps) {
+    return {
+      title: "HTTPS Required",
+      description: "Clipboard access requires a secure HTTPS connection. Please access the site via HTTPS."
+    }
+  }
+
+  // Check for secure context
+  if (!isSecureContext) {
+    return {
+      title: "Secure Context Required",
+      description: "Clipboard access requires a secure context. Please ensure you're not in an insecure iframe."
+    }
+  }
+
+  // Check for specific browser issues
+  if (userAgent.includes('firefox')) {
+    return {
+      title: "Firefox Clipboard Permissions",
+      description: "In Firefox, clipboard access may require explicit permission. Check your browser settings or try clicking again."
+    }
+  }
+
+  if (userAgent.includes('safari')) {
+    return {
+      title: "Safari Clipboard Permissions",
+      description: "Safari has strict clipboard policies. Try using the download option instead or check your privacy settings."
+    }
+  }
+
+  // Generic guidance for other browsers
+  return {
+    title: "Clipboard Access Denied",
+    description: "Browser security policy blocks clipboard access. Try copying manually, use the download option, or check your browser settings."
+  }
+}
+
 export function PreviewModal({
   previewItem,
   setPreviewItem,
@@ -68,28 +112,86 @@ export function PreviewModal({
 
         try {
           await writeToClipboard(originalBlob)
-        } catch {
+        } catch (clipboardError) {
+          if (clipboardError instanceof Error &&
+              (clipboardError.name === 'NotAllowedError' ||
+               clipboardError.message.includes('not allowed by the user agent') ||
+               clipboardError.message.includes('permission'))) {
+            throw clipboardError // Re-throw to be handled by main error handler
+          }
+
           // Fallback: re-encode to PNG via canvas
-          const bitmap = await createImageBitmap(originalBlob)
-          const canvas = document.createElement("canvas")
-          canvas.width = bitmap.width
-          canvas.height = bitmap.height
-          const ctx = canvas.getContext("2d")
-          ctx?.drawImage(bitmap, 0, 0)
-          const pngBlob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b || new Blob()), "image/png"))
-          await writeToClipboard(pngBlob)
+          try {
+            const bitmap = await createImageBitmap(originalBlob)
+            const canvas = document.createElement("canvas")
+            canvas.width = bitmap.width
+            canvas.height = bitmap.height
+            const ctx = canvas.getContext("2d")
+            ctx?.drawImage(bitmap, 0, 0)
+            const pngBlob: Blob = await new Promise((resolve) => canvas.toBlob((b) => resolve(b || new Blob()), "image/png"))
+            await writeToClipboard(pngBlob)
+          } catch (fallbackError) {
+            if (fallbackError instanceof Error &&
+                (fallbackError.name === 'NotAllowedError' ||
+                 fallbackError.message.includes('not allowed by the user agent') ||
+                 fallbackError.message.includes('permission'))) {
+              throw fallbackError // Re-throw to be handled by main error handler
+            }
+            throw fallbackError // Re-throw other errors
+          }
         }
       } else if (previewItem.type === "video") {
-        // For videos, copy the URL to clipboard since video blob copying is limited
-        await navigator.clipboard.writeText(previewItem.url)
+        // Download video directly instead of copying to clipboard
+        try {
+          const response = await fetch(previewItem.url)
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `${previewItem.title}.mp4`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+
+          URL.revokeObjectURL(url)
+
+          toast({ title: "Download started!", description: "Video downloaded successfully." })
+        } catch (error) {
+          console.error("Video download failed:", error)
+          toast({
+            title: "Download failed",
+            description: "Could not download the video. Try again or copy the URL manually.",
+            variant: "destructive"
+          })
+        }
       }
 
       setIsCopyTooltipForcedOpen(true)
       window.setTimeout(() => setIsCopyTooltipForcedOpen(false), 3000)
     } catch (error) {
       console.error("Failed to copy media:", error)
+
+      // Handle various clipboard permission errors
+      if (error instanceof Error &&
+          (error.name === 'NotAllowedError' ||
+           error.message.includes('not allowed by the user agent') ||
+           error.message.includes('permission'))) {
+        const guidance = getClipboardErrorGuidance(error)
+        toast({
+          title: guidance.title,
+          description: guidance.description,
+          variant: "destructive"
+        })
+        return
+      }
+
       const mediaType = previewItem.type === "video" ? "video" : previewItem.type === "gif" ? "GIF" : "image"
-      toast({ title: "Copy failed", description: `Could not copy the ${mediaType}. Try again or download instead.` })
+      toast({
+        title: "Copy failed",
+        description: `Could not copy the ${mediaType}. Try again or download instead.`,
+        variant: "destructive"
+      })
     }
   }
 
@@ -195,15 +297,15 @@ export function PreviewModal({
                       size="sm"
                       className="size-8 cursor-pointer"
                       onClick={handleCopyMedia}
-                      aria-label={previewItem.type === "video" ? "Copy video URL" : "Copy image"}
+                      aria-label={previewItem.type === "video" ? "Download video" : "Copy image"}
                     >
                       <Copy />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={6}>
-                    {isCopyTooltipForcedOpen ? 
-                      (previewItem.type === "video" ? "URL copied!" : "Copied!") : 
-                      (previewItem.type === "video" ? "Copy video URL" : "Copy to clipboard")
+                    {isCopyTooltipForcedOpen ?
+                      (previewItem.type === "video" ? "Downloaded!" : "Copied!") :
+                      (previewItem.type === "video" ? "Download video" : "Copy to clipboard")
                     }
                   </TooltipContent>
                 </Tooltip>

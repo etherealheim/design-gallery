@@ -11,7 +11,6 @@ import { TagDropdown } from "@/components/tag-dropdown"
 
 import type { GalleryItem } from "@/types"
 import { useState, useRef, useCallback, useEffect, useMemo } from "react"
-import { LiquidWeb } from 'liquid-web/react'
 
 
 // Mobile detection utility
@@ -244,15 +243,9 @@ function GalleryCardComponent({
 
         {/* Media Type Indicator - Bottom Left (Always visible) */}
         <div className="absolute bottom-4 left-4 z-10 pointer-events-none">
-          <LiquidWeb
-            scale={12}
-            blur={0.5}
-            aberration={15}
-          >
-            <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-black/30 text-white">
-              {iconComponent}
-            </div>
-          </LiquidWeb>
+          <div className="h-6 w-6 rounded-lg flex items-center justify-center bg-gray-400/60 text-white backdrop-blur-sm">
+            {iconComponent}
+          </div>
         </div>
       </div>
       

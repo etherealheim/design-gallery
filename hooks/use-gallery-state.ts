@@ -72,7 +72,7 @@ export function useGalleryState({
       setCurrentPage(1)
       setHasAllFilesLoaded(false)
       isLoadingAllFilesRef.current = false // Reset loading ref
-      const result = await DataService.loadFilesWithPagination(1, 20) // No filters - we filter client-side
+      const result = await DataService.loadFilesWithPagination(1, 20, filters) // Apply filters server-side
       const uploadedFilesList = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       setUploadedFiles(uploadedFilesList)
       setHasMore(result.hasMore)
@@ -120,7 +120,7 @@ export function useGalleryState({
       setIsLoadingMore(true)
       const nextPage = currentPage + 1
       console.log("Loading page:", nextPage)
-      const result = await DataService.loadFilesWithPagination(nextPage, 20) // No filters - we filter client-side
+      const result = await DataService.loadFilesWithPagination(nextPage, 20, filters) // Apply filters server-side
       const newFiles = result.items.map(file => ({ ...file, file: undefined })) as UploadedFile[]
       
       console.log("Loaded files:", { 
@@ -144,7 +144,7 @@ export function useGalleryState({
     } finally {
       setIsLoadingMore(false)
     }
-  }, [currentPage, hasMore, isLoadingMore]) // Removed filters - using client-side filtering
+  }, [currentPage, hasMore, isLoadingMore, filters])
 
   // Load all files for search (only when needed)
   const loadAllFilesForSearch = useCallback(async () => {
@@ -402,17 +402,38 @@ export function useGalleryState({
     })
   }, [])
 
+  // Memoize the active filters state first to avoid circular dependencies
+  const hasActiveFilters = useMemo(() => {
+    return filters.fileTypes.length > 0 || filters.selectedTags.length > 0
+  }, [filters.fileTypes.length, filters.selectedTags.length])
+
   // Computed values
   const combinedItems = useMemo(() => [...uploadedFiles], [uploadedFiles])
 
-  // Split complex memoization into smaller, more focused memos for better performance
-  const filteredItems = useMemo(() => {
-    return FileFilterService.filterItems(combinedItems, searchQuery, filters)
-  }, [combinedItems, searchQuery, filters])
+  // Server-side filtering is now used, so we only need to handle search if it's not server-filtered
+  const processedData = useMemo(() => {
+    let items = combinedItems
 
-  const sortedItems = useMemo(() => {
-    return FileFilterService.sortItems(filteredItems, filters.sortBy, filters.sortOrder)
-  }, [filteredItems, filters.sortBy, filters.sortOrder])
+    // If we have active filters, server has already filtered and sorted, so just return as-is
+    if (hasActiveFilters) {
+      return {
+        filteredItems: items,
+        sortedItems: items
+      }
+    }
+
+    // Otherwise, apply search and sorting client-side
+    const filtered = FileFilterService.filterItems(items, searchQuery, filters)
+    const sorted = FileFilterService.sortItems(filtered, filters.sortBy, filters.sortOrder)
+
+    return {
+      filteredItems: filtered,
+      sortedItems: sorted
+    }
+  }, [combinedItems, searchQuery, filters, hasActiveFilters])
+
+  const filteredItems = processedData.filteredItems
+  const sortedItems = processedData.sortedItems
 
   const displayItems = useMemo(() => {
     if (viewState.galleryMode === "random") {
@@ -451,6 +472,7 @@ export function useGalleryState({
 
   const handleViewModeChange = useCallback((newMode: ViewState["galleryMode"]) => {
     setViewState(prev => ({ ...prev, galleryMode: newMode }))
+    // Always set a new random seed when random mode is selected
     if (newMode === "random") {
       setRandomSeed(Date.now())
     }
@@ -605,55 +627,31 @@ export function useGalleryState({
     loadNoTagCount()
   }, [loadFiles, loadAllTags, loadNoTagCount])
 
-  // Memoize the active filters state to prevent unnecessary effect triggers
-  const hasActiveFilters = useMemo(() => {
-    return filters.fileTypes.length > 0 || filters.selectedTags.length > 0
-  }, [filters.fileTypes.length, filters.selectedTags.length])
 
   // Handle data loading based on search, filters, and view mode
   useEffect(() => {
     const isSearching = searchQuery.trim().length > 0
     const isNoTagMode = viewState.galleryMode === "no-tag"
-    const needsAllFiles = isSearching || hasActiveFilters || isNoTagMode
-    
-    // Check if the state has actually changed to prevent infinite loops
-    const lastState = lastLoadingStateRef.current
-    const stateChanged = lastState.needsAllFiles !== needsAllFiles || lastState.hasAllFilesLoaded !== hasAllFilesLoaded
-    
-    if (!stateChanged) {
-      return
-    }
-    
-    // Update the last state
-    lastLoadingStateRef.current = { needsAllFiles, hasAllFilesLoaded }
-    
-    if (needsAllFiles && !hasAllFilesLoaded && !isLoadingAllFilesRef.current) {
-      // Need all files for search, filters, or no-tag mode
-      console.log("Loading all files for:", { 
-        isSearching, 
-        hasActiveFilters, 
-        isNoTagMode, 
-        hasAllFilesLoaded 
-      })
-      loadAllFilesForSearch()
-    } else if (!needsAllFiles && hasAllFilesLoaded && viewState.galleryMode === "recent") {
-      // Only reload if we're actually switching away from filters, not just modifying them
-      // Add a small delay to prevent immediate reload when quickly changing filters
-      const timeoutId = setTimeout(() => {
-        if (!hasActiveFilters && hasAllFilesLoaded && viewState.galleryMode === "recent") {
-          console.log("Returning to paginated view")
-          loadFiles()
-        }
-      }, 300) // 300ms delay to allow for quick filter changes
-      
-      return () => clearTimeout(timeoutId)
-    }
+
+    // When filters or search change, we need to reset pagination and reload
+    // We always use pagination now with server-side filtering
+    console.log("Loading paginated files for:", {
+      isSearching,
+      hasActiveFilters,
+      isNoTagMode
+    })
+
+    // Reset pagination state when filters change
+    setCurrentPage(1)
+    setHasMore(true)
+    setHasAllFilesLoaded(false)
+
+    loadFiles() // This uses server-side filtering
   }, [
-    searchQuery, 
+    searchQuery,
     hasActiveFilters,
-    viewState.galleryMode, 
-    hasAllFilesLoaded,
-    loadAllFilesForSearch,
+    viewState.galleryMode,
+    filters, // Include filters to trigger reload when they change
     loadFiles
   ])
 
